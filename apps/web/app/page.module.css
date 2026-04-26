@@ -1,0 +1,233 @@
+.header {
+    width: 100%;
+    background: linear-gradient(135deg, #2E5E3E 0%, #1a3d2a 100%);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.headerContent {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.headerLogo {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+}
+
+.headerBrand {
+    color: white;
+}
+
+.headerBrand h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+    line-height: 1.1;
+}
+
+.headerBrand span {
+    display: block;
+    font-size: 0.85rem;
+    opacity: 0.85;
+    font-weight: 400;
+}
+
+.mainContent {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+}
+
+.loginContainer {
+    width: 100%;
+    max-width: 400px;
+    background: transparent;
+    padding: 0;
+    box-shadow: none;
+    border-radius: 0;
+}
+
+.loginHeader {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.loginHeader h2 {
+    font-size: 1.8rem;
+    color: #1a202c;
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.loginHeader p {
+    color: #718096;
+    font-size: 0.95rem;
+}
+
+.formGroup {
+    margin-bottom: 20px;
+}
+
+.formGroup label {
+    display: block;
+    margin-bottom: 8px;
+    color: #2d3748;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.inputGroup {
+    position: relative;
+}
+
+.inputGroup input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: #f8fafc;
+}
+
+.inputGroup input:focus {
+    outline: none;
+    border-color: #2E5E3E;
+    box-shadow: 0 0 0 3px rgba(46, 94, 62, 0.1);
+    background: white;
+}
+
+.inputGroup input::placeholder {
+    color: #a0aec0;
+}
+
+.forgotPassword {
+    text-align: right;
+    margin-bottom: 25px;
+}
+
+.forgotPassword a {
+    color: #2E5E3E;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: color 0.3s ease;
+}
+
+.forgotPassword a:hover {
+    color: #1a3d2a;
+    text-decoration: underline;
+}
+
+.loginBtn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, #2E5E3E 0%, #1a3d2a 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 25px;
+}
+
+.loginBtn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 15px rgba(46, 94, 62, 0.3);
+}
+
+.divider {
+    display: flex;
+    align-items: center;
+    margin: 25px 0;
+    gap: 15px;
+}
+
+.divider::before,
+.divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e2e8f0;
+}
+
+.divider span {
+    color: #718096;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.googleBtn {
+    width: 100%;
+    padding: 12px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #2d3748;
+    margin-bottom: 25px;
+}
+
+.googleBtn:hover {
+    background: #f8fafc;
+    border-color: #cbd5e0;
+}
+
+.googleBtn i {
+    color: #4285f4;
+    font-size: 1.1rem;
+}
+
+.signupLink {
+    text-align: center;
+    color: #718096;
+    font-size: 0.85rem;
+}
+
+.signupLink a {
+    color: #2E5E3E;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s ease;
+}
+
+.signupLink a:hover {
+    color: #1a3d2a;
+    text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+    .header {
+        padding: 15px 20px;
+    }
+
+    .mainContent {
+        padding: 20px 15px;
+    }
+
+    .loginHeader h2 {
+        font-size: 1.5rem;
+    }
+}

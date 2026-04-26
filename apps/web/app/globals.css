@@ -1,0 +1,363 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: #f8fafc;
+    position: relative;
+}
+
+/* Toast Notification */
+#toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #2d3748;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-size: 0.95rem;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    z-index: 2000;
+    transition: all 0.3s ease;
+    opacity: 0;
+    visibility: hidden;
+}
+
+.toastShow {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Modal - All Settings */
+.modal {
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 3000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modalContent {
+    background: white;
+    border-radius: 24px;
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    animation: modalSlide 0.3s ease;
+}
+
+@keyframes modalSlide {
+    from {
+        transform: translateY(-30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.modalHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 25px 25px 15px;
+    border-bottom: 1px solid #edf2f7;
+}
+
+.modalHeader h3 {
+    color: #2d3748;
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+.modalClose {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #a0aec0;
+    cursor: pointer;
+    padding: 5px;
+    transition: color 0.3s;
+}
+
+.modalClose:hover {
+    color: #2E5E3E;
+}
+
+.modalBody {
+    padding: 25px;
+}
+
+.modalFormGroup {
+    margin-bottom: 20px;
+}
+
+.modalFormGroup label {
+    display: block;
+    color: #4a5568;
+    font-weight: 500;
+    font-size: 0.95rem;
+    margin-bottom: 8px;
+}
+
+.modalFormGroup label i {
+    margin-right: 8px;
+    color: #2E5E3E;
+    width: 18px;
+}
+
+.modalFormControl {
+    width: 100%;
+    padding: 12px 15px;
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.modalFormControl:focus {
+    outline: none;
+    border-color: #2E5E3E;
+    box-shadow: 0 0 0 3px rgba(46, 94, 62, 0.1);
+}
+
+.passwordRequirements {
+    margin: 15px 0 20px;
+    padding: 15px;
+    background: #f7fafc;
+    border-radius: 16px;
+}
+
+.passwordRequirements p {
+    color: #4a5568;
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 10px;
+}
+
+.requirementItem {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    margin: 5px 0;
+    background: white;
+    border-radius: 30px;
+    font-size: 0.85rem;
+}
+
+.requirementItem i {
+    width: 16px;
+    font-size: 0.8rem;
+}
+
+.requirementItem.valid i {
+    color: #48bb78;
+}
+
+.requirementItem.invalid i {
+    color: #fc8181;
+}
+
+.requirementText {
+    color: #4a5568;
+}
+
+.languageOptions {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.languageOption {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    border: 2px solid #e2e8f0;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.languageOption:hover {
+    border-color: #2E5E3E;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(46, 94, 62, 0.1);
+}
+
+.languageOption.selected {
+    border-color: #2E5E3E;
+    background: linear-gradient(135deg, rgba(46, 94, 62, 0.1) 0%, rgba(46, 94, 62, 0.1) 100%);
+}
+
+.languageOption.selected .languageCheck {
+    background: linear-gradient(135deg, #2E5E3E 0%, #2E5E3E 100%);
+    color: white;
+}
+
+.languageFlag {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #2E5E3E 0%, #2E5E3E 100%);
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    margin-right: 15px;
+}
+
+.languageInfo {
+    flex: 1;
+}
+
+.languageInfo h4 {
+    color: #2d3748;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.languageDescription {
+    color: #718096;
+    font-size: 0.85rem;
+}
+
+.languageCheck {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #f7fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #a0aec0;
+    transition: all 0.3s ease;
+}
+
+.languageCheck i {
+    font-size: 0.9rem;
+}
+
+.rulesContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.rulesSection {
+    background: #f7fafc;
+    border-radius: 20px;
+    padding: 20px;
+}
+
+.rulesSection h4 {
+    color: #2d3748;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.rulesSection h4 i {
+    color: #2E5E3E;
+}
+
+.rulesSection.dos h4 i {
+    color: #48bb78;
+}
+
+.rulesSection.donts h4 i {
+    color: #fc8181;
+}
+
+.rulesList {
+    list-style: none;
+    padding: 0;
+}
+
+.rulesList li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    color: #4a5568;
+    font-size: 0.95rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.rulesList li:last-child {
+    border-bottom: none;
+}
+
+.rulesList li i {
+    width: 20px;
+    font-size: 0.9rem;
+}
+
+.rulesList.dos li i {
+    color: #48bb78;
+}
+
+.rulesList.donts li i {
+    color: #fc8181;
+}
+
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    padding: 0 25px 25px 25px;
+}
+
+.btn {
+    padding: 12px 25px;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btnSecondary {
+    background: #f7fafc;
+    color: #4a5568;
+}
+
+.btnSecondary:hover {
+    background: #e2e8f0;
+}
+
+.btnPrimary {
+    background: linear-gradient(135deg, #2E5E3E 0%, #2E5E3E 100%);
+    color: white;
+}
+
+.btnPrimary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 15px rgba(46, 94, 62, 0.3);
+}
