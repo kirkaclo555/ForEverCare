@@ -22,6 +22,34 @@ type Props = {
 
 export default function ProfileScreen({ navigation }: Props) {
   const { user, updateUser } = useUser();
+  const [isEditing, setIsEditing] = useState(false);
+
+  const nameParts = user.fullName.split(' ');
+  const initialFirst = nameParts[0] || '';
+  const initialLast = nameParts.slice(1).join(' ') || '';
+
+  const [firstName, setFirstName] = useState(initialFirst);
+  const [lastName, setLastName] = useState(initialLast);
+  const [phoneNumber, setPhoneNumber] = useState(user.phoneNumber);
+  const [email, setEmail] = useState(user.email);
+
+  const handleSave = () => {
+    if (!firstName.trim() || !lastName.trim()) {
+      Alert.alert('Validation Error', 'First name and Last name are required.');
+      return;
+    }
+    if (!phoneNumber.trim()) {
+      Alert.alert('Validation Error', 'Phone number is required.');
+      return;
+    }
+    updateUser({
+      fullName: `${firstName.trim()} ${lastName.trim()}`,
+      phoneNumber: phoneNumber.trim(),
+      email: email.trim()
+    });
+    setIsEditing(false);
+    Alert.alert('Success', 'Profile updated successfully!');
+  };
 
   const handlePickImage = async () => {
     // Ask for permission explicitly
@@ -39,8 +67,10 @@ export default function ProfileScreen({ navigation }: Props) {
       quality: 0.8,
     });
 
-    if (!result.canceled) {
-      updateUser({ avatarUri: result.assets[0].uri });
+    const isCancelled = result.canceled !== undefined ? result.canceled : (result as any).cancelled;
+    if (!isCancelled) {
+      const uri = result.assets ? result.assets[0].uri : (result as any).uri;
+      updateUser({ avatarUri: uri });
     }
   };
 
@@ -65,6 +95,15 @@ export default function ProfileScreen({ navigation }: Props) {
           )}
           <Text style={styles.headerTitle}>My Profile</Text>
         </View>
+        <TouchableOpacity onPress={() => {
+          if (isEditing) {
+            handleSave();
+          } else {
+            setIsEditing(true);
+          }
+        }}>
+          <Text style={[styles.headerAction, { color: 'white' }]}>{isEditing ? 'Save' : 'Edit'}</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView style={styles.mainScroll} showsVerticalScrollIndicator={false}>
@@ -89,43 +128,69 @@ export default function ProfileScreen({ navigation }: Props) {
           <Text style={styles.sectionTitle}>Contact Information</Text>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Full Name</Text>
-            <View style={styles.inputBox}>
+            <Text style={styles.inputLabel}>First Name <Text style={{color: 'red'}}>*</Text></Text>
+            <View style={[styles.inputBox, !isEditing && styles.inputBoxDisabled]}>
               <FontAwesome5 name="user" size={16} color="#718096" style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
-                value={user.fullName}
-                onChangeText={(text) => updateUser({ fullName: text })}
+                value={firstName}
+                onChangeText={setFirstName}
+                editable={isEditing}
+                placeholder="Enter first name"
               />
             </View>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Phone Number</Text>
-            <View style={styles.inputBox}>
+            <Text style={styles.inputLabel}>Last Name <Text style={{color: 'red'}}>*</Text></Text>
+            <View style={[styles.inputBox, !isEditing && styles.inputBoxDisabled]}>
+              <FontAwesome5 name="user" size={16} color="#718096" style={styles.inputIcon} />
+              <TextInput
+                style={styles.textInput}
+                value={lastName}
+                onChangeText={setLastName}
+                editable={isEditing}
+                placeholder="Enter last name"
+              />
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>Phone Number <Text style={{color: 'red'}}>*</Text></Text>
+            <View style={[styles.inputBox, !isEditing && styles.inputBoxDisabled]}>
               <FontAwesome5 name="phone" size={16} color="#718096" style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
-                value={user.phoneNumber}
-                onChangeText={(text) => updateUser({ phoneNumber: text })}
+                value={phoneNumber}
+                onChangeText={setPhoneNumber}
+                editable={isEditing}
                 keyboardType="phone-pad"
+                placeholder="Enter phone number"
               />
             </View>
           </View>
 
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Email Address</Text>
-            <View style={styles.inputBox}>
+            <View style={[styles.inputBox, !isEditing && styles.inputBoxDisabled]}>
               <FontAwesome5 name="envelope" size={16} color="#718096" style={styles.inputIcon} />
               <TextInput
                 style={styles.textInput}
-                value={user.email}
-                onChangeText={(text) => updateUser({ email: text })}
+                value={email}
+                onChangeText={setEmail}
+                editable={isEditing}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                placeholder="Enter email address"
               />
             </View>
           </View>
+
+          {isEditing && (
+            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+              <Text style={styles.saveButtonText}>Save Changes</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -133,18 +198,18 @@ export default function ProfileScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#FCFBF7' },
+  safeArea: { flex: 1, backgroundColor: '#F4F1EC' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
     borderBottomWidth: 0,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: 'white' },
-  headerAction: { fontSize: 16, fontWeight: '600', color: '#1E3A8A' },
+  headerTitle: { fontSize: 18, fontFamily: 'Catcut', color: 'white' },
+  headerAction: { fontSize: 16, fontFamily: 'Montserrat-SemiBold', color: '#1E3A8A' },
   mainScroll: { flex: 1, padding: 20 },
   profileHeader: {
     alignItems: 'center',
@@ -156,11 +221,8 @@ const styles = StyleSheet.create({
     height: 100,
     borderRadius: 50,
     backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 5,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.07)',
     marginBottom: 15,
     position: 'relative',
   },
@@ -168,14 +230,14 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
     borderRadius: 50,
-    backgroundColor: '#1E3A8A',
+    backgroundColor: '#2D5016',
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarPlaceholderText: {
     color: 'white',
     fontSize: 32,
-    fontWeight: '700',
+    fontFamily: 'Montserrat-Bold',
   },
   avatarImage: {
     width: '100%',
@@ -188,29 +250,26 @@ const styles = StyleSheet.create({
     right: -5,
     width: 36,
     height: 36,
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
-    borderColor: '#FCFBF7',
+    borderColor: '#F4F1EC',
   },
-  profileName: { fontSize: 24, fontWeight: '700', color: '#2d3748' },
-  profileSubtitle: { fontSize: 14, color: '#718096', marginTop: 4 },
+  profileName: { fontSize: 24, fontFamily: 'Catcut', color: '#2d3748' },
+  profileSubtitle: { fontSize: 14, color: '#718096', marginTop: 4, fontFamily: 'Montserrat-Regular' },
   sectionContainer: {
     backgroundColor: 'white',
     borderRadius: 16,
     padding: 20,
-    shadowColor: '#1E3A8A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.07)',
     marginBottom: 30,
   },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#2d3748', marginBottom: 20 },
+  sectionTitle: { fontSize: 18, fontFamily: 'Catcut', color: '#2d3748', marginBottom: 20 },
   inputGroup: { marginBottom: 15 },
-  inputLabel: { fontSize: 14, fontWeight: '600', color: '#4a5568', marginBottom: 8 },
+  inputLabel: { fontSize: 14, fontFamily: 'Montserrat-SemiBold', color: '#4a5568', marginBottom: 8 },
   inputBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -221,6 +280,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     height: 50,
   },
+  inputBoxDisabled: {
+    backgroundColor: '#f7fafc',
+    borderColor: '#edf2f7',
+  },
   inputIcon: { marginRight: 10, width: 20, textAlign: 'center' },
-  textInput: { flex: 1, fontSize: 15, color: '#2d3748' },
+  textInput: { flex: 1, fontSize: 15, color: '#2d3748', fontFamily: 'Montserrat-Regular' },
+  saveButton: {
+    backgroundColor: '#2D5016',
+    borderRadius: 12,
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginTop: 15,
+  },
+  saveButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontFamily: 'Montserrat-Bold',
+  },
 });

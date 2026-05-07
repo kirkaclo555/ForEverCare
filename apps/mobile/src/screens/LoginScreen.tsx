@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import {
   StyleSheet,
@@ -8,9 +8,12 @@ import {
   TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  TouchableWithoutFeedback,
   Keyboard,
+  TouchableWithoutFeedback,
   Alert,
+  Image,
+  Dimensions,
+  Animated,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -31,12 +34,25 @@ type Props = {
   navigation: LoginScreenNavigationProp;
 };
 
+const { height } = Dimensions.get('window');
+
 export default function LoginScreen({ navigation }: Props) {
   const [email, setEmail] = useState("owner@furcare.com");
   const [password, setPassword] = useState("owner123");
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+
+  const slideAnim = useRef(new Animated.Value(height)).current;
+
+  useEffect(() => {
+    Animated.spring(slideAnim, {
+      toValue: 0,
+      tension: 40,
+      friction: 8,
+      useNativeDriver: true,
+    }).start();
+  }, [slideAnim]);
 
   const handleLogin = () => {
     if (email === 'owner@furcare.com' && password === 'owner123') {
@@ -51,14 +67,22 @@ export default function LoginScreen({ navigation }: Props) {
       <StatusBar style="light" />
 
       <LinearGradient
-        colors={['#2E5E3E', '#4fa66c']}
+        colors={['#1a3d28', '#2E5E3E']}
         style={styles.gradientBackground}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
         <SafeAreaView style={styles.safeArea} edges={['top']}>
+          {/* Subtle Decorative Paw Prints */}
+          <View style={styles.decorativePaw1}>
+            <FontAwesome5 name="paw" size={140} color="rgba(126,212,74,0.08)" />
+          </View>
+          <View style={styles.decorativePaw2}>
+            <FontAwesome5 name="paw" size={80} color="rgba(126,212,74,0.05)" />
+          </View>
+          
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            behavior={Platform.OS === 'ios' ? 'position' : undefined}
             style={styles.keyboardAvoidingView}
           >
             <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -71,17 +95,14 @@ export default function LoginScreen({ navigation }: Props) {
                   </TouchableOpacity>
 
                   <View style={styles.brandingContainer}>
-                    <View style={styles.iconCircle}>
-                      <FontAwesome5 name="paw" size={32} color="#2E5E3E" />
-                    </View>
-                    <Text style={styles.brandText}>FurEver Paw Care</Text>
+                    <Image source={require('../../assets/logo.png')} style={{ width: 150, height: 150, resizeMode: 'contain', marginBottom: 0 }} />
                   </View>
                 </View>
 
                 {/* Bottom Login Card */}
-                <View style={styles.card}>
+                <Animated.View style={[styles.card, { transform: [{ translateY: slideAnim }] }]}>
                   <View style={styles.headerTextContainer}>
-                    <Text style={styles.welcomeText}>Welcome Back!</Text>
+                    <Text style={styles.welcomeText}>FurEver Paw Care</Text>
                     <Text style={styles.subtitleText}>Login to your account</Text>
                   </View>
 
@@ -168,7 +189,7 @@ export default function LoginScreen({ navigation }: Props) {
                     </TouchableOpacity>
                   </View>
 
-                </View>
+                </Animated.View>
               </View>
             </TouchableWithoutFeedback>
           </KeyboardAvoidingView>
@@ -189,6 +210,19 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
   },
+  decorativePaw1: {
+    position: 'absolute',
+    top: height * 0.05,
+    right: -40,
+    transform: [{ rotate: '25deg' }],
+  },
+  decorativePaw2: {
+    position: 'absolute',
+    top: height * 0.35,
+    left: -20,
+    transform: [{ rotate: '-15deg' }],
+    zIndex: 0,
+  },
   keyboardAvoidingView: {
     flex: 1,
   },
@@ -197,10 +231,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   headerSection: {
-    flex: 1,
+    flex: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 20,
+    paddingTop: 10,
+    paddingBottom: 10,
   },
   backButton: {
     position: 'absolute',
@@ -212,23 +247,9 @@ const styles = StyleSheet.create({
   brandingContainer: {
     alignItems: 'center',
   },
-  iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#ffffff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 8,
-  },
   brandText: {
+    fontFamily: 'Catcut',
     fontSize: 26,
-    fontWeight: '800',
     color: '#ffffff',
     letterSpacing: 0.5,
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
@@ -240,8 +261,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 40,
     borderTopRightRadius: 40,
     paddingHorizontal: 30,
-    paddingTop: 40,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 30,
+    paddingTop: 25,
+    paddingBottom: Platform.OS === 'ios' ? 25 : 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -10 },
     shadowOpacity: 0.1,
@@ -250,15 +271,17 @@ const styles = StyleSheet.create({
   },
   headerTextContainer: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 20,
   },
   welcomeText: {
+    fontFamily: 'Catcut',
     fontSize: 28,
-    fontWeight: '800',
-    color: '#1a202c',
+    color: '#2E5E3E',
     marginBottom: 6,
+    textAlign: 'center',
   },
   subtitleText: {
+    fontFamily: 'Montserrat-Regular',
     fontSize: 15,
     color: '#718096',
   },
@@ -286,6 +309,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   input: {
+    fontFamily: 'Montserrat-Regular',
     flex: 1,
     fontSize: 16,
     color: '#2d3748',
@@ -297,7 +321,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 20,
     marginTop: 4,
   },
   checkboxContainer: {
@@ -320,19 +344,19 @@ const styles = StyleSheet.create({
     borderColor: '#2E5E3E',
   },
   rememberText: {
+    fontFamily: 'Montserrat-Medium',
     fontSize: 14,
     color: '#4a5568',
-    fontWeight: '500',
   },
   forgotText: {
+    fontFamily: 'Montserrat-SemiBold',
     fontSize: 14,
     color: '#2E5E3E',
-    fontWeight: '600',
   },
   loginBtn: {
     height: 56,
     backgroundColor: '#2E5E3E',
-    borderRadius: 28,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#2E5E3E',
@@ -340,18 +364,18 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 10,
     elevation: 6,
-    marginBottom: 25,
+    marginBottom: 15,
   },
   loginBtnText: {
+    fontFamily: 'Montserrat-Bold',
     color: '#ffffff',
     fontSize: 16,
-    fontWeight: '700',
     letterSpacing: 0.5,
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 25,
+    marginBottom: 15,
   },
   dividerLine: {
     flex: 1,
@@ -359,15 +383,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#e2e8f0',
   },
   dividerText: {
+    fontFamily: 'Montserrat-SemiBold',
     marginHorizontal: 15,
     color: '#a0aec0',
     fontSize: 14,
-    fontWeight: '600',
   },
   socialIconsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 30,
+    marginBottom: 20,
   },
   socialButton: {
     width: 50,
@@ -386,12 +410,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   footerText: {
+    fontFamily: 'Montserrat-Regular',
     fontSize: 14,
     color: '#718096',
   },
   registerText: {
+    fontFamily: 'Montserrat-Bold',
     fontSize: 14,
     color: '#2E5E3E',
-    fontWeight: '700',
   }
 });

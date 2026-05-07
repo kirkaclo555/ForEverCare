@@ -97,19 +97,19 @@ export default function MoreMenuScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#f7fafc' },
+  safeArea: { flex: 1, backgroundColor: '#F4F1EC' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
     borderBottomWidth: 0,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: 'white' },
+  headerTitle: { fontSize: 18, fontFamily: 'Catcut', color: 'white' },
   mainScroll: { flex: 1, padding: 20 },
-  sectionTitle: { fontSize: 16, fontWeight: '600', color: '#4a5568', marginBottom: 15 },
+  sectionTitle: { fontSize: 16, fontFamily: 'Catcut', color: '#4a5568', marginBottom: 15 },
   menuContainer: { gap: 15 },
   menuCard: {
     flexDirection: 'row',
@@ -117,11 +117,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     padding: 16,
     borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.07)',
   },
   iconBox: {
     width: 48,
@@ -132,6 +129,6 @@ const styles = StyleSheet.create({
     marginRight: 15,
   },
   menuText: { flex: 1 },
-  menuTitle: { fontSize: 16, fontWeight: '700', color: '#2d3748', marginBottom: 4 },
-  menuSubtitle: { fontSize: 13, color: '#718096' },
+  menuTitle: { fontSize: 16, fontFamily: 'Montserrat-Bold', color: '#2d3748', marginBottom: 4 },
+  menuSubtitle: { fontSize: 13, color: '#718096', fontFamily: 'Montserrat-Regular' },
 });

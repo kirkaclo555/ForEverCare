@@ -473,51 +473,48 @@ export default function PetsScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#f7fafc' },
+  safeArea: { flex: 1, backgroundColor: '#F4F1EC' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
     borderBottomWidth: 0,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: 'white' },
+  headerTitle: { fontSize: 18, fontFamily: 'Catcut', color: 'white' },
   helpButton: { padding: 4 },
   mainScroll: { flex: 1, padding: 20 },
   progressContainer: { marginBottom: 20 },
   progressBarBg: {
     height: 6,
-    backgroundColor: '#edf2f7',
+    backgroundColor: '#EAF3DE',
     borderRadius: 3,
     overflow: 'hidden',
     marginBottom: 8,
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
   },
-  progressText: { fontSize: 12, color: '#718096', textAlign: 'right' },
+  progressText: { fontSize: 12, color: '#718096', textAlign: 'right', fontFamily: 'Montserrat-Medium' },
   
   wizardContainer: {
     backgroundColor: 'white',
     borderRadius: 16,
     padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.07)',
   },
   centeredContent: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 40,
   },
-  wizardTitle: { fontSize: 22, fontWeight: '700', color: '#2d3748', marginBottom: 8 },
-  wizardSubtitle: { fontSize: 14, color: '#718096', marginBottom: 24, lineHeight: 20 },
-  inputLabel: { fontSize: 13, fontWeight: '600', color: '#4a5568', marginBottom: 12, marginTop: 10 },
+  wizardTitle: { fontSize: 22, fontFamily: 'Catcut', color: '#2d3748', marginBottom: 8 },
+  wizardSubtitle: { fontSize: 14, color: '#718096', marginBottom: 24, lineHeight: 20, fontFamily: 'Montserrat-Regular' },
+  inputLabel: { fontSize: 13, fontFamily: 'Montserrat-SemiBold', color: '#4a5568', marginBottom: 12, marginTop: 10 },
   
   petSelectorRow: { flexDirection: 'row', gap: 12, marginBottom: 20 },
   petSelectorBtn: {
@@ -529,12 +526,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2e8f0',
     borderRadius: 12,
-    backgroundColor: '#f7fafc',
+    backgroundColor: 'white',
     gap: 8,
   },
-  petSelectorActive: { backgroundColor: '#2E5E3E', borderColor: '#2E5E3E' },
-  petSelectorText: { fontSize: 15, fontWeight: '600', color: '#4a5568' },
-  petSelectorTextActive: { color: 'white' },
+  petSelectorActive: { backgroundColor: '#2D5016', borderColor: '#2D5016' },
+  petSelectorText: { fontSize: 15, fontFamily: 'Montserrat-Medium', color: '#4a5568' },
+  petSelectorTextActive: { color: 'white', fontFamily: 'Montserrat-Bold' },
 
   optionCard: {
     flexDirection: 'row',
@@ -544,12 +541,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2e8f0',
     borderRadius: 12,
-    backgroundColor: '#f7fafc',
+    backgroundColor: 'white',
     marginBottom: 12,
   },
-  optionCardActive: { borderColor: '#2E5E3E', backgroundColor: '#f0fff4' },
-  optionCardText: { fontSize: 15, fontWeight: '500', color: '#4a5568' },
-  optionCardTextActive: { color: '#2E5E3E', fontWeight: 'bold' },
+  optionCardActive: { borderColor: '#2D5016', backgroundColor: '#EAF3DE' },
+  optionCardText: { fontSize: 15, fontFamily: 'Montserrat-Medium', color: '#4a5568' },
+  optionCardTextActive: { color: '#2D5016', fontFamily: 'Montserrat-Bold' },
 
   textInput: {
     borderWidth: 1,
@@ -560,6 +557,7 @@ const styles = StyleSheet.create({
     color: '#2d3748',
     backgroundColor: '#f7fafc',
     marginBottom: 15,
+    fontFamily: 'Montserrat-Regular',
   },
   textArea: { height: 100, textAlignVertical: 'top' },
 
@@ -570,21 +568,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2e8f0',
     borderRadius: 20,
-    backgroundColor: '#f7fafc',
+    backgroundColor: 'white',
   },
-  pillBtnActive: { backgroundColor: '#3182ce', borderColor: '#3182ce' },
-  pillText: { fontSize: 14, color: '#4a5568', fontWeight: '500' },
-  pillTextActive: { color: 'white' },
+  pillBtnActive: { backgroundColor: '#2D5016', borderColor: '#2D5016' },
+  pillText: { fontSize: 14, color: '#4a5568', fontFamily: 'Montserrat-Medium' },
+  pillTextActive: { color: 'white', fontFamily: 'Montserrat-Bold' },
 
   navButtonsRow: { flexDirection: 'row', gap: 12, marginTop: 24 },
   primaryButton: {
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  primaryButtonText: { color: 'white', fontSize: 16, fontWeight: '700' },
+  primaryButtonText: { color: 'white', fontSize: 16, fontFamily: 'Montserrat-Bold' },
   backButton: {
     paddingVertical: 14,
     paddingHorizontal: 20,
@@ -594,7 +592,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
-  backButtonText: { color: '#4a5568', fontSize: 15, fontWeight: '600' },
+  backButtonText: { color: '#4a5568', fontSize: 15, fontFamily: 'Montserrat-SemiBold' },
   buttonDisabled: { opacity: 0.5 },
 
   warningBox: {
@@ -605,7 +603,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
     gap: 8,
   },
-  warningBoxText: { flex: 1, fontSize: 13, color: '#2b6cb0', lineHeight: 18 },
+  warningBoxText: { flex: 1, fontSize: 13, color: '#2b6cb0', lineHeight: 18, fontFamily: 'Montserrat-Regular' },
 
   severityIconBoxWorst: {
     width: 64, height: 64, borderRadius: 32, backgroundColor: '#fed7d7',
@@ -621,7 +619,7 @@ const styles = StyleSheet.create({
   },
 
   activeMonitorBox: { alignItems: 'center', marginVertical: 30 },
-  timerText: { fontSize: 24, fontWeight: 'bold', color: '#2d3748', marginTop: 10, fontFamily: 'monospace' },
+  timerText: { fontSize: 24, fontFamily: 'Montserrat-Bold', color: '#2d3748', marginTop: 10 },
 
   demoFastForwardBtn: {
     flexDirection: 'row',
@@ -641,5 +639,5 @@ const styles = StyleSheet.create({
     borderColor: '#edf2f7',
     marginTop: 10,
   },
-  reportSummaryText: { fontSize: 14, color: '#4a5568', marginBottom: 6, lineHeight: 20 }
+  reportSummaryText: { fontSize: 14, color: '#4a5568', marginBottom: 6, lineHeight: 20, fontFamily: 'Montserrat-Regular' }
 });

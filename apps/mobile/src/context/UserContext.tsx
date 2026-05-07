@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type UserProfile = {
   fullName: string;
@@ -24,8 +25,28 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserProfile>(defaultUser);
 
-  const updateUser = (updates: Partial<UserProfile>) => {
-    setUser(prev => ({ ...prev, ...updates }));
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const storedUser = await AsyncStorage.getItem('@user_profile');
+        if (storedUser) {
+          setUser(JSON.parse(storedUser));
+        }
+      } catch (e) {
+        console.error('Failed to load user profile', e);
+      }
+    };
+    loadUser();
+  }, []);
+
+  const updateUser = async (updates: Partial<UserProfile>) => {
+    const updatedUser = { ...user, ...updates };
+    setUser(updatedUser);
+    try {
+      await AsyncStorage.setItem('@user_profile', JSON.stringify(updatedUser));
+    } catch (e) {
+      console.error('Failed to save user profile', e);
+    }
   };
 
   return (

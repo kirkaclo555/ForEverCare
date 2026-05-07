@@ -72,8 +72,10 @@ export default function PetRecordsScreen({ navigation }: Props) {
       aspect: [1, 1],
       quality: 0.8,
     });
-    if (!result.canceled) {
-      setFormAvatar(result.assets[0].uri);
+    const isCancelled = result.canceled !== undefined ? result.canceled : (result as any).cancelled;
+    if (!isCancelled) {
+      const uri = result.assets ? result.assets[0].uri : (result as any).uri;
+      setFormAvatar(uri);
     }
   };
 
@@ -458,14 +460,14 @@ export default function PetRecordsScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#f7fafc' },
+  safeArea: { flex: 1, backgroundColor: '#F4F1EC' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
     borderBottomWidth: 0,
   },
   headerNoBorder: {
@@ -474,10 +476,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: 'white' },
-  headerSubtitle: { fontSize: 13, color: '#c6f6d5', marginTop: 2 },
+  headerTitle: { fontSize: 18, fontFamily: 'Catcut', color: 'white' },
+  headerSubtitle: { fontSize: 13, color: '#EAF3DE', marginTop: 2, fontFamily: 'Montserrat-Regular' },
   mainScroll: { padding: 20 },
   fullScreenView: { flex: 1 },
   
@@ -492,11 +494,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 15,
     marginBottom: 15,
-    shadowColor: '#1E3A8A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.07)',
   },
   petCardContentSquare: {
     flex: 1,
@@ -512,8 +511,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: '100%',
   },
-  petCardNameSquare: { fontSize: 24, fontWeight: '800', color: '#2d3748', marginBottom: 6, textAlign: 'center' },
-  petCardBreedSquare: { fontSize: 16, color: '#718096', textAlign: 'center', marginBottom: 2 },
+  petCardNameSquare: { fontSize: 24, fontFamily: 'Catcut', color: '#2d3748', marginBottom: 6, textAlign: 'center' },
+  petCardBreedSquare: { fontSize: 16, color: '#718096', textAlign: 'center', marginBottom: 2, fontFamily: 'Montserrat-Regular' },
   addPetButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -523,10 +522,10 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     borderColor: '#cbd5e0',
     borderRadius: 16,
-    backgroundColor: '#f7fafc',
+    backgroundColor: 'white',
     marginTop: 10,
   },
-  addPetText: { fontSize: 16, fontWeight: '600', color: '#2E5E3E' },
+  addPetText: { fontSize: 16, fontFamily: 'Montserrat-SemiBold', color: '#2D5016' },
 
   // Create/Edit View
   formScroll: { padding: 20 },
@@ -541,15 +540,16 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     borderWidth: 1, borderColor: '#cbd5e0', borderStyle: 'dashed'
   },
-  photoUploadText: { fontSize: 14, color: '#3182ce', fontWeight: '500' },
+  photoUploadText: { fontSize: 14, color: '#3182ce', fontFamily: 'Montserrat-Medium' },
   formGroup: { marginBottom: 20 },
   rowForm: { flexDirection: 'row' },
-  label: { fontSize: 14, fontWeight: '600', color: '#4a5568', marginBottom: 8 },
+  label: { fontSize: 14, fontFamily: 'Montserrat-SemiBold', color: '#4a5568', marginBottom: 8 },
   input: {
     backgroundColor: 'white',
     borderWidth: 1, borderColor: '#e2e8f0',
     borderRadius: 10, paddingHorizontal: 15, paddingVertical: 12,
     fontSize: 15, color: '#2d3748',
+    fontFamily: 'Montserrat-Regular',
   },
   genderBtn: {
     flex: 1,
@@ -558,15 +558,15 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#e2e8f0',
     borderRadius: 10, backgroundColor: 'white'
   },
-  genderBtnActive: { borderColor: '#2E5E3E', backgroundColor: '#f0fff4' },
-  genderText: { fontSize: 15, color: '#4a5568', fontWeight: '500' },
-  genderTextActive: { color: '#2E5E3E', fontWeight: '700' },
+  genderBtnActive: { borderColor: '#2D5016', backgroundColor: '#EAF3DE' },
+  genderText: { fontSize: 15, color: '#4a5568', fontFamily: 'Montserrat-Medium' },
+  genderTextActive: { color: '#2D5016', fontFamily: 'Montserrat-Bold' },
   saveBtn: {
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
     paddingVertical: 16, borderRadius: 12, alignItems: 'center', marginTop: 10
   },
-  saveBtnText: { color: 'white', fontSize: 16, fontWeight: '700' },
-  editText: { fontSize: 16, fontWeight: '600', color: 'white' },
+  saveBtnText: { color: 'white', fontSize: 16, fontFamily: 'Montserrat-Bold' },
+  editText: { fontSize: 16, fontFamily: 'Montserrat-Bold', color: 'white' },
 
   // Details View
   detailsScroll: { flex: 1 },
@@ -579,21 +579,21 @@ const styles = StyleSheet.create({
   avatarHuge: {
     width: 100, height: 100, borderRadius: 50,
     alignItems: 'center', justifyContent: 'center',
-    marginBottom: 15, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 5, shadowOffset: {width:0, height:4}
+    marginBottom: 15,
   },
-  profileNameHuge: { fontSize: 26, fontWeight: '800', color: '#2d3748', marginBottom: 4 },
-  profileBreedText: { fontSize: 15, color: '#718096', marginBottom: 20 },
+  profileNameHuge: { fontSize: 26, fontFamily: 'Catcut', color: '#2d3748', marginBottom: 4 },
+  profileBreedText: { fontSize: 15, color: '#718096', marginBottom: 20, fontFamily: 'Montserrat-Regular' },
   profileStatsRow: {
     flexDirection: 'row', gap: 15,
   },
   statPill: {
     alignItems: 'center',
-    backgroundColor: '#f7fafc',
+    backgroundColor: '#F4F1EC',
     paddingHorizontal: 15, paddingVertical: 10,
     borderRadius: 12, minWidth: 80,
   },
-  statPillLabel: { fontSize: 11, color: '#718096', textTransform: 'uppercase', marginBottom: 4, fontWeight: '600' },
-  statPillValue: { fontSize: 16, fontWeight: '700', color: '#2d3748' },
+  statPillLabel: { fontSize: 11, color: '#718096', textTransform: 'uppercase', marginBottom: 4, fontFamily: 'Montserrat-SemiBold' },
+  statPillValue: { fontSize: 16, fontFamily: 'Montserrat-Bold', color: '#2d3748' },
   
   recordsTabsBox: {
     backgroundColor: 'white',
@@ -602,11 +602,11 @@ const styles = StyleSheet.create({
   recordsTabsContainer: { paddingHorizontal: 20, gap: 10 },
   recordTabBtn: {
     paddingHorizontal: 18, paddingVertical: 8,
-    borderRadius: 20, backgroundColor: '#f7fafc',
+    borderRadius: 20, backgroundColor: '#F4F1EC',
     borderWidth: 1, borderColor: '#edf2f7',
   },
-  recordTabBtnActive: { backgroundColor: '#2d3748', borderColor: '#2d3748' },
-  recordTabText: { fontSize: 14, fontWeight: '600', color: '#718096' },
+  recordTabBtnActive: { backgroundColor: '#2D5016', borderColor: '#2D5016' },
+  recordTabText: { fontSize: 14, fontFamily: 'Montserrat-SemiBold', color: '#718096' },
   recordTabTextActive: { color: 'white' },
 
   recordsContentArea: {
@@ -616,18 +616,18 @@ const styles = StyleSheet.create({
   recordItem: {
     backgroundColor: 'white',
     padding: 16, borderRadius: 12,
-    borderWidth: 1, borderColor: '#e2e8f0',
+    borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.07)',
   },
   recordHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  recordDate: { fontSize: 13, fontWeight: '600', color: '#718096' },
-  recordType: { fontSize: 14, fontWeight: '700', color: '#2d3748' },
-  recordDesc: { fontSize: 14, color: '#4a5568', lineHeight: 20 },
+  recordDate: { fontSize: 13, fontFamily: 'Montserrat-SemiBold', color: '#718096' },
+  recordType: { fontSize: 14, fontFamily: 'Montserrat-Bold', color: '#2d3748' },
+  recordDesc: { fontSize: 14, color: '#4a5568', lineHeight: 20, fontFamily: 'Montserrat-Regular' },
   addRecordBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     marginTop: 20, paddingVertical: 15,
-    backgroundColor: '#ebf8ff', borderRadius: 12,
+    backgroundColor: '#EAF3DE', borderRadius: 12,
   },
-  addRecordBtnText: { fontSize: 14, fontWeight: '600', color: '#3182ce' },
+  addRecordBtnText: { fontSize: 14, fontFamily: 'Montserrat-SemiBold', color: '#2D5016' },
 
   // Floating Dropdown styles
   floatingDropdown: {
@@ -637,13 +637,9 @@ const styles = StyleSheet.create({
     right: 0,
     backgroundColor: 'white',
     borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 6,
-    elevation: 100,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.07)',
+    zIndex: 100,
   },
   floatingDropdownItem: {
     paddingVertical: 12,
@@ -654,5 +650,6 @@ const styles = StyleSheet.create({
   floatingDropdownText: {
     fontSize: 15,
     color: '#4a5568',
+    fontFamily: 'Montserrat-Regular',
   }
 });

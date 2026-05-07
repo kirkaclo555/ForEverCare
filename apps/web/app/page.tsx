@@ -1,132 +1,144 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
-import styles from "./page.module.css";
+import styles from "./welcome.module.css";
 
-export default function LoginPage() {
+export default function WelcomePage() {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@furcare.com");
-  const [password, setPassword] = useState("admin123");
-
-  const [toastMessage, setToastMessage] = useState("");
-  const [showToast, setShowToast] = useState(false);
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (email === "admin@furcare.com" && password === "admin123") {
-      router.push("/dashboard");
-    } else {
-      triggerToast("Invalid credentials! Please use: admin@furcare.com / admin123");
-    }
-  };
-
-  const triggerToast = (msg: string) => {
-    setToastMessage(msg);
-    setShowToast(true);
-    setTimeout(() => setShowToast(false), 3000);
-  };
 
   return (
-    <>
-      <header className={styles.header}>
-        <div className={styles.headerContent}>
-          <div className={styles.headerLogo}>
-            <i className="fas fa-paw"></i>
-          </div>
-          <div className={styles.headerBrand}>
-            <h1>Balingasag Dog & Cat Pet's Clinic</h1>
-            <span>Veterinary Clinic Management System</span>
-          </div>
-        </div>
-      </header>
-
-      <main className={styles.mainContent}>
-        <div className={styles.loginContainer}>
-          <div className={styles.loginHeader}>
-            <h2>Welcome Back!</h2>
-            <p>Login to access your dashboard</p>
+    <div className={styles.welcomeContainer}>
+      <div className={styles.splitLayout}>
+        
+        {/* LEFT COLUMN */}
+        <div className={styles.leftColumn}>
+          <div className={styles.logoArea}>
+            <i className={`fas fa-paw ${styles.logoIcon}`}></i>
+            <span>FurEverPawCare</span>
           </div>
 
-          <form onSubmit={handleLogin}>
-            <div className={styles.formGroup}>
-              <label>Email Address</label>
-              <div className={styles.inputGroup}>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
-                  required
-                />
-              </div>
-            </div>
+          <div className={styles.pillBadge}>
+            <div className={styles.pillDot}></div>
+            Veterinary Management System
+          </div>
 
-            <div className={styles.formGroup}>
-              <label>Password</label>
-              <div className={styles.inputGroup}>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  required
-                />
-              </div>
-            </div>
+          <h1 className={styles.headline}>
+            Your Clinic,<br />
+            <span className={styles.accentText}>Smarter</span> & More Caring
+          </h1>
 
-            <div className={styles.forgotPassword}>
-              <a href="#">Forgot password?</a>
-            </div>
+          <p className={styles.subtitle}>
+            Manage appointments, patient records, billing, and your whole team — all from one easy dashboard.
+          </p>
 
-            <button type="submit" className={styles.loginBtn}>
-              Sign In
+          <div className={styles.featuresList}>
+            <div className={styles.featureItem}>
+              <div className={styles.featureIcon}><i className="far fa-calendar-check"></i></div>
+              <span>Appointment scheduling & reminders</span>
+            </div>
+            <div className={styles.featureItem}>
+              <div className={styles.featureIcon}><i className="fas fa-notes-medical"></i></div>
+              <span>Patient & pet medical records</span>
+            </div>
+            <div className={styles.featureItem}>
+              <div className={styles.featureIcon}><i className="fas fa-file-invoice-dollar"></i></div>
+              <span>Billing, invoices & inventory</span>
+            </div>
+          </div>
+
+          <div className={styles.actionContainer}>
+            <button className={styles.primaryBtn} onClick={() => router.push('/signup')}>
+              Get Started
             </button>
-          </form>
-
-          <div className={styles.divider}>
-            <span>or continue with</span>
-          </div>
-
-          <button
-            className={styles.googleBtn}
-            onClick={() => triggerToast("Google login not implemented yet.")}
-          >
-            <svg
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              style={{ marginRight: "10px" }}
-            >
-              <path
-                fill="#4285F4"
-                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-              />
-              <path
-                fill="#34A853"
-                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-              />
-              <path
-                fill="#FBBC05"
-                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-              />
-              <path
-                fill="#EA4335"
-                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-              />
-            </svg>
-            Continue with Google
-          </button>
-
-          <div className={styles.signupLink}>
-            Don't have an account? <a href="#">Sign up</a>
+            <button className={styles.secondaryBtn} onClick={() => router.push('/login')}>
+              Log in to your clinic
+            </button>
           </div>
         </div>
-      </main>
 
-      <div id="toast" className={`toast ${showToast ? "toastShow" : ""}`}>
-        {toastMessage}
+        {/* RIGHT COLUMN */}
+        <div className={styles.rightColumn}>
+          
+          <div className={`${styles.floatingStat} ${styles.stat1}`}>
+            <div className={styles.statIcon}><i className="fas fa-users"></i></div>
+            <div className={styles.statContent}>
+              <p>Patients today</p>
+              <h4>12 Appointments</h4>
+            </div>
+          </div>
+
+          <div className={`${styles.floatingStat} ${styles.stat2}`}>
+            <div className={styles.statIcon} style={{ background: '#ebf8ff', color: '#3182ce' }}><i className="fas fa-wallet"></i></div>
+            <div className={styles.statContent}>
+              <p>Revenue</p>
+              <h4>₱24,500 this week</h4>
+            </div>
+          </div>
+
+          <div className={`${styles.floatingStat} ${styles.stat3}`}>
+            <div className={styles.statIcon} style={{ background: '#fff5f5', color: '#e53e3e' }}><i className="far fa-clock"></i></div>
+            <div className={styles.statContent}>
+              <p>Next up</p>
+              <h4>Buddy in 12 mins</h4>
+            </div>
+          </div>
+
+          <div className={styles.dashboardCard}>
+            <div className={styles.dashboardHeader}>
+              <span className={styles.dashboardTitle}>Today's Schedule</span>
+              <span className={styles.dateBadge}>Oct 24, 2024</span>
+            </div>
+
+            <div className={styles.appointmentsList}>
+              
+              <div className={styles.appointmentRow}>
+                <div className={styles.petAvatar} style={{ background: '#fbd38d', color: '#c05621' }}>🐶</div>
+                <div className={styles.petInfo}>
+                  <p className={styles.petName}>Buddy</p>
+                  <p className={styles.petBreed}>Golden Retriever</p>
+                </div>
+                <div className={styles.visitDetails}>
+                  <p className={styles.visitTime}>10:30 AM</p>
+                  <p className={styles.doctorName}>Dr. Smith • Checkup</p>
+                </div>
+              </div>
+
+              <div className={`${styles.appointmentRow} ${styles.purpleBorder}`}>
+                <div className={styles.petAvatar} style={{ background: '#e9d8fd', color: '#6b46c1' }}>🐱</div>
+                <div className={styles.petInfo}>
+                  <p className={styles.petName}>Luna</p>
+                  <p className={styles.petBreed}>Siamese</p>
+                </div>
+                <div className={styles.visitDetails}>
+                  <p className={styles.visitTime}>11:45 AM</p>
+                  <p className={styles.doctorName}>Dr. Jones • Vaccine</p>
+                </div>
+              </div>
+
+              <div className={`${styles.appointmentRow} ${styles.blueBorder}`}>
+                <div className={styles.petAvatar} style={{ background: '#bee3f8', color: '#2b6cb0' }}>🐕</div>
+                <div className={styles.petInfo}>
+                  <p className={styles.petName}>Max</p>
+                  <p className={styles.petBreed}>Beagle</p>
+                </div>
+                <div className={styles.visitDetails}>
+                  <p className={styles.visitTime}>02:15 PM</p>
+                  <p className={styles.doctorName}>Dr. Smith • Dental</p>
+                </div>
+              </div>
+
+            </div>
+
+            <div className={styles.dashboardFooter}>
+              <span className={styles.morePill}>+ 4 more</span>
+              <button className={styles.viewAllBtn}>View all <i className="fas fa-arrow-right" style={{ fontSize: '0.8rem' }}></i></button>
+            </div>
+          </div>
+
+        </div>
+
       </div>
-    </>
+    </div>
   );
 }

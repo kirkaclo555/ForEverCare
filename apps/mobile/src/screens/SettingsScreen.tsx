@@ -63,7 +63,7 @@ export default function SettingsScreen({ navigation }: Props) {
             <Switch
               value={isDarkMode}
               onValueChange={setIsDarkMode}
-              trackColor={{ false: "#cbd5e0", true: "#2E5E3E" }}
+              trackColor={{ false: "#cbd5e0", true: "#2D5016" }}
               thumbColor={"#fff"}
             />
           </View>
@@ -119,10 +119,10 @@ export default function SettingsScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FCFBF7',
+    backgroundColor: '#F4F1EC',
   },
   header: {
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: 'Catcut',
     color: 'white',
   },
   content: {
@@ -149,8 +149,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '700',
-    color: '#2E5E3E',
+    fontFamily: 'Catcut',
+    color: '#2D5016',
     marginBottom: 10,
     marginLeft: 5,
   },
@@ -162,11 +162,8 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 12,
     marginBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.07)',
   },
   settingRowLeft: {
     flexDirection: 'row',
@@ -183,10 +180,11 @@ const styles = StyleSheet.create({
   settingText: {
     fontSize: 16,
     color: '#2d3748',
-    fontWeight: '600',
+    fontFamily: 'Montserrat-SemiBold',
   },
   settingValue: {
     fontSize: 14,
     color: '#a0aec0',
+    fontFamily: 'Montserrat-Regular',
   },
 });

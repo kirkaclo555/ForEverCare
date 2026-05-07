@@ -1,53 +1,98 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 export default function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [profilePic, setProfilePic] = useState<string | null>(null);
 
-  const menuItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: 'fa-home' },
-    { name: 'Inventory', path: '/inventory', icon: 'fa-boxes' },
-    { name: 'Store', path: '/store', icon: 'fa-store' },
-    { name: 'Billing', path: '/billing', icon: 'fa-file-invoice-dollar' },
-    { name: 'Appointment', path: '/appointment', icon: 'fa-calendar-check' },
-    { name: 'Teleconsultation', path: '/teleconsultation', icon: 'fa-video' },
-    { name: 'SMS Center', path: '/sms', icon: 'fa-sms' },
-    { name: 'Patient Records', path: '/records', icon: 'fa-paw' },
-    { name: 'Users', path: '/users', icon: 'fa-users' },
-    { name: 'Archive', path: '/archive', icon: 'fa-archive' },
-    { name: 'Reports', path: '/reports', icon: 'fa-chart-bar' },
+  useEffect(() => {
+    const loadProfilePic = () => {
+      const pic = localStorage.getItem('adminProfilePic');
+      if (pic) setProfilePic(pic);
+    };
+    loadProfilePic();
+    window.addEventListener('profilePicUpdated', loadProfilePic);
+    return () => window.removeEventListener('profilePicUpdated', loadProfilePic);
+  }, []);
+
+  const safePathname = pathname || '';
+  const basePath = safePathname.startsWith('/superadmin') ? '/superadmin' : '/admin';
+
+  const sections = [
+    {
+      title: 'Management',
+      items: [
+        { name: 'Dashboard', path: `${basePath}/dashboard`, icon: 'fa-home' },
+        { name: 'Inventory', path: `${basePath}/inventory`, icon: 'fa-boxes' },
+        { name: 'Products', path: `${basePath}/products`, icon: 'fa-store' },
+        { name: 'Billing', path: `${basePath}/billing`, icon: 'fa-file-invoice-dollar' },
+      ]
+    },
+    {
+      title: 'Clinic',
+      items: [
+        { name: 'Appointment', path: `${basePath}/appointment`, icon: 'fa-calendar-check' },
+        { name: 'Telemedicine', path: `${basePath}/telemedicine`, icon: 'fa-video' },
+        { name: 'Pet Monitor', path: `${basePath}/monitor`, icon: 'fa-heartbeat' },
+        { name: 'SMS Center', path: `${basePath}/sms`, icon: 'fa-sms' },
+      ]
+    },
+    {
+      title: 'Records',
+      items: [
+        { name: 'Pet Records', path: `${basePath}/records`, icon: 'fa-paw' },
+        { name: 'Users', path: `${basePath}/users`, icon: 'fa-users' },
+        { name: 'Reports', path: `${basePath}/reports`, icon: 'fa-chart-bar' },
+        { name: 'Tutorials', path: `${basePath}/tutorials`, icon: 'fa-graduation-cap' },
+        { name: 'Announcements', path: `${basePath}/announcement`, icon: 'fa-bullhorn' },
+        { name: 'Feedback', path: `${basePath}/feedback`, icon: 'fa-comments' },
+      ]
+    }
   ];
 
   return (
-    <div className={`sidebar ${isOpen ? 'active' : ''}`} id="sidebar">
-      <div className="sidebar-header">
-        <h2>
-          FurEverCare
-          <span>Veterinary System</span>
-        </h2>
-        <button className="close-sidebar" onClick={onClose}>
+    <div className={`sidebar ${isOpen ? 'active' : ''}`} id="sidebar" style={{ display: 'flex', flexDirection: 'column' }}>
+      <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 20px', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <img src="/logo.png" alt="Logo" style={{ width: '45px', height: 'auto', objectFit: 'contain' }} />
+          <h2 style={{ margin: 0, textAlign: 'left', lineHeight: '1.2', fontSize: '1.25rem' }}>
+            FurEverCare
+            <span style={{ display: 'block', fontSize: '0.7rem', marginTop: '2px' }}>Veterinary System</span>
+          </h2>
+        </div>
+        <button className="close-sidebar" onClick={onClose} style={{ color: 'white', background: 'none', border: 'none', cursor: 'pointer' }}>
           <i className="fas fa-times"></i>
         </button>
       </div>
 
-      <div className="sidebar-menu">
-        {menuItems.map((item) => {
-          const isActive = pathname === item.path || (pathname === '/' && item.path === '/dashboard');
-          return (
-            <Link 
-              key={item.path}
-              href={item.path}
-              className={`menu-item ${isActive ? 'active' : ''}`}
-            >
-              <i className={`fas ${item.icon}`}></i>
-              <span>{item.name}</span>
-            </Link>
-          );
-        })}
+      <div className="sidebar-menu" style={{ padding: '0 20px', flex: 1, overflowY: 'auto' }}>
+        {sections.map((section, idx) => (
+          <div key={idx} style={{ marginBottom: '20px' }}>
+            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '1px', marginBottom: '10px', paddingLeft: '15px' }}>
+              {section.title}
+            </div>
+            {section.items.map((item) => {
+              if (item.name === 'Pet Monitor' && basePath === '/admin') return null;
+              const isActive = safePathname === item.path || (safePathname === '/' && item.path === '/dashboard');
+              return (
+                <Link 
+                  key={item.path}
+                  href={item.path}
+                  className={`menu-item ${isActive ? 'active' : ''}`}
+                >
+                  <i className={`fas ${item.icon}`}></i>
+                  <span>{item.name}</span>
+                </Link>
+              );
+            })}
+          </div>
+        ))}
       </div>
+
     </div>
   );
 }

@@ -6,6 +6,7 @@ import {
   View,
   TouchableOpacity,
   Dimensions,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -36,7 +37,7 @@ export default function WelcomeScreen({ navigation }: Props) {
       <StatusBar style="light" />
       
       <LinearGradient
-        colors={['#2E5E3E', '#4fa66c']}
+        colors={['#1a3d28', '#2E5E3E']}
         style={styles.gradientBackground}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -44,18 +45,15 @@ export default function WelcomeScreen({ navigation }: Props) {
         <SafeAreaView style={styles.safeArea}>
           {/* Subtle Decorative Paw Prints */}
           <View style={styles.decorativePaw1}>
-            <FontAwesome5 name="paw" size={140} color="rgba(255,255,255,0.06)" />
+            <FontAwesome5 name="paw" size={140} color="rgba(126,212,74,0.08)" />
           </View>
           <View style={styles.decorativePaw2}>
-            <FontAwesome5 name="paw" size={80} color="rgba(255,255,255,0.04)" />
+            <FontAwesome5 name="paw" size={80} color="rgba(126,212,74,0.05)" />
           </View>
 
           <View style={styles.content}>
             <View style={styles.logoContainer}>
-              {/* Replace with actual pet-related logo image component eventually */}
-              <View style={styles.logoPlaceholder}>
-                <FontAwesome5 name="paw" size={50} color="#2E5E3E" />
-              </View>
+              <Image source={require('../../assets/logo.png')} style={{ width: 120, height: 120, resizeMode: 'contain' }} />
             </View>
 
             <Text style={styles.title}>Welcome!</Text>
@@ -67,7 +65,7 @@ export default function WelcomeScreen({ navigation }: Props) {
                 activeOpacity={0.8}
                 onPress={() => navigation.navigate('Register')}
               >
-                <Text style={styles.primaryButtonText}>Create Account</Text>
+                <Text style={styles.primaryButtonText}>Get Started</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -84,10 +82,10 @@ export default function WelcomeScreen({ navigation }: Props) {
               <Text style={styles.socialText}>Or connect with</Text>
               <View style={styles.socialIconsRow}>
                 <TouchableOpacity style={styles.socialButton}>
-                  <FontAwesome5 name="google" size={20} color="#2E5E3E" />
+                  <FontAwesome5 name="google" size={20} color="#ffffff" />
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.socialButton}>
-                  <FontAwesome5 name="facebook-f" size={20} color="#2E5E3E" />
+                  <FontAwesome5 name="facebook-f" size={20} color="#ffffff" />
                 </TouchableOpacity>
               </View>
             </View>
@@ -136,29 +134,22 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   logoContainer: {
-    marginBottom: 40,
+    marginBottom: 30,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.15,
     shadowRadius: 20,
     elevation: 8,
   },
-  logoPlaceholder: {
-    width: 120,
-    height: 120,
-    backgroundColor: '#ffffff',
-    borderRadius: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   title: {
+    fontFamily: 'Catcut',
     fontSize: 42,
-    fontWeight: '800',
     color: '#ffffff',
     marginBottom: 8,
     letterSpacing: 0.5,
   },
   subtitle: {
+    fontFamily: 'Montserrat-Regular',
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.85)',
     marginBottom: 60,
@@ -169,35 +160,35 @@ const styles = StyleSheet.create({
     gap: 16, // Uses gap property for spacing between buttons
   },
   primaryButton: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#7ed44a',
     height: 58,
-    borderRadius: 29,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: '#7ed44a',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.2,
     shadowRadius: 10,
     elevation: 5,
     marginBottom: 16, 
   },
   primaryButtonText: {
+    fontFamily: 'Montserrat-Bold',
     fontSize: 18,
-    fontWeight: '700',
-    color: '#2E5E3E',
+    color: '#0f2418',
   },
   secondaryButton: {
     backgroundColor: 'transparent',
     height: 58,
-    borderRadius: 29,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
   },
   secondaryButtonText: {
+    fontFamily: 'Montserrat-SemiBold',
     fontSize: 18,
-    fontWeight: '700',
     color: '#ffffff',
   },
   socialContainer: {
@@ -205,10 +196,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   socialText: {
+    fontFamily: 'Montserrat-Medium',
     color: 'rgba(255, 255, 255, 0.8)',
     marginBottom: 16,
     fontSize: 14,
-    fontWeight: '500',
   },
   socialIconsRow: {
     flexDirection: 'row',
@@ -217,15 +208,12 @@ const styles = StyleSheet.create({
     width: 50,
     height: 50,
     borderRadius: 25,
-    backgroundColor: '#ffffff',
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
     marginHorizontal: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   waveContainer: {
     position: 'absolute',

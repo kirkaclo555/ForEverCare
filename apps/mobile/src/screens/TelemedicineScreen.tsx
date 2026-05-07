@@ -16,16 +16,30 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
+import { useUser } from '../context/UserContext';
 
 type Props = {
   navigation: any;
 };
 
 export default function TelemedicineScreen({ navigation }: Props) {
+  const { user } = useUser();
   // sessionState: 'join' | 'waiting' | 'active' | 'prescription'
   const [sessionState, setSessionState] = useState<'join' | 'waiting' | 'active' | 'prescription'>('join');
   const [sessionCode, setSessionCode] = useState('');
   const [callDuration, setCallDuration] = useState(0);
+  const [appointments, setAppointments] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('http://192.168.100.78:3000/api/appointments')
+      .then(res => res.json())
+      .then(data => {
+        if (data && Array.isArray(data)) {
+          setAppointments(data);
+        }
+      })
+      .catch(err => console.error('Failed to fetch appointments:', err));
+  }, []);
 
   // Timer for active call
   useEffect(() => {
@@ -43,6 +57,20 @@ export default function TelemedicineScreen({ navigation }: Props) {
       Alert.alert("Error", "Please enter a valid session code.");
       return;
     }
+    
+    // Validate session code against API
+    const validSession = appointments.find(app => 
+      app.sessionCode?.toUpperCase() === sessionCode.trim().toUpperCase() && 
+      app.type === 'telemedicine' && 
+      app.status?.toLowerCase() === 'confirmed' &&
+      app.owner?.toLowerCase() === user?.fullName?.toLowerCase()
+    );
+
+    if (!validSession) {
+       Alert.alert("Invalid Code", "The session code you entered is invalid or does not match your confirmed appointments.");
+       return;
+    }
+
     setSessionState('waiting');
     
     // Simulate waiting for vet to join for 3 seconds
@@ -221,7 +249,7 @@ export default function TelemedicineScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#f7fafc' },
+  safeArea: { flex: 1, backgroundColor: '#F4F1EC' },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
   flexContainer: { flex: 1 },
   scrollCenterContent: {
@@ -236,10 +264,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
     borderBottomWidth: 0,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: 'white' },
+  headerTitle: { fontSize: 18, fontFamily: 'Catcut', color: 'white' },
   simpleHeader: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -254,28 +282,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 24,
     paddingVertical: 32,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.07)',
   },
   iconSquare: {
     width: 64,
     height: 64,
     borderRadius: 16,
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
-    shadowColor: '#2E5E3E',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 3,
   },
-  title: { fontSize: 24, fontWeight: '800', color: '#1a202c', marginBottom: 10 },
-  subtitle: { fontSize: 15, color: '#718096', textAlign: 'center', marginBottom: 30, lineHeight: 22, paddingHorizontal: 10 },
+  title: { fontSize: 24, fontFamily: 'Catcut', color: '#1a202c', marginBottom: 10 },
+  subtitle: { fontSize: 15, color: '#718096', textAlign: 'center', marginBottom: 30, lineHeight: 22, paddingHorizontal: 10, fontFamily: 'Montserrat-Regular' },
   input: {
     width: '100%',
     borderWidth: 1,
@@ -287,20 +307,16 @@ const styles = StyleSheet.create({
     color: '#1a202c',
     backgroundColor: '#f8fafc',
     marginBottom: 24,
+    fontFamily: 'Montserrat-Regular',
   },
   primaryButton: {
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
     width: '100%',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#2E5E3E',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 3,
   },
-  primaryButtonText: { color: 'white', fontSize: 15, fontWeight: '700' },
+  primaryButtonText: { color: 'white', fontSize: 15, fontFamily: 'Montserrat-Bold' },
   
   // Call Styles
   callContainer: { flex: 1, backgroundColor: '#1a202c' },
@@ -368,31 +384,28 @@ const styles = StyleSheet.create({
     width: '100%',
     padding: 25,
     borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.07)',
   },
   headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 15, gap: 15 },
-  prescriptionTitle: { fontSize: 20, fontWeight: '700', color: '#2d3748', flex: 1 },
+  prescriptionTitle: { fontSize: 20, fontFamily: 'Catcut', color: '#2d3748', flex: 1 },
   divider: { height: 1, backgroundColor: '#edf2f7', marginVertical: 15 },
   medRow: { marginBottom: 15 },
-  medName: { fontSize: 15, fontWeight: '600', color: '#2d3748', marginBottom: 4 },
-  medDose: { fontSize: 13, color: '#718096' },
-  vetNote: { fontSize: 14, fontStyle: 'italic', color: '#4a5568', marginBottom: 20 },
+  medName: { fontSize: 15, fontFamily: 'Montserrat-SemiBold', color: '#2d3748', marginBottom: 4 },
+  medDose: { fontSize: 13, color: '#718096', fontFamily: 'Montserrat-Regular' },
+  vetNote: { fontSize: 14, fontStyle: 'italic', color: '#4a5568', marginBottom: 20, fontFamily: 'Montserrat-Regular' },
   secondaryButton: {
     flexDirection: 'row',
     width: '100%',
     paddingVertical: 12,
     borderRadius: 10,
-    backgroundColor: '#f0fdf4',
+    backgroundColor: '#EAF3DE',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#c6f6d5',
+    borderColor: '#7CB342',
   },
-  secondaryButtonText: { color: '#3a7d55', fontSize: 15, fontWeight: '600' },
+  secondaryButtonText: { color: '#2D5016', fontSize: 15, fontFamily: 'Montserrat-Bold' },
   
   // Activity Styles
   activitySection: {
@@ -409,7 +422,7 @@ const styles = StyleSheet.create({
   },
   activityTitle: { 
     fontSize: 16, 
-    fontWeight: '700', 
+    fontFamily: 'Catcut', 
     color: '#4a5568',
   },
   historyRow: {
@@ -421,7 +434,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#f0fdf4',
+    backgroundColor: '#EAF3DE',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -431,7 +444,7 @@ const styles = StyleSheet.create({
   },
   historySessionTitle: {
     fontSize: 14,
-    fontWeight: '700',
+    fontFamily: 'Montserrat-Bold',
     color: '#2d3748',
     marginBottom: 2,
   },
@@ -439,10 +452,11 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#718096',
     marginBottom: 4,
+    fontFamily: 'Montserrat-Regular',
   },
   historyMetaText: {
     fontSize: 11,
     color: '#4a5568',
-    fontWeight: '600',
+    fontFamily: 'Montserrat-SemiBold',
   },
 });

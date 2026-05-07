@@ -1,0 +1,333 @@
+"use client";
+
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import './sms.css';
+
+export default function SmsPage() {
+  const router = useRouter();
+  
+  const [isComposeOpen, setIsComposeOpen] = useState(false);
+  const [message, setMessage] = useState('');
+  
+  const templates = [
+    { id: 1, title: 'Appointment Reminder', text: 'Hi [Name], this is a reminder for your pet\'s appointment tomorrow at FurEverCare.' },
+    { id: 2, title: 'Vaccination Due', text: 'Hello! It\'s time for your pet\'s annual vaccination. Please schedule an appointment soon.' },
+    { id: 3, title: 'Check-up Follow-up', text: 'Hi! Just checking in on how your pet is doing after their recent visit to FurEverCare.' },
+    { id: 4, title: 'Promotion', text: 'Special offer! Get 20% off all grooming services this weekend at FurEverCare.' },
+  ];
+
+  const recentMessages = [
+    { id: 1, to: '+1 (555) 123-4567', status: 'Sent', time: '10:30 AM', preview: 'Hi John, this is a reminder for your pet\'s appointment.' },
+    { id: 2, to: '+1 (555) 987-6543', status: 'Failed', time: 'Yesterday', preview: 'Special offer! Get 20% off all grooming services.' },
+    { id: 3, to: '+1 (555) 555-5555', status: 'Sent', time: 'Yesterday', preview: 'Hello! It\'s time for your pet\'s annual vaccination.' },
+    { id: 4, to: '+1 (555) 111-2222', status: 'Sent', time: 'Mon, 09:00 AM', preview: 'Please confirm your appointment tomorrow at 10 AM.' },
+    { id: 5, to: '+1 (555) 333-4444', status: 'Sent', time: 'Sun, 02:30 PM', preview: 'Your pet\'s test results are ready for pickup.' },
+    { id: 6, to: '+1 (555) 666-7777', status: 'Pending', time: '10:45 AM', preview: 'Thank you for visiting FurEverCare! We\'d love your feedback.' }
+  ];
+
+  const recentContacts = [
+    { id: 1, name: 'John Doe', phone: '+1 (555) 123-4567', pet: 'Buddy' },
+    { id: 2, name: 'Jane Smith', phone: '+1 (555) 987-6543', pet: 'Luna' },
+    { id: 3, name: 'Alice Johnson', phone: '+1 (555) 555-5555', pet: 'Milo' },
+    { id: 4, name: 'Michael Brown', phone: '+1 (555) 111-2222', pet: 'Max' },
+    { id: 5, name: 'Sarah Davis', phone: '+1 (555) 333-4444', pet: 'Bella' },
+    { id: 6, name: 'David Lee', phone: '+1 (555) 666-7777', pet: 'Lucy' },
+    { id: 7, name: 'Emily Wilson', phone: '+1 (555) 888-9999', pet: 'Charlie' },
+    { id: 8, name: 'Robert Taylor', phone: '+1 (555) 000-1111', pet: 'Cooper' }
+  ];
+
+  const [isAllMessagesOpen, setIsAllMessagesOpen] = useState(false);
+  const [isAllContactsOpen, setIsAllContactsOpen] = useState(false);
+
+  const [selectedMessage, setSelectedMessage] = useState<any>(null);
+  const [selectedContact, setSelectedContact] = useState<any>(null);
+  const [replyText, setReplyText] = useState('');
+
+  return (
+    <>
+    <div className="module-content" style={{ width: "100%", padding: 0, margin: 0 }} id="mainContent">
+        
+        <div style={{ marginBottom: '20px', display: 'flex', gap: '15px' }}>
+            <button 
+                onClick={() => setIsComposeOpen(!isComposeOpen)}
+                style={{ background: 'linear-gradient(135deg, #2E5E3E 0%, #1a4d2e 100%)', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '12px', fontSize: '1rem', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 12px rgba(46, 94, 62, 0.2)' }}
+            >
+                <i className="fas fa-edit"></i> {isComposeOpen ? 'Close Compose' : 'Compose Message'}
+            </button>
+        </div>
+
+        {isComposeOpen && (
+        <div className="sms-layout">
+            <div className="compose-card">
+                <div className="card-header">
+                    <h3>
+                        <i className="fas fa-edit"></i>
+                        Compose Message
+                    </h3>
+                    <span className="character-count">{message.length}/160</span>
+                </div>
+
+                <div className="recipient-section">
+                    <div className="recipient-label">
+                        <i className="fas fa-user"></i>
+                        <span>To:</span>
+                    </div>
+                    <div className="recipient-input-group">
+                        <input type="text" className="recipient-input" id="recipient" placeholder="Enter phone number" />
+                        <button className="select-contact-btn" onClick={() => setIsAllContactsOpen(true)}>
+                            <i className="fas fa-address-book"></i>
+                        </button>
+                    </div>
+                    <div id="selectedContactsList" style={{"marginTop":"10px","display":"flex","flexWrap":"wrap","gap":"8px"}}></div>
+                </div>
+
+                <div className="message-input-group">
+                    <div className="message-label">
+                        <i className="fas fa-comment"></i>
+                        <span>Message:</span>
+                    </div>
+                    <textarea className="message-input" id="message" placeholder="Type your message here..." maxLength={160} value={message} onChange={(e) => setMessage(e.target.value)}></textarea>
+                </div>
+
+                <div className="send-options">
+                    <label className="schedule-check">
+                        <input type="checkbox" id="schedule" />
+                        <span>Schedule for later</span>
+                    </label>
+                    <button className="send-now-btn" onClick={() => {
+                        alert('Message sent successfully!');
+                        setMessage('');
+                        setIsComposeOpen(false);
+                    }}>
+                        <i className="fas fa-paper-plane"></i>
+                        Send Now
+                    </button>
+                </div>
+            </div>
+
+            <div className="templates-card">
+                <div className="templates-header">
+                    <h3>
+                        <i className="fas fa-file-alt"></i>
+                        Templates
+                    </h3>
+                    <button className="add-template-btn" onClick={() => alert('Add template clicked')}>
+                        <i className="fas fa-plus"></i>
+                    </button>
+                </div>
+
+                <div className="template-search">
+                    <i className="fas fa-search"></i>
+                    <input type="text" id="templateSearch" placeholder="Search templates..." />
+                </div>
+
+                <div className="templates-list" id="templatesList">
+                    {templates.map(template => (
+                        <div key={template.id} onClick={() => setMessage(template.text)} style={{ padding: '15px', borderBottom: '1px solid #edf2f7', cursor: 'pointer', transition: 'background 0.2s' }} onMouseEnter={e => e.currentTarget.style.background = '#f7fafc'} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}>
+                            <h4 style={{ margin: '0 0 5px 0', color: '#2d3748', fontSize: '0.95rem' }}>{template.title}</h4>
+                            <p style={{ margin: 0, color: '#718096', fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{template.text}</p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+        )}
+
+        {/* 2-Column Format Container */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '25px', marginBottom: '25px' }}>
+            <div className="history-card" style={{ gridColumn: 'unset', margin: 0 }}>
+                <div className="history-header">
+                    <h3>
+                        <i className="fas fa-history"></i>
+                        Recent Messages
+                    </h3>
+                    <span className="view-all" onClick={() => setIsAllMessagesOpen(true)}>View All</span>
+                </div>
+
+                <div className="messages-list">
+                    {recentMessages.slice(0, 3).map(msg => (
+                        <div className="message-item" key={msg.id} onClick={() => setSelectedMessage(msg)} style={{ cursor: 'pointer', transition: 'background-color 0.2s', borderRadius: '8px', padding: '10px' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f7fafc'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                            <div className="message-avatar"><i className="fas fa-user"></i></div>
+                            <div className="message-content">
+                                <div className="message-header">
+                                    <span className="message-sender">{msg.to}</span>
+                                    <span className="message-time">{msg.time}</span>
+                                </div>
+                                <div className="message-preview">{msg.preview}</div>
+                                <div className="message-status">
+                                    <span className={`status-badge status-${msg.status.toLowerCase()}`}>{msg.status}</span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            <div className="contacts-card" style={{ gridColumn: 'unset', margin: 0 }}>
+                <div className="contacts-header">
+                    <h3>
+                        <i className="fas fa-address-book"></i>
+                        Recent Contacts
+                    </h3>
+                    <span className="view-all" onClick={() => setIsAllContactsOpen(true)}>View All Contacts</span>
+                </div>
+
+                <div className="contacts-grid">
+                    {recentContacts.slice(0, 4).map(contact => (
+                        <div className="contact-item" key={contact.id} onClick={() => setSelectedContact(contact)} style={{ cursor: 'pointer', transition: 'box-shadow 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)'} onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}>
+                            <div className="contact-avatar"><i className="fas fa-user"></i></div>
+                            <div className="contact-info">
+                                <div className="contact-name">{contact.name}</div>
+                                <div className="contact-number">{contact.phone}</div>
+                                <div className="contact-role">Pet: {contact.pet}</div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {/* View All Messages Modal */}
+    {isAllMessagesOpen && (
+    <div className="modal show" onClick={(e) => { if(e.target === e.currentTarget) setIsAllMessagesOpen(false) }}>
+        <div className="modal-content" style={{ maxWidth: '600px' }}>
+            <div className="modal-header">
+                <h3><i className="fas fa-history" style={{ marginRight: '10px', color: '#2E5E3E' }}></i> All Messages</h3>
+                <button className="modal-close" onClick={() => setIsAllMessagesOpen(false)}><i className="fas fa-times"></i></button>
+            </div>
+            <div className="modal-body" style={{ padding: 0 }}>
+                <div className="messages-list" style={{ maxHeight: '60vh', overflowY: 'auto', padding: '25px' }}>
+                    {recentMessages.map(msg => (
+                        <div className="message-item" key={msg.id} onClick={() => setSelectedMessage(msg)} style={{ borderBottom: '1px solid #edf2f7', padding: '15px', cursor: 'pointer', transition: 'background-color 0.2s', borderRadius: '8px' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f7fafc'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                            <div className="message-avatar"><i className="fas fa-user"></i></div>
+                            <div className="message-content">
+                                <div className="message-header">
+                                    <span className="message-sender">{msg.to}</span>
+                                    <span className="message-time">{msg.time}</span>
+                                </div>
+                                <div className="message-preview">{msg.preview}</div>
+                                <div className="message-status">
+                                    <span className={`status-badge status-${msg.status.toLowerCase()}`}>{msg.status}</span>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    </div>
+    )}
+
+    {/* View All Contacts Modal */}
+    {isAllContactsOpen && (
+    <div className="modal show" onClick={(e) => { if(e.target === e.currentTarget) setIsAllContactsOpen(false) }}>
+        <div className="modal-content" style={{ maxWidth: '800px' }}>
+            <div className="modal-header">
+                <h3><i className="fas fa-address-book" style={{ marginRight: '10px', color: '#2E5E3E' }}></i> All Contacts</h3>
+                <button className="modal-close" onClick={() => setIsAllContactsOpen(false)}><i className="fas fa-times"></i></button>
+            </div>
+            <div className="modal-body">
+                <div className="template-search" style={{ marginBottom: '20px' }}>
+                    <i className="fas fa-search" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#a0aec0' }}></i>
+                    <input type="text" placeholder="Search contacts..." style={{ width: '100%', padding: '10px 10px 10px 40px', border: '2px solid #e2e8f0', borderRadius: '12px', fontSize: '0.95rem' }} />
+                </div>
+                <div className="contacts-grid" style={{ maxHeight: '50vh', overflowY: 'auto' }}>
+                    {recentContacts.map(contact => (
+                        <div className="contact-item" key={contact.id} onClick={() => setSelectedContact(contact)} style={{ cursor: 'pointer', transition: 'box-shadow 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)'} onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}>
+                            <div className="contact-avatar"><i className="fas fa-user"></i></div>
+                            <div className="contact-info">
+                                <div className="contact-name">{contact.name}</div>
+                                <div className="contact-number">{contact.phone}</div>
+                                <div className="contact-role">Pet: {contact.pet}</div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    </div>
+    )}
+
+    {/* Message Details & Reply Modal */}
+    {selectedMessage && (
+    <div className="modal show" onClick={(e) => { if(e.target === e.currentTarget) setSelectedMessage(null) }}>
+        <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+                <h3><i className="fas fa-comment-dots" style={{ marginRight: '10px', color: '#2E5E3E' }}></i> Message Details</h3>
+                <button className="modal-close" onClick={() => { setSelectedMessage(null); setReplyText(''); }}><i className="fas fa-times"></i></button>
+            </div>
+            <div className="modal-body">
+                <div style={{ background: '#f7fafc', padding: '15px', borderRadius: '12px', marginBottom: '20px' }}>
+                    <p style={{ margin: '0 0 10px 0', fontSize: '0.9rem', color: '#718096' }}><strong>To:</strong> {selectedMessage.to}</p>
+                    <p style={{ margin: '0 0 10px 0', fontSize: '0.9rem', color: '#718096' }}><strong>Time:</strong> {selectedMessage.time}</p>
+                    <p style={{ margin: '0 0 10px 0', fontSize: '0.9rem', color: '#718096' }}><strong>Status:</strong> <span className={`status-badge status-${selectedMessage.status.toLowerCase()}`}>{selectedMessage.status}</span></p>
+                    <div style={{ background: 'white', padding: '15px', borderRadius: '8px', border: '1px solid #edf2f7', marginTop: '10px' }}>
+                        {selectedMessage.preview}
+                    </div>
+                </div>
+                
+                <div className="message-input-group">
+                    <label style={{ display: 'block', marginBottom: '8px', color: '#4a5568', fontWeight: 600 }}>Reply:</label>
+                    <textarea 
+                        className="message-input" 
+                        placeholder="Type your reply here..." 
+                        value={replyText} 
+                        onChange={(e) => setReplyText(e.target.value)}
+                        style={{ width: '100%', minHeight: '100px', padding: '12px', borderRadius: '12px', border: '2px solid #e2e8f0', resize: 'vertical' }}
+                    ></textarea>
+                </div>
+            </div>
+            <div className="modal-actions">
+                <button className="btn btn-secondary" onClick={() => { setSelectedMessage(null); setReplyText(''); }}>Cancel</button>
+                <button className="btn btn-primary" onClick={() => {
+                    alert('Reply sent successfully!');
+                    setReplyText('');
+                    setSelectedMessage(null);
+                }} disabled={!replyText.trim()} style={{ opacity: !replyText.trim() ? 0.5 : 1 }}><i className="fas fa-paper-plane" style={{ marginRight: '8px' }}></i>Send Reply</button>
+            </div>
+        </div>
+    </div>
+    )}
+
+    {/* Contact Message Modal */}
+    {selectedContact && (
+    <div className="modal show" onClick={(e) => { if(e.target === e.currentTarget) setSelectedContact(null) }}>
+        <div className="modal-content" style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+                <h3><i className="fas fa-user" style={{ marginRight: '10px', color: '#2E5E3E' }}></i> Message {selectedContact.name}</h3>
+                <button className="modal-close" onClick={() => { setSelectedContact(null); setReplyText(''); }}><i className="fas fa-times"></i></button>
+            </div>
+            <div className="modal-body">
+                <div style={{ background: '#f7fafc', padding: '15px', borderRadius: '12px', marginBottom: '20px' }}>
+                    <p style={{ margin: '0 0 5px 0', fontSize: '0.9rem', color: '#718096' }}><strong>Phone:</strong> {selectedContact.phone}</p>
+                    <p style={{ margin: '0', fontSize: '0.9rem', color: '#718096' }}><strong>Pet:</strong> {selectedContact.pet}</p>
+                </div>
+                
+                <div className="message-input-group">
+                    <label style={{ display: 'block', marginBottom: '8px', color: '#4a5568', fontWeight: 600 }}>Message:</label>
+                    <textarea 
+                        className="message-input" 
+                        placeholder={`Type your message to ${selectedContact.name}...`}
+                        value={replyText} 
+                        onChange={(e) => setReplyText(e.target.value)}
+                        style={{ width: '100%', minHeight: '100px', padding: '12px', borderRadius: '12px', border: '2px solid #e2e8f0', resize: 'vertical' }}
+                    ></textarea>
+                </div>
+            </div>
+            <div className="modal-actions">
+                <button className="btn btn-secondary" onClick={() => { setSelectedContact(null); setReplyText(''); }}>Cancel</button>
+                <button className="btn btn-primary" onClick={() => {
+                    alert(`Message sent to ${selectedContact.name}!`);
+                    setReplyText('');
+                    setSelectedContact(null);
+                }} disabled={!replyText.trim()} style={{ opacity: !replyText.trim() ? 0.5 : 1 }}><i className="fas fa-paper-plane" style={{ marginRight: '8px' }}></i>Send Message</button>
+            </div>
+        </div>
+    </div>
+    )}
+
+    </>
+  );
+}

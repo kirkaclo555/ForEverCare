@@ -235,7 +235,7 @@ export default function UsersScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f7fafc',
+    backgroundColor: '#F4F1EC',
   },
   header: {
     flexDirection: 'row',
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
     borderBottomWidth: 0,
   },
   headerLeft: {
@@ -262,20 +262,20 @@ const styles = StyleSheet.create({
   },
   pageTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: 'Catcut',
     color: 'white',
     marginRight: 8,
   },
   subtitleBadge: {
-    backgroundColor: '#e2e8f0',
+    backgroundColor: '#EAF3DE',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
   },
   subtitleBadgeText: {
     fontSize: 10,
-    fontWeight: '600',
-    color: '#4a5568',
+    fontFamily: 'Montserrat-Bold',
+    color: '#2D5016',
   },
   headerRight: {
     flexDirection: 'row',
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
   notificationText: {
     color: 'white',
     fontSize: 9,
-    fontWeight: 'bold',
+    fontFamily: 'Montserrat-Bold',
   },
   mainScroll: {
     flex: 1,
@@ -327,6 +327,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     color: '#4a5568',
+    fontFamily: 'Montserrat-Regular',
   },
   statsScroll: {
     flexDirection: 'row',
@@ -339,11 +340,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginRight: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.07)',
     width: 160,
   },
   statIconContainer: {
@@ -353,16 +351,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+    backgroundColor: '#2D5016',
   },
   statTitle: {
     color: '#a0aec0',
     fontSize: 12,
-    fontWeight: '500',
+    fontFamily: 'Montserrat-SemiBold',
     marginBottom: 2,
   },
   statValue: {
     fontSize: 20,
-    fontWeight: '700',
+    fontFamily: 'Montserrat-Bold',
     color: '#2d3748',
   },
   actionRow: {
@@ -373,11 +372,11 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'Catcut',
     color: '#2d3748',
   },
   addButton: {
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 15,
@@ -386,7 +385,7 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     color: 'white',
-    fontWeight: '600',
+    fontFamily: 'Montserrat-Bold',
     fontSize: 13,
     marginLeft: 6,
   },
@@ -395,11 +394,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.07)',
   },
   userCardHeader: {
     flexDirection: 'row',
@@ -414,7 +410,7 @@ const styles = StyleSheet.create({
   avatar: {
     width: 40,
     height: 40,
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
@@ -422,11 +418,11 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     color: 'white',
-    fontWeight: '600',
+    fontFamily: 'Montserrat-Bold',
     fontSize: 14,
   },
   userName: {
-    fontWeight: '700',
+    fontFamily: 'Montserrat-Bold',
     fontSize: 15,
     color: '#2d3748',
     marginBottom: 2,
@@ -434,6 +430,7 @@ const styles = StyleSheet.create({
   userEmail: {
     fontSize: 12,
     color: '#718096',
+    fontFamily: 'Montserrat-Regular',
   },
   idBadge: {
     backgroundColor: '#e2e8f0',
@@ -444,7 +441,7 @@ const styles = StyleSheet.create({
   idBadgeText: {
     color: '#4a5568',
     fontSize: 10,
-    fontWeight: '700',
+    fontFamily: 'Montserrat-Bold',
   },
   userCardBody: {
     borderTopWidth: 1,
@@ -463,6 +460,7 @@ const styles = StyleSheet.create({
   detailText: {
     color: '#4a5568',
     fontSize: 13,
+    fontFamily: 'Montserrat-Regular',
   },
   badgeRow: {
     flexDirection: 'row',
@@ -476,7 +474,7 @@ const styles = StyleSheet.create({
   },
   roleBadgeText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontFamily: 'Montserrat-SemiBold',
   },
   statusBadge: {
     paddingHorizontal: 10,
@@ -485,7 +483,7 @@ const styles = StyleSheet.create({
   },
   statusBadgeText: {
     fontSize: 11,
-    fontWeight: '600',
+    fontFamily: 'Montserrat-SemiBold',
   },
   cardActions: {
     flexDirection: 'row',

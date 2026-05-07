@@ -1,0 +1,239 @@
+.feedback-page-container {
+    padding: 0;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.feedback-page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.feedback-page-header h2 {
+    font-size: 2rem;
+    color: #2d3748;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.feedback-container-wrapper {
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+.feedback-container-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #2d3748;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.feedback-container-title span {
+    background: #2E5E3E;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+}
+
+/* Rating Summary Card */
+.rating-summary-card {
+    background: #f7fafc;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.rating-summary-wrapper {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+/* Left Side - Overall Rating */
+.rating-overall {
+    flex: 0 0 auto;
+    text-align: center;
+    min-width: 150px;
+}
+
+.rating-summary-title {
+    font-size: 0.9rem;
+    color: #718096;
+    margin-bottom: 5px;
+}
+
+.average-rating {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 5px;
+}
+
+.rating-stars-large {
+    font-size: 1.2rem;
+    color: #f6ad55;
+    margin-bottom: 5px;
+}
+
+.rating-stats-text {
+    font-size: 0.8rem;
+    color: #718096;
+}
+
+/* Right Side - Rating Breakdown */
+.rating-breakdown {
+    flex: 1;
+    min-width: 250px;
+}
+
+.rating-breakdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.rating-breakdown-label {
+    min-width: 45px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #4a5568;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.rating-breakdown-label i {
+    color: #f6ad55;
+}
+
+.rating-bar-container {
+    flex: 1;
+    height: 8px;
+    background: #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.rating-bar-fill {
+    height: 100%;
+    background: #2E5E3E;
+    border-radius: 10px;
+    transition: width 0.5s ease;
+}
+
+.rating-breakdown-count {
+    min-width: 30px;
+    font-size: 0.85rem;
+    color: #718096;
+    text-align: right;
+}
+
+/* Feedback Cards */
+.feedback-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+}
+
+.feedback-card {
+    background: #f7fafc;
+    border-radius: 16px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    border: 1px solid #edf2f7;
+    display: flex;
+    flex-direction: column;
+}
+
+.feedback-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+    border-color: #2E5E3E;
+}
+
+.feedback-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.feedback-user {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.feedback-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #2E5E3E 0%, #1a4d2e 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.feedback-user-info h4 {
+    font-size: 1rem;
+    color: #2d3748;
+    margin: 0 0 2px 0;
+}
+
+.feedback-user-info p {
+    font-size: 0.8rem;
+    color: #718096;
+    margin: 0;
+}
+
+.feedback-rating {
+    color: #f6ad55;
+    font-size: 0.9rem;
+}
+
+.feedback-text {
+    color: #4a5568;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    flex: 1;
+}
+
+.feedback-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: #a0aec0;
+    border-top: 1px solid #edf2f7;
+    padding-top: 12px;
+}
+
+.btn-secondary {
+    background: white;
+    border: 1px solid #e2e8f0;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    color: #4a5568;
+    transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+    background: #f7fafc;
+    border-color: #cbd5e0;
+}

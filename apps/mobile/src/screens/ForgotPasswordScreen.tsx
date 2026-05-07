@@ -96,14 +96,9 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
                       />
                     </View>
                     <TouchableOpacity onPress={handleSendCode} activeOpacity={0.8} style={styles.buttonShadow}>
-                      <LinearGradient
-                        colors={['#4fb97a', '#2e6b47']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.actionBtn}
-                      >
+                      <View style={styles.actionBtn}>
                         <Text style={styles.actionBtnText}>Send Code</Text>
-                      </LinearGradient>
+                      </View>
                     </TouchableOpacity>
                   </>
                 ) : (
@@ -144,14 +139,9 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
                       />
                     </View>
                     <TouchableOpacity onPress={handleResetPassword} activeOpacity={0.8} style={styles.buttonShadow}>
-                      <LinearGradient
-                        colors={['#4fb97a', '#2e6b47']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={styles.actionBtn}
-                      >
+                      <View style={styles.actionBtn}>
                         <Text style={styles.actionBtnText}>Reset Password</Text>
-                      </LinearGradient>
+                      </View>
                     </TouchableOpacity>
                   </>
                 )}
@@ -167,14 +157,14 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#f4f7f6',
+    backgroundColor: '#F4F1EC',
   },
   keyboardAvoidingView: {
     flex: 1,
   },
   container: {
     flex: 1,
-    backgroundColor: '#f4f7f6',
+    backgroundColor: '#F4F1EC',
   },
   content: {
     flex: 1,
@@ -187,12 +177,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
     borderBottomWidth: 0,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: 'Catcut',
     color: 'white',
   },
   card: {
@@ -200,14 +190,12 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     padding: 24,
     paddingTop: 32,
-    shadowColor: '#a6b8b0',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 8,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.07)',
   },
   instructionText: {
     fontSize: 15,
+    fontFamily: 'Montserrat-Regular',
     color: '#718096',
     marginBottom: 24,
     textAlign: 'center',
@@ -225,13 +213,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   inputFocused: {
-    borderColor: '#4fb97a',
+    borderColor: '#2D5016',
     backgroundColor: '#ffffff',
-    shadowColor: '#3a7d55',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
   },
   inputIcon: {
     marginRight: 12,
@@ -240,25 +223,22 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#2d3748',
+    fontFamily: 'Montserrat-Regular',
   },
   buttonShadow: {
-    shadowColor: '#3a7d55',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 6,
     marginTop: 16,
   },
   actionBtn: {
     height: 56,
-    borderRadius: 28,
+    borderRadius: 14,
+    backgroundColor: '#2D5016',
     justifyContent: 'center',
     alignItems: 'center',
   },
   actionBtnText: {
     color: '#ffffff',
     fontSize: 16,
-    fontWeight: '700',
+    fontFamily: 'Montserrat-Bold',
     letterSpacing: 0.5,
   },
 });

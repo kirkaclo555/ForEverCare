@@ -93,18 +93,18 @@ export default function TutorialsScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#f7fafc' },
+  safeArea: { flex: 1, backgroundColor: '#F4F1EC' },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
     borderBottomWidth: 0,
   },
   backButton: { padding: 8, marginLeft: -8 },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: 'white' },
+  headerTitle: { fontSize: 18, fontFamily: 'Catcut', color: 'white' },
   mainContainer: { flex: 1 },
   
   categoryContainer: {
@@ -118,24 +118,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#edf2f7',
+    backgroundColor: '#F4F1EC',
   },
-  categoryBtnActive: { backgroundColor: '#2E5E3E' },
-  categoryText: { fontSize: 14, fontWeight: '600', color: '#4a5568' },
+  categoryBtnActive: { backgroundColor: '#2D5016' },
+  categoryText: { fontSize: 14, fontFamily: 'Montserrat-SemiBold', color: '#4a5568' },
   categoryTextActive: { color: '#fff' },
 
   tutorialsList: { flex: 1, padding: 20 },
-  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#2d3748', marginBottom: 15 },
+  sectionTitle: { fontSize: 16, fontFamily: 'Catcut', color: '#2d3748', marginBottom: 15 },
   
   videoCard: {
     backgroundColor: '#fff',
     borderRadius: 16,
     marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.07)',
     overflow: 'hidden',
   },
   videoThumbnail: {
@@ -163,9 +160,9 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 6,
   },
-  durationText: { color: 'white', fontSize: 12, fontWeight: '600' },
+  durationText: { color: 'white', fontSize: 12, fontFamily: 'Montserrat-SemiBold' },
   
   videoInfo: { padding: 15 },
-  videoTitle: { fontSize: 16, fontWeight: '700', color: '#2d3748', marginBottom: 4, lineHeight: 22 },
-  videoCategory: { fontSize: 13, color: '#718096', fontWeight: '500' },
+  videoTitle: { fontSize: 16, fontFamily: 'Montserrat-Bold', color: '#2d3748', marginBottom: 4, lineHeight: 22 },
+  videoCategory: { fontSize: 13, color: '#718096', fontFamily: 'Montserrat-Medium' },
 });

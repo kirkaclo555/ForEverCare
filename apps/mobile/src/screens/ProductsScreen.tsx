@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -45,17 +45,35 @@ type CartItem = {
 type ViewState = 'browse' | 'detail' | 'cart' | 'checkout' | 'active_order';
 
 export default function ProductsScreen({ navigation }: Props) {
-  // Mock Database
-  const products: Product[] = [
-    { id: 1, name: 'Premium Dog Food, 5kg', price: 35.00, category: 'Food', icon: 'bone', color: '#dd6b20', desc: 'High quality protein-rich kibble designed for adult dogs. Supports digestion and a shiny coat.' },
-    { id: 2, name: 'Joint Care Supplements', price: 28.00, category: 'Supplements', icon: 'capsules', color: '#3182ce', desc: 'Glucosamine and Chondroitin blend. Highly recommended for senior pets to support mobility.' },
-    { id: 3, name: 'Worming Medicine', price: 15.00, category: 'Medicine', icon: 'prescription-bottle-alt', color: '#e53e3e', desc: 'Broad-spectrum deworming tablets. Please administer strictly as directed by your vet.' },
-    { id: 4, name: 'Cozy Dog Sweater', price: 22.00, category: 'Clothes', icon: 'tshirt', color: '#805ad5', desc: 'Soft fleece sweater perfect for chilly morning walks. Available in multiple sizes.' },
-    { id: 5, name: 'Interactive Cat Wand', price: 12.50, category: 'Toys', icon: 'cat', color: '#38a169', desc: 'Feather wand with a sturdy handle to keep your feline active and engaged.' },
-    { id: 6, name: 'Oatmeal Pet Shampoo', price: 18.00, category: 'Grooming', icon: 'pump-medical', color: '#2b6cb0', desc: 'Gentle, soothing oatmeal formula for pets with sensitive skin.' },
-  ];
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<string[]>(['All']);
 
-  const categories = ['All', 'Supplements', 'Medicine', 'Clothes', 'Food', 'Toys', 'Grooming'];
+  useEffect(() => {
+    fetch('http://192.168.100.78:3000/api/inventory')
+      .then(res => res.json())
+      .then(data => {
+        const sellableCategories = ['food', 'dog', 'cat', 'medications', 'vaccine', 'grooming', 'accessories', 'accessory', 'medicine', 'Food supplies'];
+        const mappedProducts = data
+          .filter((item: any) => sellableCategories.includes((item.category || '').toLowerCase()))
+          .map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            price: parseFloat(item.price) || 0,
+            category: item.categoryLabel || item.category || 'Other',
+            icon: item.icon || 'box',
+            color: '#dd6b20',
+            desc: item.description || 'No description available.',
+            stock: item.stock || 0
+          })).filter((item: any) => item.stock > 0);
+        
+        setProducts(mappedProducts);
+        
+        // Extract unique categories
+        const uniqueCats = Array.from(new Set(mappedProducts.map((p: any) => p.category))) as string[];
+        setCategories(['All', ...uniqueCats]);
+      })
+      .catch(e => console.log('Error fetching products', e));
+  }, []);
 
   // View & App State
   const [viewState, setViewState] = useState<ViewState>('browse');
@@ -110,9 +128,67 @@ export default function ProductsScreen({ navigation }: Props) {
     setViewState('checkout');
   };
 
-  const handlePaymentSuccess = () => {
-    // If the items being checked out were from the cart, clear the cart.
-    // For simplicity, we just clear the whole cart assuming checkout processes everything.
+  const handlePaymentSuccess = async () => {
+    // Generate Invoice Data
+    const newInvoice = {
+      id: `INV-${1000 + Math.floor(Math.random() * 9000)}`,
+      clientName: 'Mobile User', // Default for now
+      date: new Date().toISOString().split('T')[0],
+      items: checkoutItems.map(item => ({
+        id: item.product.id.toString(),
+        name: item.product.name,
+        quantity: item.quantity,
+        price: item.product.price
+      })),
+      totalAmount: checkoutItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0),
+      status: 'paid',
+      source: 'product'
+    };
+
+    try {
+      // 1. Post to billing
+      const billingRes = await fetch('http://192.168.100.78:3000/api/billing');
+      const existingInvoices = await billingRes.json();
+      await fetch('http://192.168.100.78:3000/api/billing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify([newInvoice, ...existingInvoices])
+      });
+
+      // 2. Post to inventory to deduct stock
+      const invRes = await fetch('http://192.168.100.78:3000/api/inventory');
+      const inventory = await invRes.json();
+      
+      const updatedInventory = inventory.map((invItem: any) => {
+        const boughtItem = checkoutItems.find(c => c.product.id === invItem.id);
+        if (boughtItem) {
+          return { ...invItem, stock: Math.max(0, invItem.stock - boughtItem.quantity) };
+        }
+        return invItem;
+      });
+
+      await fetch('http://192.168.100.78:3000/api/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updatedInventory)
+      });
+      
+      // Update local products state stock
+      setProducts(updatedInventory.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          price: parseFloat(item.price) || 0,
+          category: item.categoryLabel || item.category || 'Other',
+          icon: item.icon || 'box',
+          color: '#dd6b20',
+          desc: item.description || 'No description available.',
+          stock: item.stock || 0
+      })).filter((item: any) => item.stock > 0));
+
+    } catch (e) {
+      console.log('Error during checkout', e);
+    }
+
     setCart([]);
     setViewState('active_order');
   };
@@ -239,7 +315,7 @@ export default function ProductsScreen({ navigation }: Props) {
                 <Text style={styles.detailCategory}>{selectedProduct.category}</Text>
                 <Text style={styles.detailTitle}>{selectedProduct.name}</Text>
               </View>
-              <Text style={styles.detailPriceHuge}>${selectedProduct.price.toFixed(2)}</Text>
+              <Text style={styles.detailPriceHuge}>₱{selectedProduct.price.toFixed(2)}</Text>
             </View>
 
             <View style={styles.divider} />
@@ -293,7 +369,7 @@ export default function ProductsScreen({ navigation }: Props) {
             <Text style={styles.emptyCartTitle}>Your cart is empty</Text>
             <Text style={styles.emptyCartSub}>Looks like you haven't added any pet supplies yet.</Text>
             <TouchableOpacity style={styles.shopNowBtn} onPress={() => setViewState('browse')}>
-              <Text style={{ color: 'white', fontWeight: '600' }}>Start Shopping</Text>
+              <Text style={{ color: 'white', fontFamily: 'Montserrat-SemiBold' }}>Start Shopping</Text>
             </TouchableOpacity>
           </View>
         ) : (
@@ -306,7 +382,7 @@ export default function ProductsScreen({ navigation }: Props) {
                   </View>
                   <View style={styles.cartItemDetails}>
                     <Text style={styles.cartItemName} numberOfLines={2}>{item.product.name}</Text>
-                    <Text style={styles.cartItemPrice}>${item.product.price.toFixed(2)}</Text>
+                    <Text style={styles.cartItemPrice}>₱{item.product.price.toFixed(2)}</Text>
                   </View>
                   <View style={styles.cartQtyControls}>
                     <TouchableOpacity style={styles.qtyBtn} onPress={() => updateCartQuantity(item.product.id, -1)}>
@@ -325,10 +401,10 @@ export default function ProductsScreen({ navigation }: Props) {
             <View style={styles.cartBottomContainer}>
               <View style={styles.cartSummaryRow}>
                 <Text style={styles.cartSummaryLabel}>Subtotal</Text>
-                <Text style={styles.cartSummaryValue}>${totalCost.toFixed(2)}</Text>
+                <Text style={styles.cartSummaryValue}>₱{totalCost.toFixed(2)}</Text>
               </View>
               <TouchableOpacity style={styles.checkoutBtn} onPress={handleCheckoutCart}>
-                <Text style={styles.checkoutBtnText}>Proceed to Checkout (${totalCost.toFixed(2)})</Text>
+                <Text style={styles.checkoutBtnText}>Proceed to Checkout (₱{totalCost.toFixed(2)})</Text>
               </TouchableOpacity>
             </View>
           </>
@@ -357,7 +433,7 @@ export default function ProductsScreen({ navigation }: Props) {
             <View style={styles.qrMockOuter}>
               <FontAwesome5 name="qrcode" size={160} color="#2d3748" />
             </View>
-            <Text style={styles.qrAmountText}>Amount Due: <Text style={{ color: '#2E5E3E' }}>${totalCost.toFixed(2)}</Text></Text>
+            <Text style={styles.qrAmountText}>Amount Due: <Text style={{ color: '#2E5E3E' }}>₱{totalCost.toFixed(2)}</Text></Text>
           </View>
 
           <View style={styles.paymentInstructionsBox}>
@@ -415,7 +491,7 @@ export default function ProductsScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#f7fafc' },
+  safeArea: { flex: 1, backgroundColor: '#F4F1EC' },
   // Browse View Styles
   header: {
     flexDirection: 'row',
@@ -423,13 +499,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
     borderBottomWidth: 0,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: 'white' },
-  headerSubtitle: { fontSize: 13, color: '#c6f6d5', marginTop: 2 },
+  headerTitle: { fontSize: 18, fontFamily: 'Catcut', color: 'white' },
+  headerSubtitle: { fontSize: 13, color: '#EAF3DE', marginTop: 2, fontFamily: 'Montserrat-Regular' },
   cartButton: {
-    backgroundColor: '#cbd5e0',
+    backgroundColor: 'rgba(255,255,255,0.2)',
     width: 40,
     height: 40,
     borderRadius: 20,
@@ -441,7 +517,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: -2,
     right: -2,
-    backgroundColor: '#e53e3e',
+    backgroundColor: '#7CB342',
     width: 18,
     height: 18,
     borderRadius: 9,
@@ -450,7 +526,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: 'white',
   },
-  cartBadgeText: { color: 'white', fontSize: 10, fontWeight: '700' },
+  cartBadgeText: { color: 'white', fontSize: 10, fontFamily: 'Montserrat-Bold' },
   mainScroll: { flex: 1 },
   categoryScroll: {
     paddingHorizontal: 15,
@@ -464,16 +540,16 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 20,
     marginRight: 10,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.07)',
     justifyContent: 'center',
   },
-  categoryChipActive: { backgroundColor: '#2d3748', borderColor: '#2d3748' },
-  categoryChipText: { fontSize: 13, fontWeight: '600', color: '#4a5568' },
+  categoryChipActive: { backgroundColor: '#2D5016', borderColor: '#2D5016' },
+  categoryChipText: { fontSize: 13, fontFamily: 'Montserrat-SemiBold', color: '#4a5568' },
   categoryChipTextActive: { color: 'white' },
   promoBanner: {
     marginHorizontal: 15,
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
@@ -481,7 +557,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   promoContent: { zIndex: 1 },
-  promoTitle: { fontSize: 18, fontWeight: '700', color: 'white', marginBottom: 6, lineHeight: 24 },
+  promoTitle: { fontSize: 18, fontFamily: 'Catcut', color: 'white', marginBottom: 6, lineHeight: 24 },
   productsHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -489,7 +565,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 15,
   },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#2d3748' },
+  sectionTitle: { fontSize: 18, fontFamily: 'Catcut', color: '#2d3748' },
   productsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -502,11 +578,8 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 12,
     marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.07)',
   },
   productImagePlaceholder: {
     height: 120,
@@ -516,16 +589,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  productCategory: { fontSize: 11, color: '#718096', marginBottom: 4, fontWeight: '500' },
-  productName: { fontSize: 14, fontWeight: '600', color: '#2d3748', marginBottom: 8, height: 40 },
+  productCategory: { fontSize: 11, color: '#718096', marginBottom: 4, fontFamily: 'Montserrat-Medium' },
+  productName: { fontSize: 14, fontFamily: 'Montserrat-SemiBold', color: '#2d3748', marginBottom: 8, height: 40 },
   productFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  productPrice: { fontSize: 16, fontWeight: '700', color: '#2E5E3E' },
+  productPrice: { fontSize: 16, fontFamily: 'Montserrat-Bold', color: '#2D5016' },
   addButton: {
-    backgroundColor: '#2d3748',
+    backgroundColor: '#2D5016',
     width: 28,
     height: 28,
     borderRadius: 14,
@@ -534,21 +607,21 @@ const styles = StyleSheet.create({
   },
 
   // Full Screen Views Common
-  fullScreenView: { flex: 1, backgroundColor: '#f7fafc' },
+  fullScreenView: { flex: 1, backgroundColor: '#F4F1EC' },
   detailHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
     borderBottomWidth: 0,
   },
   backIconButton: {
     width: 40, height: 40,
     justifyContent: 'center',
   },
-  screenHeading: { fontSize: 18, fontWeight: '700', color: '#2d3748' },
+  screenHeading: { fontSize: 18, fontFamily: 'Catcut', color: '#2d3748' },
   cartButtonDetail: {
     width: 40, height: 40,
     alignItems: 'flex-end', justifyContent: 'center',
@@ -566,23 +639,23 @@ const styles = StyleSheet.create({
   },
   detailContentBox: { paddingHorizontal: 20 },
   detailTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  detailCategory: { fontSize: 13, color: '#718096', fontWeight: '600', marginBottom: 6, textTransform: 'uppercase' },
-  detailTitle: { fontSize: 24, fontWeight: '700', color: '#2d3748', lineHeight: 30 },
-  detailPriceHuge: { fontSize: 28, fontWeight: '700', color: '#2E5E3E' },
+  detailCategory: { fontSize: 13, color: '#718096', fontFamily: 'Montserrat-SemiBold', marginBottom: 6, textTransform: 'uppercase' },
+  detailTitle: { fontSize: 24, fontFamily: 'Catcut', color: '#2d3748', lineHeight: 30 },
+  detailPriceHuge: { fontSize: 28, fontFamily: 'Montserrat-Bold', color: '#2D5016' },
   divider: { height: 1, backgroundColor: '#e2e8f0', marginVertical: 20 },
-  descLabel: { fontSize: 16, fontWeight: '700', color: '#2d3748', marginBottom: 10 },
-  descText: { fontSize: 15, color: '#4a5568', lineHeight: 22, opacity: 0.9 },
+  descLabel: { fontSize: 16, fontFamily: 'Montserrat-Bold', color: '#2d3748', marginBottom: 10 },
+  descText: { fontSize: 15, color: '#4a5568', lineHeight: 22, opacity: 0.9, fontFamily: 'Montserrat-Regular' },
   stockBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f0fff4',
+    backgroundColor: '#EAF3DE',
     alignSelf: 'flex-start',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
     marginTop: 20,
   },
-  stockBadgeText: { fontSize: 13, color: '#2f855a', fontWeight: '600', marginLeft: 6 },
+  stockBadgeText: { fontSize: 13, color: '#2D5016', fontFamily: 'Montserrat-SemiBold', marginLeft: 6 },
 
   detailActionContainer: {
     flexDirection: 'row',
@@ -597,28 +670,28 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     borderWidth: 1.5,
-    borderColor: '#2E5E3E',
+    borderColor: '#2D5016',
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
   },
-  detailAddToCartText: { fontSize: 15, fontWeight: '700', color: '#2E5E3E' },
+  detailAddToCartText: { fontSize: 15, fontFamily: 'Montserrat-Bold', color: '#2D5016' },
   detailBuyNowBtn: {
     flex: 1,
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
   },
-  detailBuyNowText: { fontSize: 15, fontWeight: '700', color: 'white' },
+  detailBuyNowText: { fontSize: 15, fontFamily: 'Montserrat-Bold', color: 'white' },
 
   // Cart View
   emptyCartContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
-  emptyCartTitle: { fontSize: 20, fontWeight: '700', color: '#2d3748', marginBottom: 8 },
-  emptyCartSub: { fontSize: 15, color: '#718096', textAlign: 'center', marginBottom: 24, lineHeight: 22 },
-  shopNowBtn: { backgroundColor: '#2E5E3E', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 12 },
+  emptyCartTitle: { fontSize: 20, fontFamily: 'Catcut', color: '#2d3748', marginBottom: 8 },
+  emptyCartSub: { fontSize: 15, color: '#718096', textAlign: 'center', marginBottom: 24, lineHeight: 22, fontFamily: 'Montserrat-Regular' },
+  shopNowBtn: { backgroundColor: '#2D5016', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 12 },
 
   cartScroll: { flex: 1, paddingHorizontal: 20 },
   cartItem: {
@@ -627,17 +700,14 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 16,
     marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.07)',
     alignItems: 'center',
   },
   cartItemImage: { width: 60, height: 60, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginRight: 15 },
   cartItemDetails: { flex: 1 },
-  cartItemName: { fontSize: 14, fontWeight: '600', color: '#2d3748', marginBottom: 4 },
-  cartItemPrice: { fontSize: 15, fontWeight: '700', color: '#2E5E3E' },
+  cartItemName: { fontSize: 14, fontFamily: 'Montserrat-SemiBold', color: '#2d3748', marginBottom: 4 },
+  cartItemPrice: { fontSize: 15, fontFamily: 'Montserrat-Bold', color: '#2D5016' },
   cartQtyControls: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -647,7 +717,7 @@ const styles = StyleSheet.create({
     borderColor: '#edf2f7',
   },
   qtyBtn: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
-  qtyText: { fontSize: 14, fontWeight: '700', color: '#2d3748', width: 20, textAlign: 'center' },
+  qtyText: { fontSize: 14, fontFamily: 'Montserrat-Bold', color: '#2d3748', width: 20, textAlign: 'center' },
 
   cartBottomContainer: {
     padding: 20,
@@ -656,29 +726,26 @@ const styles = StyleSheet.create({
     borderTopColor: '#edf2f7',
   },
   cartSummaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15, alignItems: 'center' },
-  cartSummaryLabel: { fontSize: 16, color: '#4a5568', fontWeight: '600' },
-  cartSummaryValue: { fontSize: 20, fontWeight: '700', color: '#2d3748' },
+  cartSummaryLabel: { fontSize: 16, color: '#4a5568', fontFamily: 'Montserrat-SemiBold' },
+  cartSummaryValue: { fontSize: 20, fontFamily: 'Montserrat-Bold', color: '#2d3748' },
   checkoutBtn: {
-    backgroundColor: '#2d3748',
+    backgroundColor: '#2D5016',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
   },
-  checkoutBtnText: { color: 'white', fontSize: 16, fontWeight: '700' },
+  checkoutBtnText: { color: 'white', fontSize: 16, fontFamily: 'Montserrat-Bold' },
 
   // Checkout View
   checkoutScroll: { padding: 20, alignItems: 'center' },
-  checkoutSubtitle: { fontSize: 16, color: '#4a5568', marginBottom: 30 },
+  checkoutSubtitle: { fontSize: 16, color: '#4a5568', marginBottom: 30, fontFamily: 'Montserrat-Regular' },
   qrCodeContainer: {
     alignItems: 'center',
     backgroundColor: 'white',
     padding: 30,
     borderRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 4,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.07)',
     width: '100%',
   },
   qrMockOuter: {
@@ -689,7 +756,7 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     marginBottom: 20,
   },
-  qrAmountText: { fontSize: 18, fontWeight: '700', color: '#2d3748' },
+  qrAmountText: { fontSize: 18, fontFamily: 'Montserrat-Bold', color: '#2d3748' },
   paymentInstructionsBox: {
     flexDirection: 'row',
     backgroundColor: '#ebf8ff',
@@ -698,7 +765,7 @@ const styles = StyleSheet.create({
     marginTop: 30,
     gap: 12,
   },
-  paymentInstructionsText: { flex: 1, fontSize: 13, color: '#2b6cb0', lineHeight: 20 },
+  paymentInstructionsText: { flex: 1, fontSize: 13, color: '#2b6cb0', lineHeight: 20, fontFamily: 'Montserrat-Regular' },
   demoPaymentBtn: {
     flexDirection: 'row',
     backgroundColor: '#38a169',
@@ -710,7 +777,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     width: '100%',
   },
-  demoPaymentBtnText: { color: 'white', fontSize: 15, fontWeight: '700' },
+  demoPaymentBtnText: { color: 'white', fontSize: 15, fontFamily: 'Montserrat-Bold' },
 
   // Active Order View
   activeOrderCenter: {
@@ -722,34 +789,31 @@ const styles = StyleSheet.create({
   successIconCircle: {
     width: 100, height: 100,
     borderRadius: 50,
-    backgroundColor: '#c6f6d5',
+    backgroundColor: '#EAF3DE',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
   },
-  successTitle: { fontSize: 24, fontWeight: '700', color: '#22543d', marginBottom: 10 },
-  successDesc: { fontSize: 15, color: '#2f855a', textAlign: 'center', marginBottom: 40 },
+  successTitle: { fontSize: 24, fontFamily: 'Catcut', color: '#2D5016', marginBottom: 10 },
+  successDesc: { fontSize: 15, color: '#2D5016', textAlign: 'center', marginBottom: 40, fontFamily: 'Montserrat-Regular' },
   pickupCard: {
     backgroundColor: 'white',
     padding: 20,
     borderRadius: 16,
     alignItems: 'center',
     width: '100%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.07)',
     marginBottom: 40,
   },
-  pickupCardTitle: { fontSize: 18, fontWeight: '700', color: '#2d3748', marginBottom: 8 },
-  pickupCardDesc: { fontSize: 14, color: '#718096', textAlign: 'center', lineHeight: 22 },
+  pickupCardTitle: { fontSize: 18, fontFamily: 'Montserrat-Bold', color: '#2d3748', marginBottom: 8 },
+  pickupCardDesc: { fontSize: 14, color: '#718096', textAlign: 'center', lineHeight: 22, fontFamily: 'Montserrat-Regular' },
   markReceivedBtn: {
-    backgroundColor: '#2E5E3E',
+    backgroundColor: '#2D5016',
     paddingVertical: 16,
     width: '100%',
     borderRadius: 12,
     alignItems: 'center',
   },
-  markReceivedText: { color: 'white', fontSize: 16, fontWeight: '700' },
+  markReceivedText: { color: 'white', fontSize: 16, fontFamily: 'Montserrat-Bold' },
 });

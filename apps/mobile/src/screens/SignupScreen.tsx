@@ -61,7 +61,7 @@ export default function SignupScreen({ navigation }: Props) {
       >
           <View style={styles.container}>
             <LinearGradient
-              colors={['#3a7d55', '#245237']}
+              colors={['#1a3d28', '#2E5E3E']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.header}
@@ -158,15 +158,8 @@ export default function SignupScreen({ navigation }: Props) {
                     />
                   </View>
 
-                  <TouchableOpacity onPress={handleSignup} activeOpacity={0.8}>
-                    <LinearGradient
-                      colors={['#3a7d55', '#245237']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.signupBtn}
-                    >
-                      <Text style={styles.signupBtnText}>Sign Up</Text>
-                    </LinearGradient>
+                  <TouchableOpacity onPress={handleSignup} activeOpacity={0.8} style={styles.signupBtn}>
+                    <Text style={styles.signupBtnText}>Sign Up</Text>
                   </TouchableOpacity>
 
                   <View style={styles.loginHintContainer}>
@@ -188,7 +181,7 @@ export default function SignupScreen({ navigation }: Props) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#3a7d55',
+    backgroundColor: '#1a3d28',
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -220,12 +213,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
+    fontFamily: 'Catcut',
     color: 'white',
     fontSize: 18,
-    fontWeight: '600',
     marginBottom: 2,
   },
   headerSubtitle: {
+    fontFamily: 'Montserrat-Regular',
     color: 'white',
     fontSize: 12,
     opacity: 0.85,
@@ -250,12 +244,13 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   welcomeText: {
+    fontFamily: 'Catcut',
     fontSize: 28,
     color: '#1a202c',
-    fontWeight: '700',
     marginBottom: 8,
   },
   instructionText: {
+    fontFamily: 'Montserrat-Regular',
     color: '#718096',
     fontSize: 15,
   },
@@ -263,12 +258,13 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   label: {
+    fontFamily: 'Montserrat-Medium',
     marginBottom: 8,
     color: '#2d3748',
-    fontWeight: '500',
     fontSize: 14,
   },
   input: {
+    fontFamily: 'Montserrat-Regular',
     width: '100%',
     paddingVertical: 12,
     paddingHorizontal: 16,
@@ -280,22 +276,28 @@ const styles = StyleSheet.create({
     color: '#1a202c',
   },
   inputFocused: {
-    borderColor: '#3a7d55',
+    borderColor: '#2E5E3E',
     backgroundColor: '#ffffff',
   },
   signupBtn: {
     width: '100%',
     paddingVertical: 16,
-    borderRadius: 10,
+    borderRadius: 14,
+    backgroundColor: '#7ed44a',
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 10,
     marginBottom: 30,
+    shadowColor: '#7ed44a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 5,
   },
   signupBtnText: {
-    color: 'white',
+    fontFamily: 'Montserrat-Bold',
+    color: '#0f2418',
     fontSize: 16,
-    fontWeight: '600',
   },
   loginHintContainer: {
     flexDirection: 'row',
@@ -304,12 +306,13 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   alreadyAccountText: {
+    fontFamily: 'Montserrat-Regular',
     color: '#718096',
     fontSize: 14,
   },
   loginText: {
-    color: '#3a7d55',
-    fontWeight: '600',
+    fontFamily: 'Montserrat-Bold',
+    color: '#2E5E3E',
     fontSize: 14,
   }
 });

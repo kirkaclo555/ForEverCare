@@ -1,5 +1,18 @@
 import React from 'react';
 import { View, Text } from 'react-native';
+import { useFonts } from 'expo-font';
+import { 
+  PlusJakartaSans_400Regular,
+  PlusJakartaSans_500Medium,
+  PlusJakartaSans_600SemiBold,
+  PlusJakartaSans_700Bold 
+} from '@expo-google-fonts/plus-jakarta-sans';
+import { 
+  Lora_400Regular,
+  Lora_500Medium,
+  Lora_600SemiBold,
+  Lora_700Bold 
+} from '@expo-google-fonts/lora';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -99,6 +112,22 @@ function MainTabNavigator() {
 }
 
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    'PlusJakartaSans-Regular': PlusJakartaSans_400Regular,
+    'PlusJakartaSans-Medium': PlusJakartaSans_500Medium,
+    'PlusJakartaSans-SemiBold': PlusJakartaSans_600SemiBold,
+    'PlusJakartaSans-Bold': PlusJakartaSans_700Bold,
+    'Lora-Regular': Lora_400Regular,
+    'Lora-Medium': Lora_500Medium,
+    'Lora-SemiBold': Lora_600SemiBold,
+    'Lora-Bold': Lora_700Bold,
+    'Catcut': require('./assets/fonts/Catcut.ttf'),
+  });
+
+  if (!fontsLoaded) {
+    return null;
+  }
+
   return (
     <SafeAreaProvider>
       <UserProvider>

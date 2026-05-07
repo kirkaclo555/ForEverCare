@@ -361,3 +361,44 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 8px 15px rgba(46, 94, 62, 0.3);
 }
+
+/* Hide all scrollbars globally across the entire application while maintaining scroll functionality */
+*, *::before, *::after {
+    -ms-overflow-style: none !important;  /* IE and Edge */
+    scrollbar-width: none !important;  /* Firefox */
+}
+
+*::-webkit-scrollbar {
+    display: none !important; /* Chrome, Safari and Opera */
+}
+
+/* Remove underlines from sidebar links */
+.sidebar-menu a, .menu-item {
+    text-decoration: none !important;
+}
+
+/* Fix for stat cards content overlapping/cutting out */
+.stat-card {
+    overflow: hidden !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    height: auto !important; /* Allow the card to grow if text wraps */
+    min-height: min-content !important;
+}
+
+/* Ensure flex children can shrink to allow word wrap */
+.stat-info {
+    min-width: 0 !important;
+    flex: 1 1 0% !important;
+}
+
+.stat-header {
+    min-width: 0 !important;
+}
+
+.stat-value, .stat-info h3, .stat-header h3, .stat-info p, .stat-info span, .stat-item .stat-value, .stat-label {
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important;
+    max-width: 100% !important;
+}

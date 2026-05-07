@@ -1,0 +1,128 @@
+﻿app/admin/appointment/page.tsx(86,94): error TS2322: Type '{ type: "text"; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/appointment/page.tsx(435,29): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/appointment/page.tsx(440,64): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/archive/page.tsx(697,29): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/archive/page.tsx(702,64): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/billing/page.tsx(36,155): error TS2322: Type '{ type: "text"; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/dashboard/page.tsx(381,29): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/dashboard/page.tsx(386,64): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/dashboard/page.tsx(538,37): error TS2322: Type '{ children: Element; colspan: string; }' is not assignable to type 'DetailedHTMLProps<TdHTMLAttributes<HTMLTableDataCellElement>, HTMLTableDataCellElement>'.
+  Property 'colspan' does not exist on type 'DetailedHTMLProps<TdHTMLAttributes<HTMLTableDataCellElement>, HTMLTableDataCellElement>'. Did you mean 'colSpan'?
+app/admin/dashboard/page.tsx(578,37): error TS2322: Type '{ children: Element; colspan: string; }' is not assignable to type 'DetailedHTMLProps<TdHTMLAttributes<HTMLTableDataCellElement>, HTMLTableDataCellElement>'.
+  Property 'colspan' does not exist on type 'DetailedHTMLProps<TdHTMLAttributes<HTMLTableDataCellElement>, HTMLTableDataCellElement>'. Did you mean 'colSpan'?
+app/admin/dashboard/page.tsx(640,114): error TS2322: Type '{ type: "text"; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/inventory/page.tsx(86,91): error TS2322: Type '{ type: "text"; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/login/page.tsx(132,29): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/login/page.tsx(137,64): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/profile/page.tsx(505,29): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/profile/page.tsx(510,64): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/records/page.tsx(91,90): error TS2322: Type '{ type: "text"; placeholder: string; id: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/records/page.tsx(281,29): error TS2322: Type '{ children: Element; colspan: string; }' is not assignable to type 'DetailedHTMLProps<TdHTMLAttributes<HTMLTableDataCellElement>, HTMLTableDataCellElement>'.
+  Property 'colspan' does not exist on type 'DetailedHTMLProps<TdHTMLAttributes<HTMLTableDataCellElement>, HTMLTableDataCellElement>'. Did you mean 'colSpan'?
+app/admin/signup/page.tsx(56,110): error TS2322: Type '{ type: "password"; id: string; placeholder: string; required: true; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/signup/page.tsx(66,114): error TS2322: Type '{ type: "password"; id: string; placeholder: string; required: true; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/sms/page.tsx(86,90): error TS2322: Type '{ type: "text"; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/sms/page.tsx(253,102): error TS2322: Type '{ className: string; id: string; placeholder: string; maxlength: string; oninput: string; }' is not assignable to type 'DetailedHTMLProps<TextareaHTMLAttributes<HTMLTextAreaElement>, HTMLTextAreaElement>'.
+  Property 'maxlength' does not exist on type 'DetailedHTMLProps<TextareaHTMLAttributes<HTMLTextAreaElement>, HTMLTextAreaElement>'. Did you mean 'maxLength'?
+app/admin/sms/page.tsx(282,86): error TS2322: Type '{ type: "text"; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/sms/page.tsx(379,29): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/sms/page.tsx(384,64): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/store/page.tsx(86,90): error TS2322: Type '{ type: "text"; placeholder: string; id: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/store/page.tsx(632,29): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/store/page.tsx(637,64): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/telemedicine/page.tsx(85,103): error TS2322: Type '{ type: "text"; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/telemedicine/page.tsx(245,109): error TS2322: Type '{ type: "text"; className: string; id: string; placeholder: string; maxlength: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'maxlength' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'maxLength'?
+app/admin/telemedicine/page.tsx(328,29): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/telemedicine/page.tsx(333,64): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/tutorials/page.tsx(45,91): error TS2322: Type '{ type: "text"; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/admin/tutorials/page.tsx(247,131): error TS2322: Type '{ id: string; style: { position: "absolute"; top: string; left: string; width: string; height: string; }; frameborder: string; allow: string; allowfullscreen: true; }' is not assignable to type 'DetailedHTMLProps<IframeHTMLAttributes<HTMLIFrameElement>, HTMLIFrameElement>'.
+  Property 'frameborder' does not exist on type 'DetailedHTMLProps<IframeHTMLAttributes<HTMLIFrameElement>, HTMLIFrameElement>'. Did you mean 'frameBorder'?
+app/superadmin/appointment/page.tsx(91,94): error TS2322: Type '{ type: "text"; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/appointment/page.tsx(440,29): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/appointment/page.tsx(445,64): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/archive/page.tsx(704,29): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/archive/page.tsx(709,64): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/billing/page.tsx(193,92): error TS2322: Type '{ type: "text"; id: string; placeholder: string; oninput: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'oninput' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onInput'?
+app/superadmin/dashboard/page.tsx(381,29): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/dashboard/page.tsx(386,64): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/dashboard/page.tsx(538,37): error TS2322: Type '{ children: Element; colspan: string; }' is not assignable to type 'DetailedHTMLProps<TdHTMLAttributes<HTMLTableDataCellElement>, HTMLTableDataCellElement>'.
+  Property 'colspan' does not exist on type 'DetailedHTMLProps<TdHTMLAttributes<HTMLTableDataCellElement>, HTMLTableDataCellElement>'. Did you mean 'colSpan'?
+app/superadmin/dashboard/page.tsx(578,37): error TS2322: Type '{ children: Element; colspan: string; }' is not assignable to type 'DetailedHTMLProps<TdHTMLAttributes<HTMLTableDataCellElement>, HTMLTableDataCellElement>'.
+  Property 'colspan' does not exist on type 'DetailedHTMLProps<TdHTMLAttributes<HTMLTableDataCellElement>, HTMLTableDataCellElement>'. Did you mean 'colSpan'?
+app/superadmin/dashboard/page.tsx(640,114): error TS2322: Type '{ type: "text"; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/inventory/page.tsx(94,91): error TS2322: Type '{ type: "text"; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/login/page.tsx(139,29): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/login/page.tsx(144,64): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/profile/page.tsx(499,29): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/profile/page.tsx(504,64): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/records/page.tsx(91,93): error TS2322: Type '{ type: "text"; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/records/page.tsx(302,29): error TS2322: Type '{ children: Element; colspan: string; }' is not assignable to type 'DetailedHTMLProps<TdHTMLAttributes<HTMLTableDataCellElement>, HTMLTableDataCellElement>'.
+  Property 'colspan' does not exist on type 'DetailedHTMLProps<TdHTMLAttributes<HTMLTableDataCellElement>, HTMLTableDataCellElement>'. Did you mean 'colSpan'?
+app/superadmin/sms/page.tsx(253,102): error TS2322: Type '{ className: string; id: string; placeholder: string; maxlength: string; oninput: string; }' is not assignable to type 'DetailedHTMLProps<TextareaHTMLAttributes<HTMLTextAreaElement>, HTMLTextAreaElement>'.
+  Property 'maxlength' does not exist on type 'DetailedHTMLProps<TextareaHTMLAttributes<HTMLTextAreaElement>, HTMLTextAreaElement>'. Did you mean 'maxLength'?
+app/superadmin/sms/page.tsx(282,86): error TS2322: Type '{ type: "text"; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/sms/page.tsx(379,29): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/sms/page.tsx(384,64): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/store/page.tsx(91,90): error TS2322: Type '{ type: "text"; placeholder: string; id: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/store/page.tsx(403,29): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/store/page.tsx(408,64): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/telemedicine/page.tsx(246,109): error TS2322: Type '{ type: "text"; className: string; id: string; placeholder: string; maxlength: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'maxlength' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'maxLength'?
+app/superadmin/telemedicine/page.tsx(329,29): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/telemedicine/page.tsx(334,64): error TS2322: Type '{ type: "password"; className: string; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/tutorials/page.tsx(45,91): error TS2322: Type '{ type: "text"; id: string; placeholder: string; onkeyup: string; }' is not assignable to type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'.
+  Property 'onkeyup' does not exist on type 'DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>'. Did you mean 'onKeyUp'?
+app/superadmin/tutorials/page.tsx(278,131): error TS2322: Type '{ id: string; style: { position: "absolute"; top: string; left: string; width: string; height: string; }; frameborder: string; allow: string; allowfullscreen: true; }' is not assignable to type 'DetailedHTMLProps<IframeHTMLAttributes<HTMLIFrameElement>, HTMLIFrameElement>'.
+  Property 'frameborder' does not exist on type 'DetailedHTMLProps<IframeHTMLAttributes<HTMLIFrameElement>, HTMLIFrameElement>'. Did you mean 'frameBorder'?
