@@ -5,14 +5,122 @@ import './login.css';
 
 export default function LoginPage() {
   const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [resetStep, setResetStep] = useState(1);
   const [resetEmail, setResetEmail] = useState('');
+  const [resetCode, setResetCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [resetMessage, setResetMessage] = useState('');
+  const [resetError, setResetError] = useState('');
 
-  const handleResetPassword = (e: React.FormEvent) => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSendResetEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!resetEmail) return;
-    setResetMessage(`A password reset link has been sent to ${resetEmail}`);
-    setResetEmail('');
+    
+    setIsLoading(true);
+    setResetMessage('');
+    setResetError('');
+    
+    try {
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: resetEmail }),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        setResetMessage(`A password reset code has been sent to ${resetEmail}`);
+        setResetStep(2);
+      } else {
+        setResetError(`Error: ${data.message || 'Failed to send reset code'}`);
+      }
+    } catch (error) {
+      setResetError('An error occurred. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetCode) return;
+    
+    setIsLoading(true);
+    setResetMessage('');
+    setResetError('');
+    
+    try {
+      const response = await fetch('/api/auth/verify-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: resetEmail, code: resetCode }),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        setResetMessage('Code verified successfully.');
+        setResetStep(3);
+      } else {
+        setResetError(`Error: ${data.message || 'Invalid code'}`);
+      }
+    } catch (error) {
+      setResetError('An error occurred. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSetNewPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newPassword || newPassword !== confirmNewPassword) {
+      setResetError("Passwords do not match");
+      return;
+    }
+    
+    setIsLoading(true);
+    setResetMessage('');
+    setResetError('');
+    
+    try {
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: resetEmail, code: resetCode, newPassword }),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        setResetMessage('Password reset successfully. You can now login.');
+        setTimeout(() => {
+          setIsForgotPassword(false);
+          setResetStep(1);
+          setResetEmail('');
+          setResetCode('');
+          setNewPassword('');
+          setConfirmNewPassword('');
+          setResetMessage('');
+          setResetError('');
+        }, 3000);
+      } else {
+        setResetError(`Error: ${data.message || 'Failed to reset password'}`);
+      }
+    } catch (error) {
+      setResetError('An error occurred. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -38,29 +146,76 @@ export default function LoginPage() {
               <div className="forgot-password-view">
                 <div className="login-header">
                     <h2>Reset Password</h2>
-                    <p>Enter your email to receive a reset link</p>
+                    <p>
+                      {resetStep === 1 && "Enter your email to receive a reset link"}
+                      {resetStep === 2 && "Enter the 6-digit code sent to your email"}
+                      {resetStep === 3 && "Set your new password"}
+                    </p>
                 </div>
                 {resetMessage && (
                     <div style={{ padding: '10px', background: '#c6f6d5', color: '#22543d', borderRadius: '8px', marginBottom: '15px', textAlign: 'center', fontSize: '0.9rem' }}>
                         <i className="fas fa-check-circle" style={{marginRight:'5px'}}></i> {resetMessage}
                     </div>
                 )}
-                <form onSubmit={handleResetPassword}>
-                    <div className="form-group">
-                        <label>Email Address</label>
-                        <div className="input-group">
-                            <input type="email" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} placeholder="Enter your email" required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', background: 'transparent' }} />
-                        </div>
+                {resetError && (
+                    <div style={{ padding: '10px', background: '#fed7d7', color: '#c53030', borderRadius: '8px', marginBottom: '15px', textAlign: 'center', fontSize: '0.9rem' }}>
+                        <i className="fas fa-exclamation-circle" style={{marginRight:'5px'}}></i> {resetError}
                     </div>
-                    <button type="submit" className="login-btn" style={{marginTop: '10px'}}>
-                        Send Reset Link
-                    </button>
-                    <div style={{ textAlign: 'center', marginTop: '20px' }}>
-                        <a href="#" onClick={(e) => { e.preventDefault(); setIsForgotPassword(false); setResetMessage(''); }} style={{ color: '#2E5E3E', textDecoration: 'none', fontWeight: 600 }}>
-                            <i className="fas fa-arrow-left"></i> Back to Login
-                        </a>
-                    </div>
-                </form>
+                )}
+
+                {resetStep === 1 && (
+                  <form onSubmit={handleSendResetEmail}>
+                      <div className="form-group">
+                          <label>Email Address</label>
+                          <div className="input-group">
+                              <input type="email" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} placeholder="Enter your email" required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', background: 'transparent' }} />
+                          </div>
+                      </div>
+                      <button type="submit" className="login-btn" style={{marginTop: '10px'}} disabled={isLoading}>
+                          {isLoading ? 'Sending...' : 'Send Reset Link'}
+                      </button>
+                  </form>
+                )}
+
+                {resetStep === 2 && (
+                  <form onSubmit={handleVerifyCode}>
+                      <div className="form-group">
+                          <label>6-Digit Code</label>
+                          <div className="input-group">
+                              <input type="text" value={resetCode} onChange={(e) => setResetCode(e.target.value)} placeholder="Enter code" required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', background: 'transparent' }} />
+                          </div>
+                      </div>
+                      <button type="submit" className="login-btn" style={{marginTop: '10px'}} disabled={isLoading}>
+                          {isLoading ? 'Verifying...' : 'Verify Code'}
+                      </button>
+                  </form>
+                )}
+
+                {resetStep === 3 && (
+                  <form onSubmit={handleSetNewPassword}>
+                      <div className="form-group">
+                          <label>New Password</label>
+                          <div className="input-group">
+                              <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Enter new password" required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', background: 'transparent' }} />
+                          </div>
+                      </div>
+                      <div className="form-group">
+                          <label>Confirm Password</label>
+                          <div className="input-group">
+                              <input type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} placeholder="Confirm new password" required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', background: 'transparent' }} />
+                          </div>
+                      </div>
+                      <button type="submit" className="login-btn" style={{marginTop: '10px'}} disabled={isLoading}>
+                          {isLoading ? 'Saving...' : 'Reset Password'}
+                      </button>
+                  </form>
+                )}
+
+                <div style={{ textAlign: 'center', marginTop: '20px' }}>
+                    <a href="#" onClick={(e) => { e.preventDefault(); setIsForgotPassword(false); setResetStep(1); setResetMessage(''); setResetError(''); }} style={{ color: '#2E5E3E', textDecoration: 'none', fontWeight: 600 }}>
+                        <i className="fas fa-arrow-left"></i> Back to Login
+                    </a>
+                </div>
               </div>
             ) : (
               <div className="login-view">

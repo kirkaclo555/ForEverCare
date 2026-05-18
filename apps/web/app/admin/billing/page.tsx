@@ -40,13 +40,13 @@ export default function BillingPage() {
     
     const errors: { [key: string]: string } = {};
 
-    if (!newInvoiceClient || !newInvoiceClient.trim()) errors.client = "Client Name is required";
-    if (!newInvoiceDate) errors.date = "Invoice Date is required";
+    if (!newInvoiceClient || !newInvoiceClient.trim()) errors.client = "Warning: Client Name is required";
+    if (!newInvoiceDate) errors.date = "Warning: Invoice Date is required";
 
     newInvoiceItems.forEach((item) => {
-        if (!item.name || !item.name.trim()) errors[`itemName_${item.id}`] = "Required";
-        if ((item.quantity as any) === '' || Number.isNaN(item.quantity as any) || item.quantity <= 0) errors[`itemQty_${item.id}`] = "Invalid";
-        if ((item.price as any) === '' || Number.isNaN(item.price as any) || item.price < 0) errors[`itemPrice_${item.id}`] = "Invalid";
+        if (!item.name || !item.name.trim()) errors[`itemName_${item.id}`] = "Warning: Required";
+        if ((item.quantity as any) === '' || Number.isNaN(item.quantity as any) || item.quantity <= 0) errors[`itemQty_${item.id}`] = "Warning: Invalid";
+        if ((item.price as any) === '' || Number.isNaN(item.price as any) || item.price < 0) errors[`itemPrice_${item.id}`] = "Warning: Invalid";
     });
 
     if (Object.keys(errors).length > 0) {
@@ -258,12 +258,11 @@ export default function BillingPage() {
                     <form noValidate onSubmit={handleSaveInvoice}>
                         <div className="form-group">
                             <label>Client Name *</label>
-                            <input type="text" className="form-control" value={newInvoiceClient} onChange={e => { setNewInvoiceClient(e.target.value); if (validationErrors.client) setValidationErrors({...validationErrors, client: ''}); }} placeholder="Client name" style={validationErrors.client ? {borderColor: '#e53e3e'} : {}} />
-                            {validationErrors.client && <span style={{ color: '#e53e3e', fontSize: '0.8rem', marginTop: '5px', display: 'block' }}>{validationErrors.client}</span>}
+                            <input type="text" className="form-control" value={newInvoiceClient} onChange={e => { setNewInvoiceClient(e.target.value); if (validationErrors.client) setValidationErrors({...validationErrors, client: ''}); }} placeholder={validationErrors.client || "Client name"} style={validationErrors.client ? {borderColor: '#e53e3e', color: '#e53e3e'} : {}} />
                         </div>
                         <div className="form-group">
                             <label>Invoice Date *</label>
-                            <input type="date" className="form-control" value={newInvoiceDate} onChange={e => { setNewInvoiceDate(e.target.value); if (validationErrors.date) setValidationErrors({...validationErrors, date: ''}); }} style={validationErrors.date ? {borderColor: '#e53e3e'} : {}} />
+                            <input type="date" className="form-control" value={newInvoiceDate} onChange={e => { setNewInvoiceDate(e.target.value); if (validationErrors.date) setValidationErrors({...validationErrors, date: ''}); }} style={validationErrors.date ? {borderColor: '#e53e3e', color: '#e53e3e'} : {}} />
                             {validationErrors.date && <span style={{ color: '#e53e3e', fontSize: '0.8rem', marginTop: '5px', display: 'block' }}>{validationErrors.date}</span>}
                         </div>
                         <div className="form-group">
@@ -278,16 +277,13 @@ export default function BillingPage() {
                                 {newInvoiceItems.map((item, idx) => (
                                     <div key={item.id} style={{display: 'flex', gap: '10px', marginBottom: '10px', alignItems: 'flex-start'}}>
                                         <div style={{ flex: 2, display: 'flex', flexDirection: 'column' }}>
-                                            <input type="text" className="form-control" placeholder="Item Name" value={item.name} onChange={e => { handleItemChange(item.id, 'name', e.target.value); if (validationErrors[`itemName_${item.id}`]) setValidationErrors({...validationErrors, [`itemName_${item.id}`]: ''}); }} style={{ width: '100%', borderColor: validationErrors[`itemName_${item.id}`] ? '#e53e3e' : undefined }} />
-                                            {validationErrors[`itemName_${item.id}`] && <span style={{ color: '#e53e3e', fontSize: '0.75rem', marginTop: '2px' }}>{validationErrors[`itemName_${item.id}`]}</span>}
+                                            <input type="text" className="form-control" placeholder={validationErrors[`itemName_${item.id}`] || "Item Name"} value={item.name} onChange={e => { handleItemChange(item.id, 'name', e.target.value); if (validationErrors[`itemName_${item.id}`]) setValidationErrors({...validationErrors, [`itemName_${item.id}`]: ''}); }} style={{ width: '100%', borderColor: validationErrors[`itemName_${item.id}`] ? '#e53e3e' : undefined, color: validationErrors[`itemName_${item.id}`] ? '#e53e3e' : undefined }} />
                                         </div>
                                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                            <input type="number" className="form-control" placeholder="Qty" min="1" value={Number.isNaN(item.quantity) ? '' : item.quantity} onChange={e => { handleItemChange(item.id, 'quantity', e.target.value === '' ? '' : parseInt(e.target.value)); if (validationErrors[`itemQty_${item.id}`]) setValidationErrors({...validationErrors, [`itemQty_${item.id}`]: ''}); }} style={{ width: '100%', borderColor: validationErrors[`itemQty_${item.id}`] ? '#e53e3e' : undefined }} />
-                                            {validationErrors[`itemQty_${item.id}`] && <span style={{ color: '#e53e3e', fontSize: '0.75rem', marginTop: '2px' }}>{validationErrors[`itemQty_${item.id}`]}</span>}
+                                            <input type="number" className="form-control" placeholder={validationErrors[`itemQty_${item.id}`] || "Qty"} min="1" value={Number.isNaN(item.quantity) ? '' : item.quantity} onChange={e => { handleItemChange(item.id, 'quantity', e.target.value === '' ? '' : parseInt(e.target.value)); if (validationErrors[`itemQty_${item.id}`]) setValidationErrors({...validationErrors, [`itemQty_${item.id}`]: ''}); }} style={{ width: '100%', borderColor: validationErrors[`itemQty_${item.id}`] ? '#e53e3e' : undefined, color: validationErrors[`itemQty_${item.id}`] ? '#e53e3e' : undefined }} />
                                         </div>
                                         <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-                                            <input type="number" className="form-control" placeholder="Price" min="0" step="0.01" value={Number.isNaN(item.price) ? '' : item.price} onChange={e => { handleItemChange(item.id, 'price', e.target.value === '' ? '' : parseFloat(e.target.value)); if (validationErrors[`itemPrice_${item.id}`]) setValidationErrors({...validationErrors, [`itemPrice_${item.id}`]: ''}); }} style={{ width: '100%', borderColor: validationErrors[`itemPrice_${item.id}`] ? '#e53e3e' : undefined }} />
-                                            {validationErrors[`itemPrice_${item.id}`] && <span style={{ color: '#e53e3e', fontSize: '0.75rem', marginTop: '2px' }}>{validationErrors[`itemPrice_${item.id}`]}</span>}
+                                            <input type="number" className="form-control" placeholder={validationErrors[`itemPrice_${item.id}`] || "Price"} min="0" step="0.01" value={Number.isNaN(item.price) ? '' : item.price} onChange={e => { handleItemChange(item.id, 'price', e.target.value === '' ? '' : parseFloat(e.target.value)); if (validationErrors[`itemPrice_${item.id}`]) setValidationErrors({...validationErrors, [`itemPrice_${item.id}`]: ''}); }} style={{ width: '100%', borderColor: validationErrors[`itemPrice_${item.id}`] ? '#e53e3e' : undefined, color: validationErrors[`itemPrice_${item.id}`] ? '#e53e3e' : undefined }} />
                                         </div>
                                         {newInvoiceItems.length > 1 && (
                                             <button type="button" className="btn-secondary" style={{padding: '0 10px', color: '#e53e3e', marginTop: '2px', height: '38px'}} onClick={() => handleRemoveItem(item.id)}><i className="fas fa-trash"></i></button>

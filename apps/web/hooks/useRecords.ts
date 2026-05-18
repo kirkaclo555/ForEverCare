@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 
 export interface PetRecord {
     id: string;
+    displayId?: string;
     petName: string;
     species: string;
     breed: string;
@@ -19,92 +20,87 @@ export interface PetRecord {
     veterinarian: string;
 }
 
-const mockRecords: PetRecord[] = [
-    {
-        id: "PR-1001",
-        petName: "Bella",
-        species: "Dog",
-        breed: "Golden Retriever",
-        gender: "Female",
-        age: "3 years",
-        color: "Golden",
-        weight: "25 kg",
-        ownerName: "Sarah Johnson",
-        contact: "555-0101",
-        address: "123 Maple St",
-        userName: "sjohnson",
-        pastIllness: "None",
-        previousSurgeries: "Spayed",
-        vaccine: "Up to Date",
-        veterinarian: "Dr. Smith"
-    },
-    {
-        id: "PR-1002",
-        petName: "Luna",
-        species: "Cat",
-        breed: "Siamese",
-        gender: "Female",
-        age: "2 years",
-        color: "Cream/Brown",
-        weight: "4 kg",
-        ownerName: "Michael Brown",
-        contact: "555-0102",
-        address: "456 Oak Ave",
-        userName: "mbrown",
-        pastIllness: "URI",
-        previousSurgeries: "None",
-        vaccine: "Pending",
-        veterinarian: "Dr. Davis"
-    },
-    {
-        id: "PR-1003",
-        petName: "Max",
-        species: "Dog",
-        breed: "German Shepherd",
-        gender: "Male",
-        age: "5 years",
-        color: "Black/Tan",
-        weight: "35 kg",
-        ownerName: "David Wilson",
-        contact: "555-0103",
-        address: "789 Pine Rd",
-        userName: "dwilson",
-        pastIllness: "Hip Dysplasia",
-        previousSurgeries: "None",
-        vaccine: "Overdue",
-        veterinarian: "Dr. Smith"
+const formatId = (id: string) => {
+    if (!id) return "000000";
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) {
+        hash = (hash << 5) - hash + id.charCodeAt(i);
+        hash |= 0;
     }
-];
+    return String(Math.abs(hash)).padStart(6, '0').substring(0, 6);
+};
 
 export function useRecords() {
     const [records, setRecords] = useState<PetRecord[]>([]);
 
-    useEffect(() => {
-        const stored = localStorage.getItem('furever_records');
-        if (stored) {
-            setRecords(JSON.parse(stored));
-        } else {
-            setRecords(mockRecords);
-            localStorage.setItem('furever_records', JSON.stringify(mockRecords));
+    const fetchRecords = async () => {
+        try {
+            const res = await fetch('/api/records');
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                const mappedRecords = data.map(r => ({
+                    ...r,
+                    displayId: formatId(r.id)
+                }));
+                setRecords(mappedRecords);
+            }
+        } catch (err) {
+            console.error('Failed to fetch records:', err);
         }
+    };
+
+    useEffect(() => {
+        fetchRecords();
     }, []);
 
-    const addRecord = (record: PetRecord) => {
-        const updated = [...records, record];
-        setRecords(updated);
-        localStorage.setItem('furever_records', JSON.stringify(updated));
+    const addRecord = async (recordData: any) => {
+        try {
+            const res = await fetch('/api/records', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(recordData)
+            });
+            const data = await res.json();
+            if (data.success && data.record) {
+                setRecords(prev => [data.record, ...prev]);
+                return data.record;
+            }
+        } catch (err) {
+            console.error('Failed to add record:', err);
+        }
+        return null;
     };
 
-    const updateRecord = (id: string, updatedRecord: Partial<PetRecord>) => {
-        const updated = records.map(r => r.id === id ? { ...r, ...updatedRecord } : r);
-        setRecords(updated);
-        localStorage.setItem('furever_records', JSON.stringify(updated));
+    const updateRecord = async (id: string, updatedRecord: Partial<PetRecord>) => {
+        try {
+            const res = await fetch(`/api/records/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedRecord)
+            });
+            const data = await res.json();
+            if (data.success && data.record) {
+                setRecords(prev => prev.map(r => r.id === id ? data.record : r));
+                return data.record;
+            }
+        } catch (err) {
+            console.error('Failed to update record:', err);
+        }
+        return null;
     };
 
-    const deleteRecord = (id: string) => {
-        const updated = records.filter(r => r.id !== id);
-        setRecords(updated);
-        localStorage.setItem('furever_records', JSON.stringify(updated));
+    const deleteRecord = async (id: string) => {
+        try {
+            const res = await fetch(`/api/records/${id}`, {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            if (data.success) {
+                setRecords(prev => prev.filter(r => r.id !== id));
+            }
+        } catch (err) {
+            console.error('Failed to delete record:', err);
+        }
     };
 
     return { records, addRecord, updateRecord, deleteRecord };

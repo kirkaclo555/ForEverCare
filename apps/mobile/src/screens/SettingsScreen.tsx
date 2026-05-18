@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -97,8 +97,14 @@ export default function SettingsScreen({ navigation }: Props) {
           <TouchableOpacity 
             style={[styles.settingRow, { marginTop: 10 }]} 
             onPress={() => {
-              // Usually we'd reset the stack to Login
-              navigation.replace('Login');
+              Alert.alert(
+                'Log Out',
+                'Are you sure you want to log out?',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Yes, log out', style: 'destructive', onPress: () => navigation.replace('Login') }
+                ]
+              );
             }}
           >
             <View style={styles.settingRowLeft}>

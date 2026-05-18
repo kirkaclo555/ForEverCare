@@ -2,11 +2,22 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRecords, PetRecord } from '../../../hooks/useRecords';
-import { useUsers } from '../../../hooks/useUsers';
+
+const DOG_BREEDS = ["Aspin", "Golden Retriever", "Labrador", "Poodle", "Bulldog", "Beagle", "Pug", "Chihuahua", "Shih Tzu", "Husky", "German Shepherd", "Rottweiler", "Dachshund", "Boxer", "Doberman", "Great Dane", "Pomeranian", "Corgi", "Shiba Inu", "Chow Chow", "Dalmatian", "Mixed"];
+const CAT_BREEDS = ["Puspin", "Persian", "Siamese", "Maine Coon", "Bengal", "Sphynx", "British Shorthair", "Scottish Fold", "Mixed"];
 
 export default function RecordsPage() {
     const { records, addRecord, updateRecord, deleteRecord } = useRecords();
-    const { users, addUser } = useUsers();
+    const [users, setUsers] = useState<any[]>([]);
+
+    useEffect(() => {
+        fetch('/api/users?role=USER')
+          .then(res => res.json())
+          .then(data => {
+            if (Array.isArray(data)) setUsers(data);
+          })
+          .catch(console.error);
+    }, []);
     
     // View Modal State
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -23,7 +34,6 @@ export default function RecordsPage() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
-    const [contactWarning, setContactWarning] = useState(false);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -36,10 +46,9 @@ export default function RecordsPage() {
     }, []);
 
     // Form State for Add
-    const [formData, setFormData] = useState<Partial<PetRecord>>({
-        petName: '', species: '', breed: '', gender: '', age: '',
-        color: '', weight: '', ownerName: '', contact: '', address: '',
-        userName: '', pastIllness: '', previousSurgeries: '', vaccine: 'Pending', veterinarian: ''
+    const [formData, setFormData] = useState<any>({
+        ownerId: '', petName: '', species: '', breed: '', gender: '', age: '',
+        color: '', weight: '', pastIllness: 'None', previousSurgeries: 'None', vaccine: 'Pending', veterinarian: ''
     });
 
     const openViewModal = (record: PetRecord) => {
@@ -52,48 +61,25 @@ export default function RecordsPage() {
         setSelectedRecord(null);
     };
 
-    const handleAddSubmit = (e: React.FormEvent) => {
+    const handleAddSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        const newRecord: PetRecord = {
-            id: `PR-${1000 + Math.floor(Math.random() * 9000)}`,
-            petName: formData.petName || '',
-            species: formData.species || '',
-            breed: formData.breed || '',
-            gender: formData.gender || '',
-            age: formData.age || '',
-            color: formData.color || '',
-            weight: formData.weight || '',
-            ownerName: formData.ownerName || '',
-            contact: formData.contact || '',
-            address: formData.address || '',
-            userName: formData.userName || '',
-            pastIllness: formData.pastIllness || 'None',
-            previousSurgeries: formData.previousSurgeries || 'None',
-            vaccine: formData.vaccine || 'Pending',
-            veterinarian: formData.veterinarian || ''
+        const payload = {
+            ownerId: formData.ownerId,
+            petName: formData.petName,
+            species: formData.species,
+            breed: formData.breed,
+            gender: formData.gender,
+            age: formData.age,
+            color: formData.color,
+            weight: formData.weight,
+            vaccine: formData.vaccine,
+            veterinarian: formData.veterinarian,
+            pastIllness: formData.pastIllness,
+            previousSurgeries: formData.previousSurgeries
         };
-
-        // Sync to Users
-        if (formData.ownerName) {
-            const ownerExists = users.some(u => u.name.toLowerCase() === formData.ownerName!.toLowerCase());
-            if (!ownerExists) {
-                addUser({
-                    name: formData.ownerName,
-                    email: 'pending@fureverpaw.com',
-                    contact: formData.contact || '',
-                    role: 'petowner',
-                    status: 'Active'
-                });
-            }
-        }
-
-        addRecord(newRecord);
+        await addRecord(payload);
         setIsAddModalOpen(false);
-        setFormData({
-            petName: '', species: '', breed: '', gender: '', age: '',
-            color: '', weight: '', ownerName: '', contact: '', address: '',
-            userName: '', pastIllness: '', previousSurgeries: '', vaccine: 'Pending', veterinarian: ''
-        });
+        setFormData({ vaccine: 'Pending', pastIllness: 'None', previousSurgeries: 'None', ownerId: '', petName: '', species: '', breed: '', gender: '', age: '', color: '', weight: '', veterinarian: '' });
         setSuccessMessage('Successfully added a new pet!');
     };
 
@@ -131,7 +117,7 @@ export default function RecordsPage() {
                 if (Array.isArray(parsed)) {
                     parsed.forEach(record => {
                         // Basic validation
-                        if (record.petName && record.ownerName) {
+                        if (record.petName && record.ownerId) {
                             addRecord(record);
                         }
                     });
@@ -218,10 +204,10 @@ export default function RecordsPage() {
                         <table className="data-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
                             <thead>
                                 <tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-                                    <th style={{ padding: '15px', color: '#4a5568', fontWeight: 600 }}>ID</th>
+                                    <th style={{ padding: '15px', color: '#4a5568', fontWeight: 600 }}>No.</th>
+                                    <th style={{ padding: '15px', color: '#4a5568', fontWeight: 600 }}>Owner Name</th>
                                     <th style={{ padding: '15px', color: '#4a5568', fontWeight: 600 }}>Pet Name</th>
                                     <th style={{ padding: '15px', color: '#4a5568', fontWeight: 600 }}>Pet Type / Breed</th>
-                                    <th style={{ padding: '15px', color: '#4a5568', fontWeight: 600 }}>Owner</th>
                                     <th style={{ padding: '15px', color: '#4a5568', fontWeight: 600 }}>Contact</th>
                                     <th style={{ padding: '15px', color: '#4a5568', fontWeight: 600 }}>Vaccine</th>
                                     <th style={{ padding: '15px', color: '#4a5568', fontWeight: 600, textAlign: 'center' }}>Actions</th>
@@ -231,9 +217,9 @@ export default function RecordsPage() {
                                 {currentRecords.map((record, index) => (
                                     <tr key={record.id} style={{ borderBottom: '1px solid #edf2f7', background: 'white' }}>
                                         <td style={{ padding: '15px', color: '#718096' }}><strong>{startIndex + index + 1}</strong></td>
+                                        <td style={{ padding: '15px', color: '#2d3748', fontWeight: 600 }}>{record.ownerName}</td>
                                         <td style={{ padding: '15px', color: '#2d3748', fontWeight: 600 }}>{record.petName}</td>
                                         <td style={{ padding: '15px', color: '#4a5568' }}>{record.species} ({record.breed})</td>
-                                        <td style={{ padding: '15px', color: '#4a5568' }}>{record.ownerName}</td>
                                         <td style={{ padding: '15px', color: '#718096' }}>{record.contact}</td>
                                         <td style={{ padding: '15px' }}>
                                             <span style={{
@@ -306,119 +292,136 @@ export default function RecordsPage() {
 
                 {/* View Patient Modal - Redesigned */}
                 {isViewModalOpen && selectedRecord && (
-                    <div className="modal" style={{ display: 'flex', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', zIndex: 1000, alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { if (e.target === e.currentTarget) closeViewModal(); }}>
-                        <div className="modal-content" style={{ background: '#f0f4f8', borderRadius: '24px', width: '95%', maxWidth: '900px', maxHeight: '90vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: 0 }}>
-                            {/* Header Section */}
-                            <div style={{ background: 'white', padding: '30px', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #e2e8f0' }}>
-                                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                                    <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'linear-gradient(135deg, #2E5E3E, #1a4d2e)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '2.5rem', boxShadow: '0 10px 25px rgba(46, 94, 62, 0.2)' }}>
-                                        <i className={selectedRecord.species?.toLowerCase() === 'cat' ? 'fas fa-cat' : 'fas fa-dog'}></i>
-                                    </div>
-                                    <div>
-                                        <h2 style={{ margin: '0 0 5px 0', color: '#2d3748', fontSize: '2rem', fontWeight: 800 }}>{selectedRecord.petName}</h2>
-                                        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                                            <span style={{ background: '#edf2f7', color: '#4a5568', padding: '4px 10px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600 }}>{selectedRecord.id}</span>
-                                            <span style={{ color: '#718096', fontSize: '0.95rem' }}>{selectedRecord.breed} ({selectedRecord.species})</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div style={{ display: 'flex', gap: '10px' }}>
-                                    <button className="print-btn" onClick={() => window.print()} style={{ background: 'white', color: '#4a5568', border: '1px solid #e2e8f0', padding: '10px 15px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, boxShadow: '0 2px 5px rgba(0,0,0,0.02)' }}>
+                    <div className="modal" style={{ display: 'flex', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 1000, alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }} onClick={(e) => { if (e.target === e.currentTarget) closeViewModal(); }}>
+                        <div className="modal-content" style={{ background: '#f8fafc', borderRadius: '24px', width: '90%', maxWidth: '850px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)' }}>
+                            
+                            {/* Formal Header */}
+                            <div style={{ background: 'linear-gradient(135deg, #2E5E3E 0%, #1a3622 100%)', padding: '30px 40px', position: 'relative', borderTopLeftRadius: '24px', borderTopRightRadius: '24px' }}>
+                                <div style={{ position: 'absolute', top: '20px', right: '20px', display: 'flex', gap: '10px' }}>
+                                    <button className="print-btn" onClick={() => window.print()} style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, transition: '0.2s', backdropFilter: 'blur(4px)' }}>
                                         <i className="fas fa-print"></i> Print Record
                                     </button>
-                                    <button className="modal-close" onClick={closeViewModal} style={{ background: 'white', border: '1px solid #e2e8f0', padding: '10px 15px', borderRadius: '12px', color: '#a0aec0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.02)' }}><i className="fas fa-times"></i></button>
+                                    <button className="modal-close" onClick={closeViewModal} style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: 'none', width: '36px', height: '36px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s' }}>
+                                        <i className="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+                                    <div style={{ width: '80px', height: '80px', background: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.2)' }}>
+                                        <i className={`fas fa-${selectedRecord.species?.toLowerCase() === 'cat' ? 'cat' : 'dog'}`} style={{ fontSize: '36px', color: '#2E5E3E' }}></i>
+                                    </div>
+                                    <div>
+                                        <h2 style={{ color: 'white', margin: '0 0 5px 0', fontSize: '2rem', fontWeight: 700, letterSpacing: '-0.5px' }}>{selectedRecord.petName}</h2>
+                                        <div style={{ display: 'flex', gap: '15px', color: '#e2e8f0', fontSize: '0.95rem' }}>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><i className="fas fa-paw"></i> {selectedRecord.species} • {selectedRecord.breed}</span>
+                                            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><i className="fas fa-id-badge"></i> ID: {selectedRecord.displayId || selectedRecord.id.substring(0,8)}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            
-                            {/* Body Layout */}
-                            <div className="modal-body" style={{ padding: '30px', display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '25px', gridAutoRows: 'min-content' }}>
-                                {/* Left Column: Pet Info & Medical */}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
-                                    <div style={{ background: 'white', padding: '25px', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
-                                        <h3 style={{ margin: '0 0 20px 0', color: '#2d3748', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }}><i className="fas fa-info-circle" style={{ color: '#2E5E3E' }}></i> Pet Information</h3>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                            <div><p style={{ margin: 0, fontSize: '0.85rem', color: '#a0aec0', fontWeight: 600, textTransform: 'uppercase' }}>Gender</p><p style={{ margin: '5px 0 0 0', color: '#4a5568', fontWeight: 500 }}>{selectedRecord.gender || 'Unknown'}</p></div>
-                                            <div><p style={{ margin: 0, fontSize: '0.85rem', color: '#a0aec0', fontWeight: 600, textTransform: 'uppercase' }}>Age</p><p style={{ margin: '5px 0 0 0', color: '#4a5568', fontWeight: 500 }}>{selectedRecord.age || 'Unknown'}</p></div>
-                                            <div><p style={{ margin: 0, fontSize: '0.85rem', color: '#a0aec0', fontWeight: 600, textTransform: 'uppercase' }}>Color</p><p style={{ margin: '5px 0 0 0', color: '#4a5568', fontWeight: 500 }}>{selectedRecord.color || 'Unknown'}</p></div>
-                                            <div><p style={{ margin: 0, fontSize: '0.85rem', color: '#a0aec0', fontWeight: 600, textTransform: 'uppercase' }}>Weight</p><p style={{ margin: '5px 0 0 0', color: '#4a5568', fontWeight: 500 }}>{selectedRecord.weight || 'Unknown'}</p></div>
-                                        </div>
-                                    </div>
 
-                                    <div style={{ background: 'white', padding: '25px', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
-                                        <h3 style={{ margin: '0 0 20px 0', color: '#2d3748', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }}><i className="fas fa-notes-medical" style={{ color: '#2E5E3E' }}></i> Medical History</h3>
+                            {/* Modal Body */}
+                            <div className="modal-body" style={{ padding: '40px' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px' }}>
+                                    
+                                    {/* Left Column */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
                                         
-                                        <div style={{ marginBottom: '20px' }}>
-                                            <p style={{ margin: 0, fontSize: '0.85rem', color: '#a0aec0', fontWeight: 600, textTransform: 'uppercase' }}>Vaccination Status</p>
-                                            <div style={{ marginTop: '8px' }}>
-                                                <span style={{
-                                                    padding: '6px 14px',
-                                                    borderRadius: '20px',
-                                                    fontSize: '0.9rem',
-                                                    fontWeight: 700,
-                                                    background: selectedRecord.vaccine === 'Up to Date' ? '#c6f6d5' : selectedRecord.vaccine === 'Overdue' ? '#fed7d7' : '#feebc8',
-                                                    color: selectedRecord.vaccine === 'Up to Date' ? '#22543d' : selectedRecord.vaccine === 'Overdue' ? '#9b2c2c' : '#7b341e',
-                                                    display: 'inline-flex',
-                                                    alignItems: 'center',
-                                                    gap: '6px'
-                                                }}>
-                                                    <i className={selectedRecord.vaccine === 'Up to Date' ? "fas fa-check-circle" : selectedRecord.vaccine === 'Overdue' ? "fas fa-exclamation-circle" : "fas fa-clock"}></i>
-                                                    {selectedRecord.vaccine}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        <div style={{ background: '#fff5f5', padding: '15px', borderRadius: '12px', marginBottom: '15px', borderLeft: '4px solid #fc8181' }}>
-                                            <p style={{ margin: '0 0 5px 0', color: '#c53030', fontWeight: 700, fontSize: '0.9rem' }}><i className="fas fa-procedures"></i> Past Illnesses</p>
-                                            <p style={{ margin: 0, color: '#4a5568', fontSize: '0.95rem' }}>{selectedRecord.pastIllness || 'None reported'}</p>
-                                        </div>
-
-                                        <div style={{ background: '#ebf4ff', padding: '15px', borderRadius: '12px', borderLeft: '4px solid #63b3ed' }}>
-                                            <p style={{ margin: '0 0 5px 0', color: '#2b6cb0', fontWeight: 700, fontSize: '0.9rem' }}><i className="fas fa-syringe"></i> Previous Surgeries</p>
-                                            <p style={{ margin: 0, color: '#4a5568', fontSize: '0.95rem' }}>{selectedRecord.previousSurgeries || 'None reported'}</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Right Column: Owner Info & Clinic */}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
-                                    <div style={{ background: 'white', padding: '25px', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                                            <h3 style={{ margin: 0, color: '#2d3748', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }}><i className="fas fa-user" style={{ color: '#2E5E3E' }}></i> Owner Details</h3>
-                                            <span style={{ background: '#e6fffa', color: '#319795', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 600 }}>Linked Account</span>
-                                        </div>
-                                        
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: '#edf2f7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a0aec0', fontSize: '1.2rem' }}><i className="fas fa-user"></i></div>
+                                        {/* Pet Information Card */}
+                                        <div style={{ background: 'white', padding: '25px', borderRadius: '16px', boxShadow: '0 2px 10px rgba(0,0,0,0.02)', border: '1px solid #edf2f7' }}>
+                                            <h4 style={{ margin: '0 0 20px 0', color: '#2d3748', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '2px solid #f1f5f9', paddingBottom: '10px' }}>
+                                                <i className="fas fa-info-circle" style={{ color: '#2E5E3E' }}></i> General Information
+                                            </h4>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                                                 <div>
-                                                    <p style={{ margin: 0, color: '#2d3748', fontWeight: 700 }}>{selectedRecord.ownerName}</p>
-                                                    <p style={{ margin: '2px 0 0 0', color: '#718096', fontSize: '0.85rem' }}>Pet Owner</p>
+                                                    <p style={{ margin: '0 0 4px 0', color: '#a0aec0', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase' }}>Gender</p>
+                                                    <p style={{ margin: 0, color: '#2d3748', fontWeight: 500 }}>{selectedRecord.gender}</p>
+                                                </div>
+                                                <div>
+                                                    <p style={{ margin: '0 0 4px 0', color: '#a0aec0', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase' }}>Age</p>
+                                                    <p style={{ margin: 0, color: '#2d3748', fontWeight: 500 }}>{selectedRecord.age}</p>
+                                                </div>
+                                                <div>
+                                                    <p style={{ margin: '0 0 4px 0', color: '#a0aec0', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase' }}>Color</p>
+                                                    <p style={{ margin: 0, color: '#2d3748', fontWeight: 500 }}>{selectedRecord.color}</p>
+                                                </div>
+                                                <div>
+                                                    <p style={{ margin: '0 0 4px 0', color: '#a0aec0', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase' }}>Weight</p>
+                                                    <p style={{ margin: 0, color: '#2d3748', fontWeight: 500 }}>{selectedRecord.weight}</p>
                                                 </div>
                                             </div>
-                                            <hr style={{ border: 'none', borderTop: '1px solid #edf2f7', margin: '5px 0' }} />
-                                            <div>
-                                                <p style={{ margin: '0 0 5px 0', fontSize: '0.85rem', color: '#a0aec0', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}><i className="fas fa-phone-alt"></i> Contact Number</p>
-                                                <p style={{ margin: 0, color: '#4a5568', fontWeight: 500 }}>{selectedRecord.contact}</p>
-                                            </div>
-                                            <div>
-                                                <p style={{ margin: '0 0 5px 0', fontSize: '0.85rem', color: '#a0aec0', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}><i className="fas fa-map-marker-alt"></i> Address</p>
-                                                <p style={{ margin: 0, color: '#4a5568', fontWeight: 500, lineHeight: 1.4 }}>{selectedRecord.address || 'No address provided'}</p>
-                                            </div>
-                                            <div>
-                                                <p style={{ margin: '0 0 5px 0', fontSize: '0.85rem', color: '#a0aec0', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}><i className="fas fa-at"></i> Username / Email</p>
-                                                <p style={{ margin: 0, color: '#4a5568', fontWeight: 500 }}>{selectedRecord.userName || 'N/A'}</p>
+                                        </div>
+
+                                        {/* Owner Information Card */}
+                                        <div style={{ background: 'white', padding: '25px', borderRadius: '16px', boxShadow: '0 2px 10px rgba(0,0,0,0.02)', border: '1px solid #edf2f7' }}>
+                                            <h4 style={{ margin: '0 0 20px 0', color: '#2d3748', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '2px solid #f1f5f9', paddingBottom: '10px' }}>
+                                                <i className="fas fa-user" style={{ color: '#2E5E3E' }}></i> Owner Details
+                                            </h4>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                                                <div>
+                                                    <p style={{ margin: '0 0 4px 0', color: '#a0aec0', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase' }}>Owner Name</p>
+                                                    <p style={{ margin: 0, color: '#2d3748', fontWeight: 500 }}>{selectedRecord.ownerName}</p>
+                                                </div>
+                                                <div>
+                                                    <p style={{ margin: '0 0 4px 0', color: '#a0aec0', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase' }}>Contact Number</p>
+                                                    <p style={{ margin: 0, color: '#2d3748', fontWeight: 500 }}>{selectedRecord.contact}</p>
+                                                </div>
+                                                <div>
+                                                    <p style={{ margin: '0 0 4px 0', color: '#a0aec0', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase' }}>Address</p>
+                                                    <p style={{ margin: 0, color: '#2d3748', fontWeight: 500 }}>{selectedRecord.address}</p>
+                                                </div>
+                                                <div>
+                                                    <p style={{ margin: '0 0 4px 0', color: '#a0aec0', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase' }}>App User Profile</p>
+                                                    <p style={{ margin: 0, color: '#2d3748', fontWeight: 500 }}>{selectedRecord.userName}</p>
+                                                </div>
                                             </div>
                                         </div>
+
                                     </div>
 
-                                    <div style={{ background: 'white', padding: '25px', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
-                                        <h3 style={{ margin: '0 0 20px 0', color: '#2d3748', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }}><i className="fas fa-clinic-medical" style={{ color: '#2E5E3E' }}></i> Clinic Assignment</h3>
-                                        <div>
-                                            <p style={{ margin: '0 0 5px 0', fontSize: '0.85rem', color: '#a0aec0', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}><i className="fas fa-user-md"></i> Primary Veterinarian</p>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '10px' }}>
-                                                <div style={{ width: '35px', height: '35px', borderRadius: '50%', background: '#e6fffa', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#319795' }}><i className="fas fa-stethoscope"></i></div>
-                                                <p style={{ margin: 0, color: '#2d3748', fontWeight: 600 }}>{selectedRecord.veterinarian || 'Not assigned'}</p>
+                                    {/* Right Column */}
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
+                                        
+                                        {/* Medical Status Card */}
+                                        <div style={{ background: 'white', padding: '25px', borderRadius: '16px', boxShadow: '0 2px 10px rgba(0,0,0,0.02)', border: '1px solid #edf2f7' }}>
+                                            <h4 style={{ margin: '0 0 20px 0', color: '#2d3748', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '2px solid #f1f5f9', paddingBottom: '10px' }}>
+                                                <i className="fas fa-stethoscope" style={{ color: '#2E5E3E' }}></i> Medical Profile
+                                            </h4>
+                                            
+                                            <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc', padding: '15px', borderRadius: '12px' }}>
+                                                <div>
+                                                    <p style={{ margin: '0 0 4px 0', color: '#a0aec0', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase' }}>Vaccination Status</p>
+                                                    <p style={{ margin: 0, color: '#2d3748', fontWeight: 600 }}>{selectedRecord.vaccine}</p>
+                                                </div>
+                                                <div style={{ 
+                                                    width: '40px', height: '40px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    background: selectedRecord.vaccine === 'Up to Date' ? '#c6f6d5' : selectedRecord.vaccine === 'Overdue' ? '#fed7d7' : '#feebc8',
+                                                    color: selectedRecord.vaccine === 'Up to Date' ? '#22543d' : selectedRecord.vaccine === 'Overdue' ? '#9b2c2c' : '#7b341e'
+                                                }}>
+                                                    <i className={`fas ${selectedRecord.vaccine === 'Up to Date' ? 'fa-check' : selectedRecord.vaccine === 'Overdue' ? 'fa-exclamation-triangle' : 'fa-clock'}`}></i>
+                                                </div>
                                             </div>
+
+                                            <div style={{ marginBottom: '20px' }}>
+                                                <p style={{ margin: '0 0 4px 0', color: '#a0aec0', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase' }}>Primary Veterinarian</p>
+                                                <p style={{ margin: 0, color: '#2d3748', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                    <i className="fas fa-user-md" style={{ color: '#4a5568' }}></i> {selectedRecord.veterinarian || 'Not specified'}
+                                                </p>
+                                            </div>
+
+                                            <div style={{ marginBottom: '15px' }}>
+                                                <p style={{ margin: '0 0 6px 0', color: '#a0aec0', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase' }}>Past Illnesses</p>
+                                                <div style={{ background: '#fffbeb', padding: '12px 15px', borderRadius: '8px', borderLeft: '4px solid #f59e0b' }}>
+                                                    <p style={{ margin: 0, color: '#92400e', fontSize: '0.95rem', lineHeight: '1.4' }}>{selectedRecord.pastIllness || 'None'}</p>
+                                                </div>
+                                            </div>
+
+                                            <div>
+                                                <p style={{ margin: '0 0 6px 0', color: '#a0aec0', fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase' }}>Previous Surgeries</p>
+                                                <div style={{ background: '#fef2f2', padding: '12px 15px', borderRadius: '8px', borderLeft: '4px solid #ef4444' }}>
+                                                    <p style={{ margin: 0, color: '#991b1b', fontSize: '0.95rem', lineHeight: '1.4' }}>{selectedRecord.previousSurgeries || 'None'}</p>
+                                                </div>
+                                            </div>
+
                                         </div>
                                     </div>
                                 </div>
@@ -429,38 +432,82 @@ export default function RecordsPage() {
 
                 {/* Add Patient Modal */}
                 {isAddModalOpen && (
-                    <div className="modal" style={{ display: 'flex', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', zIndex: 1000, alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { if (e.target === e.currentTarget) setIsAddModalOpen(false); }}>
-                        <div className="modal-content" style={{ background: 'white', padding: '30px', borderRadius: '20px', width: '90%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto' }}>
-                            <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #edf2f7', paddingBottom: '15px', marginBottom: '20px' }}>
-                                <h3 style={{ margin: 0, color: '#2d3748', display: 'flex', alignItems: 'center', gap: '10px' }}><i className="fas fa-plus-circle" style={{ color: '#2E5E3E' }}></i> Add New Pet</h3>
-                                <button className="modal-close" onClick={() => setIsAddModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: '#a0aec0', cursor: 'pointer' }}><i className="fas fa-times"></i></button>
-                            </div>
-                            <form onSubmit={handleAddSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                <div><label style={{ fontSize: '0.85rem', color: '#4a5568', fontWeight: 600 }}>Pet Name *</label><input type="text" required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '5px' }} value={formData.petName} onChange={(e) => setFormData({...formData, petName: e.target.value})} /></div>
-                                <div><label style={{ fontSize: '0.85rem', color: '#4a5568', fontWeight: 600 }}>Pet Type *</label><select required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '5px' }} value={formData.species} onChange={(e) => setFormData({...formData, species: e.target.value})}><option value="">Select</option><option value="Dog">Dog</option><option value="Cat">Cat</option></select></div>
-                                <div><label style={{ fontSize: '0.85rem', color: '#4a5568', fontWeight: 600 }}>Breed</label><input type="text" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '5px' }} value={formData.breed} onChange={(e) => setFormData({...formData, breed: e.target.value})} /></div>
-                                <div><label style={{ fontSize: '0.85rem', color: '#4a5568', fontWeight: 600 }}>Gender</label><select style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '5px' }} value={formData.gender} onChange={(e) => setFormData({...formData, gender: e.target.value})}><option value="">Select</option><option value="Male">Male</option><option value="Female">Female</option></select></div>
-                                <div><label style={{ fontSize: '0.85rem', color: '#4a5568', fontWeight: 600 }}>Owner Name *</label><input type="text" required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '5px' }} value={formData.ownerName} onChange={(e) => setFormData({...formData, ownerName: e.target.value})} /></div>
+                    <div className="modal" style={{ display: 'flex', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 1000, alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)' }} onClick={(e) => { if (e.target === e.currentTarget) setIsAddModalOpen(false); }}>
+                        <div className="modal-content" style={{ background: '#f8fafc', borderRadius: '24px', width: '90%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)' }}>
+                            <div className="modal-header" style={{ background: 'linear-gradient(135deg, #2E5E3E 0%, #1a3622 100%)', padding: '30px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTopLeftRadius: '24px', borderTopRightRadius: '24px' }}>
                                 <div>
-                                    <label style={{ fontSize: '0.85rem', color: '#4a5568', fontWeight: 600 }}>Contact # *</label>
-                                    <input 
-                                        type="text" 
-                                        required 
-                                        style={{ width: '100%', padding: '10px', borderRadius: '8px', border: `1px solid ${contactWarning ? '#fc8181' : '#e2e8f0'}`, marginTop: '5px', outline: contactWarning ? 'none' : undefined, boxShadow: contactWarning ? '0 0 0 1px #fc8181' : 'none' }} 
-                                        value={formData.contact} 
-                                        onChange={(e) => {
-                                            const val = e.target.value;
-                                            if (/\D/.test(val)) {
-                                                setContactWarning(true);
-                                                setTimeout(() => setContactWarning(false), 3000);
-                                            }
-                                            setFormData({...formData, contact: val.replace(/\D/g, '')});
-                                        }} 
-                                    />
-                                    {contactWarning && <p style={{ color: '#e53e3e', fontSize: '0.8rem', margin: '5px 0 0 0', display: 'flex', alignItems: 'center', gap: '5px' }}><i className="fas fa-exclamation-circle"></i> Numbers only</p>}
+                                    <h3 style={{ margin: 0, color: 'white', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1.8rem', fontWeight: 800 }}><i className="fas fa-plus-circle"></i> Add New Pet</h3>
+                                    <p style={{ color: '#e2e8f0', margin: '8px 0 0 0', fontSize: '1rem', opacity: 0.9 }}>Register a new pet to the system</p>
                                 </div>
-                                <div style={{ gridColumn: 'span 2' }}>
-                                    <button type="submit" className="btn-primary" style={{ width: '100%', padding: '12px', borderRadius: '8px', border: 'none', background: '#2E5E3E', color: 'white', cursor: 'pointer', fontWeight: 600, marginTop: '10px' }}>Save Pet</button>
+                                <button type="button" className="modal-close" onClick={() => setIsAddModalOpen(false)} style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: 'none', width: '40px', height: '40px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s', backdropFilter: 'blur(4px)' }}>
+                                    <i className="fas fa-times" style={{ fontSize: '1.2rem' }}></i>
+                                </button>
+                            </div>
+                            
+                            <form onSubmit={handleAddSubmit}>
+                                <div className="modal-body" style={{ padding: '30px 40px' }}>
+                                    <div style={{ background: 'white', padding: '25px', borderRadius: '16px', boxShadow: '0 2px 10px rgba(0,0,0,0.02)', border: '1px solid #edf2f7' }}>
+                                        <h4 style={{ margin: '0 0 20px 0', color: '#2d3748', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '2px solid #f1f5f9', paddingBottom: '10px' }}>
+                                            <i className="fas fa-paw" style={{ color: '#2E5E3E' }}></i> Pet Details
+                                        </h4>
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                                                <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Owner *</label>
+                                                <select required style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#f8fafc', fontSize: '0.95rem', color: '#2d3748', transition: '0.2s' }} value={formData.ownerId} onChange={(e) => setFormData({...formData, ownerId: e.target.value})}>
+                                                    <option value="">Select Owner</option>
+                                                    {users.map(u => (
+                                                        <option key={u.id} value={u.id}>{u.fullName || u.name} ({u.email})</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="form-group">
+                                                <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Pet Name *</label>
+                                                <input type="text" required style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#f8fafc', fontSize: '0.95rem', color: '#2d3748', transition: '0.2s' }} value={formData.petName} onChange={(e) => setFormData({...formData, petName: e.target.value})} placeholder="Buddy" />
+                                            </div>
+                                            <div className="form-group">
+                                                <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Species *</label>
+                                                <select required style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#f8fafc', fontSize: '0.95rem', color: '#2d3748', transition: '0.2s' }} value={formData.species} onChange={(e) => setFormData({...formData, species: e.target.value})}>
+                                                    <option value="">Select</option>
+                                                    <option value="Dog">Dog</option>
+                                                    <option value="Cat">Cat</option>
+                                                    <option value="Bird">Bird</option>
+                                                    <option value="Rabbit">Rabbit</option>
+                                                    <option value="Other">Other</option>
+                                                </select>
+                                            </div>
+                                            <div className="form-group">
+                                                <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Breed</label>
+                                                {['Dog', 'Cat'].includes(formData.species) ? (
+                                                    <select style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#f8fafc', fontSize: '0.95rem', color: '#2d3748', transition: '0.2s' }} value={formData.breed} onChange={(e) => setFormData({...formData, breed: e.target.value})}>
+                                                        <option value="">Select Breed</option>
+                                                        {(formData.species === 'Dog' ? DOG_BREEDS : CAT_BREEDS).map(b => (
+                                                            <option key={b} value={b}>{b}</option>
+                                                        ))}
+                                                    </select>
+                                                ) : (
+                                                    <input type="text" style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#f8fafc', fontSize: '0.95rem', color: '#2d3748', transition: '0.2s' }} value={formData.breed} onChange={(e) => setFormData({...formData, breed: e.target.value})} placeholder="E.g. Golden Retriever" />
+                                                )}
+                                            </div>
+                                            <div className="form-group">
+                                                <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Gender</label>
+                                                <select style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#f8fafc', fontSize: '0.95rem', color: '#2d3748', transition: '0.2s' }} value={formData.gender} onChange={(e) => setFormData({...formData, gender: e.target.value})}>
+                                                    <option value="">Select</option>
+                                                    <option value="Male">Male</option>
+                                                    <option value="Female">Female</option>
+                                                </select>
+                                            </div>
+                                            <div className="form-group">
+                                                <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Age (Years)</label>
+                                                <input type="text" style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', border: '1px solid #e2e8f0', background: '#f8fafc', fontSize: '0.95rem', color: '#2d3748', transition: '0.2s' }} value={formData.age} onChange={(e) => setFormData({...formData, age: e.target.value})} placeholder="3" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '15px', padding: '25px 40px', background: '#f8fafc', borderTop: '1px solid #edf2f7', borderBottomLeftRadius: '24px', borderBottomRightRadius: '24px' }}>
+                                    <button type="button" onClick={() => setIsAddModalOpen(false)} style={{ padding: '12px 24px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, color: '#4a5568', fontSize: '0.95rem', transition: '0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>Cancel</button>
+                                    <button type="submit" style={{ padding: '12px 24px', background: 'linear-gradient(135deg, #2E5E3E 0%, #1a3622 100%)', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, color: 'white', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px', transition: '0.2s', boxShadow: '0 4px 15px rgba(46, 94, 62, 0.3)' }}>
+                                        <i className="fas fa-check"></i> Save Pet
+                                    </button>
                                 </div>
                             </form>
                         </div>

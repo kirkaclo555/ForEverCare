@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useUser } from './UserContext';
 
 export type PetProfile = {
   id: string;
@@ -27,43 +28,70 @@ export const usePetContext = () => {
   }
   return context;
 };
+
 export const PetProvider = ({ children }: { children: ReactNode }) => {
-  const [pets, setPets] = useState<PetProfile[]>([
-    { id: '1', name: 'Max', species: 'Dog', breed: 'Golden Retriever', age: '3 yrs', weight: '28.5 kg', gender: 'Male', avatar: 'dog' },
-    { id: '2', name: 'Luna', species: 'Cat', breed: 'Persian', age: '2.5 yrs', weight: '4.2 kg', gender: 'Female', avatar: 'cat' },
-  ]);
+  const [pets, setPets] = useState<PetProfile[]>([]);
+  const { user } = useUser();
 
-  useEffect(() => {
-    const loadPets = async () => {
-      try {
-        const storedPets = await AsyncStorage.getItem('@pet_records');
-        if (storedPets) {
-          setPets(JSON.parse(storedPets));
-        }
-      } catch (e) {
-        console.error('Failed to load pet records', e);
-      }
-    };
-    loadPets();
-  }, []);
-
-  const savePets = async (newPets: PetProfile[]) => {
-    setPets(newPets);
+  const fetchPets = async () => {
+    if (!user || !user.id) return;
     try {
-      await AsyncStorage.setItem('@pet_records', JSON.stringify(newPets));
+      const res = await fetch(`http://192.168.100.16:3000/api/pets?userId=${user.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setPets(data);
+        await AsyncStorage.setItem('@pet_records', JSON.stringify(data));
+      }
     } catch (e) {
-      console.error('Failed to save pet records', e);
+      console.error('Failed to fetch pets from API', e);
+      // Fallback to local storage if offline
+      const storedPets = await AsyncStorage.getItem('@pet_records');
+      if (storedPets) setPets(JSON.parse(storedPets));
     }
   };
 
-  const addPet = (pet: PetProfile) => {
+  useEffect(() => {
+    fetchPets();
+  }, [user?.id]);
+
+  const addPet = async (pet: PetProfile) => {
+    if (!user || !user.id) return;
+    // Optimistic update
     const newPets = [...pets, pet];
-    savePets(newPets);
+    setPets(newPets);
+    
+    try {
+      const res = await fetch('http://192.168.100.16:3000/api/pets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, pet })
+      });
+      if (res.ok) {
+        fetchPets(); // Refresh with real ID
+      }
+    } catch (e) {
+      console.error('Failed to add pet to API', e);
+    }
   };
 
-  const updatePet = (pet: PetProfile) => {
+  const updatePet = async (pet: PetProfile) => {
+    if (!user || !user.id) return;
+    // Optimistic update
     const newPets = pets.map(p => p.id === pet.id ? pet : p);
-    savePets(newPets);
+    setPets(newPets);
+    
+    try {
+      const res = await fetch('http://192.168.100.16:3000/api/pets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, pet })
+      });
+      if (res.ok) {
+        fetchPets(); // Refresh
+      }
+    } catch (e) {
+      console.error('Failed to update pet to API', e);
+    }
   };
 
   return (

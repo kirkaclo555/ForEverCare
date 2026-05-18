@@ -13,6 +13,7 @@ export default function InventoryPage() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
   const [newItem, setNewItem] = useState({ name: '', category: '', description: '', dosageForm: '', expiryDate: '', stock: '', price: '' });
+  const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
   
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [categoryFilter, setCategoryFilter] = useState('all');
@@ -34,32 +35,36 @@ export default function InventoryPage() {
           setEditingId(null);
           setNewItem({ name: '', category: '', description: '', dosageForm: '', expiryDate: '', stock: '', price: '' });
       }
+      setValidationErrors({});
       setIsItemModalOpen(true);
   };
   const closeItemModal = () => {
       setIsItemModalOpen(false);
       setEditingId(null);
+      setValidationErrors({});
       setNewItem({ name: '', category: '', description: '', dosageForm: '', expiryDate: '', stock: '', price: '' });
   };
 
   const saveItem = () => {
     const isMedOrVac = newItem.category === 'medicine' || newItem.category === 'vaccine';
     
-    const missingFields = [];
-    if (!newItem.name) missingFields.push("Item Name");
-    if (!newItem.category) missingFields.push("Category");
-    if (!newItem.description) missingFields.push("Description");
-    if (!newItem.stock) missingFields.push("Stock Quantity");
-    if (!newItem.price) missingFields.push("Unit Price");
+    const errors: { [key: string]: string } = {};
+    if (!newItem.name) errors.name = "Warning: Item Name is required";
+    if (!newItem.category) errors.category = "Warning: Category is required";
+    if (!newItem.description) errors.description = "Warning: Description is required";
+    if (!newItem.stock) errors.stock = "Warning: Stock Quantity is required";
+    if (!newItem.price) errors.price = "Warning: Unit Price is required";
     
     if (isMedOrVac) {
-        if (!newItem.dosageForm) missingFields.push("Dosage Form");
-        if (!newItem.expiryDate) missingFields.push("Expiration Date");
+        if (!newItem.dosageForm) errors.dosageForm = "Warning: Dosage Form is required";
+        if (!newItem.expiryDate) errors.expiryDate = "Warning: Expiration Date is required";
     }
 
-    if (missingFields.length > 0) {
-        return setWarningMessage(`Please fill in the following missing fields:\n- ${missingFields.join('\n- ')}`);
+    if (Object.keys(errors).length > 0) {
+        setValidationErrors(errors);
+        return;
     }
+    setValidationErrors({});
     
     const isDuplicate = items.some(item => item.name.trim().toLowerCase() === newItem.name.trim().toLowerCase() && item.id !== editingId);
     if (isDuplicate) {
@@ -245,12 +250,12 @@ export default function InventoryPage() {
                     <input type="hidden" id="itemId" />
                     <div className="form-group">
                         <label><i className="fas fa-tag"></i> Item Name *</label>
-                        <input type="text" className="form-control" value={newItem.name} onChange={e => setNewItem({...newItem, name: e.target.value})} required />
+                        <input type="text" className="form-control" placeholder={validationErrors.name || ""} value={newItem.name} onChange={e => { setNewItem({...newItem, name: e.target.value}); if (validationErrors.name) setValidationErrors({...validationErrors, name: ''}); }} required style={validationErrors.name ? {borderColor: '#e53e3e', color: '#e53e3e'} : {}} />
                     </div>
                     <div className="form-group">
                         <label><i className="fas fa-folder"></i> Category *</label>
-                        <select className="form-select" value={newItem.category} onChange={e => setNewItem({...newItem, category: e.target.value})} required>
-                            <option value="">Select Category</option>
+                        <select className="form-select" value={newItem.category} onChange={e => { setNewItem({...newItem, category: e.target.value}); if (validationErrors.category) setValidationErrors({...validationErrors, category: ''}); }} required style={validationErrors.category ? {borderColor: '#e53e3e', color: '#e53e3e'} : {}}>
+                            <option value="">{validationErrors.category || "Select Category"}</option>
                             <option value="medicine">Medicine</option>
                             <option value="vaccine">Vaccine</option>
                             <option value="equipment">Equipment</option>
@@ -261,29 +266,30 @@ export default function InventoryPage() {
                     </div>
                     <div className="form-group">
                         <label><i className="fas fa-align-left"></i> Description *</label>
-                        <input type="text" className="form-control" value={newItem.description} onChange={e => setNewItem({...newItem, description: e.target.value})} required />
+                        <input type="text" className="form-control" placeholder={validationErrors.description || ""} value={newItem.description} onChange={e => { setNewItem({...newItem, description: e.target.value}); if (validationErrors.description) setValidationErrors({...validationErrors, description: ''}); }} required style={validationErrors.description ? {borderColor: '#e53e3e', color: '#e53e3e'} : {}} />
                     </div>
                     {(newItem.category === 'medicine' || newItem.category === 'vaccine') && (
                         <div className="form-group">
                             <label><i className="fas fa-capsules"></i> Dosage Form *</label>
-                            <input type="text" className="form-control" value={newItem.dosageForm} onChange={e => setNewItem({...newItem, dosageForm: e.target.value})} required />
+                            <input type="text" className="form-control" placeholder={validationErrors.dosageForm || ""} value={newItem.dosageForm} onChange={e => { setNewItem({...newItem, dosageForm: e.target.value}); if (validationErrors.dosageForm) setValidationErrors({...validationErrors, dosageForm: ''}); }} required style={validationErrors.dosageForm ? {borderColor: '#e53e3e', color: '#e53e3e'} : {}} />
                         </div>
                     )}
                     <div className="form-row">
                         {(newItem.category === 'medicine' || newItem.category === 'vaccine') && (
                             <div className="form-group">
                                 <label><i className="fas fa-calendar"></i> Expiration Date *</label>
-                                <input type="date" className="form-control" value={newItem.expiryDate} onChange={e => setNewItem({...newItem, expiryDate: e.target.value})} required />
+                                <input type="date" className="form-control" value={newItem.expiryDate} onChange={e => { setNewItem({...newItem, expiryDate: e.target.value}); if (validationErrors.expiryDate) setValidationErrors({...validationErrors, expiryDate: ''}); }} required style={validationErrors.expiryDate ? {borderColor: '#e53e3e', color: '#e53e3e'} : {}} />
+                                {validationErrors.expiryDate && <span style={{ color: '#e53e3e', fontSize: '0.8rem', marginTop: '5px', display: 'block' }}>{validationErrors.expiryDate}</span>}
                             </div>
                         )}
                         <div className="form-group" style={{ width: (newItem.category === 'medicine' || newItem.category === 'vaccine') ? undefined : '100%' }}>
                             <label><i className="fas fa-boxes"></i> Stock Quantity *</label>
-                            <input type="number" className="form-control" value={newItem.stock} onChange={e => setNewItem({...newItem, stock: e.target.value})} required />
+                            <input type="number" className="form-control" placeholder={validationErrors.stock || ""} value={newItem.stock} onChange={e => { setNewItem({...newItem, stock: e.target.value}); if (validationErrors.stock) setValidationErrors({...validationErrors, stock: ''}); }} required style={validationErrors.stock ? {borderColor: '#e53e3e', color: '#e53e3e'} : {}} />
                         </div>
                     </div>
                     <div className="form-group">
                         <label><i className="fas fa-money-bill"></i> Unit Price (₱) *</label>
-                        <input type="number" step="0.01" className="form-control" value={newItem.price} onChange={e => setNewItem({...newItem, price: e.target.value})} required />
+                        <input type="number" step="0.01" className="form-control" placeholder={validationErrors.price || ""} value={newItem.price} onChange={e => { setNewItem({...newItem, price: e.target.value}); if (validationErrors.price) setValidationErrors({...validationErrors, price: ''}); }} required style={validationErrors.price ? {borderColor: '#e53e3e', color: '#e53e3e'} : {}} />
                     </div>
                     <div className="modal-actions">
                         <button type="button" className="btn btn-secondary" onClick={closeItemModal}>Cancel</button>

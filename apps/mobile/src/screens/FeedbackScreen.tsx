@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { 
-  StyleSheet, 
-  Text, 
-  View, 
-  ScrollView, 
-  TouchableOpacity, 
+import {
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+  TouchableOpacity,
   StatusBar,
   TextInput
 } from 'react-native';
@@ -24,7 +24,7 @@ export default function FeedbackScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -38,51 +38,51 @@ export default function FeedbackScreen({ navigation }: Props) {
       </View>
 
       <ScrollView style={styles.mainScroll} showsVerticalScrollIndicator={false}>
-        
+
         <View style={styles.card}>
-           <Text style={styles.cardTitle}>How was your experience?</Text>
-           <Text style={styles.cardSubtitle}>Your feedback helps us improve our services for you and your pets.</Text>
-           
-           <View style={styles.starsContainer}>
-             {[1, 2, 3, 4, 5].map((star) => (
-                <TouchableOpacity key={star} onPress={() => setRating(star)}>
-                  <FontAwesome5 
-                    name="star" 
-                    solid={star <= rating} 
-                    size={32} 
-                    color={star <= rating ? '#fbbf24' : '#e2e8f0'} 
-                    style={{ marginHorizontal: 5 }}
-                  />
-                </TouchableOpacity>
-             ))}
-           </View>
+          <Text style={styles.cardTitle}>How was your experience?</Text>
+          <Text style={styles.cardSubtitle}>Your feedback helps us improve our services for you and your pets.</Text>
+
+          <View style={styles.starsContainer}>
+            {[1, 2, 3, 4, 5].map((star) => (
+              <TouchableOpacity key={star} onPress={() => setRating(star)}>
+                <FontAwesome5
+                  name="star"
+                  solid={star <= rating}
+                  size={32}
+                  color={star <= rating ? '#fbbf24' : '#e2e8f0'}
+                  style={{ marginHorizontal: 5 }}
+                />
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
         <View style={styles.card}>
-           <Text style={styles.inputLabel}>What category does this fall under?</Text>
-           <View style={styles.chipRow}>
-             <TouchableOpacity style={[styles.chip, styles.chipActive]}><Text style={styles.chipTextActive}>Clinic Visit</Text></TouchableOpacity>
-             <TouchableOpacity style={styles.chip}><Text style={styles.chipText}>App Issue</Text></TouchableOpacity>
-             <TouchableOpacity style={styles.chip}><Text style={styles.chipText}>Suggestion</Text></TouchableOpacity>
-             <TouchableOpacity style={styles.chip}><Text style={styles.chipText}>Products</Text></TouchableOpacity>
-           </View>
+          <Text style={styles.inputLabel}>What category does this fall under?</Text>
+          <View style={styles.chipRow}>
+            <TouchableOpacity style={[styles.chip, styles.chipActive]}><Text style={styles.chipTextActive}>Clinic Visit</Text></TouchableOpacity>
+            <TouchableOpacity style={styles.chip}><Text style={styles.chipText}>App Issue</Text></TouchableOpacity>
+            <TouchableOpacity style={styles.chip}><Text style={styles.chipText}>Suggestion</Text></TouchableOpacity>
+            <TouchableOpacity style={styles.chip}><Text style={styles.chipText}>Products</Text></TouchableOpacity>
+          </View>
 
-           <Text style={styles.inputLabel}>Tell us more about it</Text>
-           <TextInput 
-             style={styles.textArea}
-             placeholder="Please share any details that could help us..."
-             placeholderTextColor="#a0aec0"
-             multiline
-             numberOfLines={5}
-             textAlignVertical="top"
-           />
+          <Text style={styles.inputLabel}>Tell us more about it</Text>
+          <TextInput
+            style={styles.textArea}
+            placeholder="Please share any details that could help us..."
+            placeholderTextColor="#a0aec0"
+            multiline
+            numberOfLines={5}
+            textAlignVertical="top"
+          />
 
-           <TouchableOpacity style={styles.submitBtn}>
-             <Text style={styles.submitBtnText}>Submit Feedback</Text>
-           </TouchableOpacity>
+          <TouchableOpacity style={styles.submitBtn}>
+            <Text style={styles.submitBtnText}>Submit Feedback</Text>
+          </TouchableOpacity>
         </View>
-        
-        <View style={{height: 40}} />
+
+        <View style={{ height: 40 }} />
       </ScrollView>
     </SafeAreaView>
   );

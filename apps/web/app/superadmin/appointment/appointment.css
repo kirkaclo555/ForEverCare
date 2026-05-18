@@ -761,6 +761,16 @@
             color: #7b341e;
         }
 
+        .status-paid {
+            background: #bee3f8;
+            color: #2b6cb0;
+        }
+
+        .status-completed {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
         .status-cancelled {
             background: #fed7d7;
             color: #822727;

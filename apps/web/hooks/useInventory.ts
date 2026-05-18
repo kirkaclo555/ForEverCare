@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 
 export interface InventoryItem {
-  id: number;
+  id: string | number;
   category: string;
   categoryLabel?: string;
   name: string;
@@ -49,20 +49,20 @@ export function useSharedInventory() {
   };
 
   const addItem = (item: Omit<InventoryItem, 'id'>) => {
-    const newId = items.length > 0 ? Math.max(...items.map(i => i.id)) + 1 : 1;
+    const newId = `temp-${Date.now()}`;
     const newItem = { ...item, id: newId };
     setItems([...items, newItem]);
   };
 
-  const updateItem = (id: number, updates: Partial<InventoryItem>) => {
+  const updateItem = (id: string | number, updates: Partial<InventoryItem>) => {
     setItems(items.map(item => item.id === id ? { ...item, ...updates } : item));
   };
 
-  const deleteItem = (id: number) => {
+  const deleteItem = (id: string | number) => {
     setItems(items.filter(item => item.id !== id));
   };
 
-  const sellItem = (id: number, quantity: number) => {
+  const sellItem = (id: string | number, quantity: number) => {
     setItems(items.map(item => {
       if (item.id === id) {
         return { ...item, stock: Math.max(0, item.stock - quantity) };

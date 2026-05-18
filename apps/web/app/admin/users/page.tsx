@@ -17,9 +17,11 @@ export default function UsersPage() {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [formData, setFormData] = useState({
         role: 'petowner' as 'admin' | 'petowner',
-        name: '',
+        firstName: '',
+        lastName: '',
         email: '',
         contact: '',
+        password: '',
     });
 
     const [activeDropdownId, setActiveDropdownId] = useState<string | null>(null);
@@ -49,18 +51,29 @@ export default function UsersPage() {
     const currentPetOwners = petOwners.slice(startIndex, startIndex + rowsPerPage);
 
     // Handlers
+    const [showValidationErrors, setShowValidationErrors] = useState(false);
+
     const handleAddSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        
+        if (!formData.firstName || !formData.lastName || !formData.email || !formData.contact || !formData.password || !formData.role) {
+            setShowValidationErrors(true);
+            return;
+        }
+
         addUser({
-            name: formData.name,
+            firstName: formData.firstName,
+            lastName: formData.lastName,
             email: formData.email,
             contact: formData.contact,
+            password: formData.password,
             role: formData.role,
             status: 'Active'
         });
-        addNotification('New User Added', `${formData.name} was added as ${formData.role}.`, 'fas fa-user-plus');
+        addNotification('New User Added', `${formData.firstName} ${formData.lastName} was added as ${formData.role}.`, 'fas fa-user-plus');
         setIsAddModalOpen(false);
-        setFormData({ role: 'petowner', name: '', email: '', contact: '' });
+        setFormData({ role: 'petowner', firstName: '', lastName: '', email: '', contact: '', password: '' });
+        setShowValidationErrors(false);
     };
 
     const toggleStatus = (user: User) => {
@@ -83,7 +96,7 @@ export default function UsersPage() {
         return (
             <tr key={user.id}>
                 <td style={{ textAlign: 'center', fontWeight: 'bold', color: '#4a5568' }}>{index + 1}</td>
-                <td><strong>{user.id}</strong></td>
+                <td><strong>{user.displayId || user.id}</strong></td>
                 <td style={{ fontWeight: 600 }}>{user.name}</td>
                 <td>{user.email}</td>
                 <td>{user.contact}</td>
@@ -234,31 +247,74 @@ export default function UsersPage() {
 
             {/* Add User Modal */}
             {isAddModalOpen && (
-                <div className="modal" style={{ display: 'flex', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', zIndex: 1000, alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { if (e.target === e.currentTarget) setIsAddModalOpen(false); }}>
-                    <div className="modal-content" style={{ background: 'white', padding: '30px', borderRadius: '20px', width: '90%', maxWidth: '500px' }}>
-                        <div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #edf2f7', paddingBottom: '15px', marginBottom: '20px' }}>
-                            <h3 style={{ margin: 0, color: '#2d3748', display: 'flex', alignItems: 'center', gap: '10px' }}><i className="fas fa-user-plus" style={{ color: '#2E5E3E' }}></i> Add New User</h3>
-                            <button className="modal-close" onClick={() => setIsAddModalOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', color: '#a0aec0', cursor: 'pointer' }}><i className="fas fa-times"></i></button>
+                <div className="modal" style={{ display: 'flex', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 1000, alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)' }} onClick={(e) => { if (e.target === e.currentTarget) setIsAddModalOpen(false); }}>
+                    <div className="modal-content" style={{ background: '#f8fafc', borderRadius: '24px', width: '90%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.3)' }}>
+                        <div className="modal-header" style={{ background: 'linear-gradient(135deg, #2E5E3E 0%, #1a3622 100%)', padding: '30px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTopLeftRadius: '24px', borderTopRightRadius: '24px' }}>
+                            <div>
+                                <h3 style={{ margin: 0, color: 'white', display: 'flex', alignItems: 'center', gap: '12px', fontSize: '1.8rem', fontWeight: 800 }}><i className="fas fa-user-plus"></i> Add New User</h3>
+                                <p style={{ color: '#e2e8f0', margin: '8px 0 0 0', fontSize: '1rem', opacity: 0.9 }}>Register a new account to the system</p>
+                            </div>
+                            <button type="button" className="modal-close" onClick={() => setIsAddModalOpen(false)} style={{ background: 'rgba(255,255,255,0.2)', color: 'white', border: 'none', width: '40px', height: '40px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: '0.2s', backdropFilter: 'blur(4px)' }}>
+                                <i className="fas fa-times" style={{ fontSize: '1.2rem' }}></i>
+                            </button>
                         </div>
                         
-                        <form onSubmit={handleAddSubmit}>
-                            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-                                <div className="form-group">
-                                    <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 600, display: 'block', marginBottom: '5px' }}>Full Name *</label>
-                                    <input type="text" required value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="form-control" placeholder="Full name" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+                        <form onSubmit={handleAddSubmit} noValidate>
+                            <div className="modal-body" style={{ padding: '30px 40px' }}>
+                                <div style={{ background: 'white', padding: '25px', borderRadius: '16px', boxShadow: '0 2px 10px rgba(0,0,0,0.02)', border: '1px solid #edf2f7', marginBottom: '25px' }}>
+                                    <h4 style={{ margin: '0 0 20px 0', color: '#2d3748', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '2px solid #f1f5f9', paddingBottom: '10px' }}>
+                                        <i className="fas fa-id-card" style={{ color: '#2E5E3E' }}></i> Basic Information
+                                    </h4>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                                            <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>User Role *</label>
+                                            <select value={formData.role} onChange={(e) => {setFormData({...formData, role: e.target.value as 'admin'|'petowner'}); setShowValidationErrors(false);}} className="form-control" style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', border: (showValidationErrors && !formData.role) ? '1px solid #fc8181' : '1px solid #e2e8f0', background: (showValidationErrors && !formData.role) ? '#fff5f5' : '#f8fafc', fontSize: '0.95rem', color: '#2d3748', transition: '0.2s', outline: 'none' }}>
+                                                <option value="petowner">Pet Owner</option>
+                                                <option value="admin">Administrator</option>
+                                            </select>
+                                            {showValidationErrors && !formData.role && <p style={{ color: '#e53e3e', fontSize: '0.85rem', margin: '6px 0 0 0', display: 'flex', alignItems: 'center', gap: '5px' }}><i className="fas fa-exclamation-circle"></i> This field is required</p>}
+                                        </div>
+                                        <div className="form-group">
+                                            <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>First Name *</label>
+                                            <input type="text" value={formData.firstName} onChange={(e) => {setFormData({...formData, firstName: e.target.value}); setShowValidationErrors(false);}} className="form-control" placeholder="Jane" style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', border: (showValidationErrors && !formData.firstName) ? '1px solid #fc8181' : '1px solid #e2e8f0', background: (showValidationErrors && !formData.firstName) ? '#fff5f5' : '#f8fafc', fontSize: '0.95rem', color: '#2d3748', transition: '0.2s', outline: 'none' }} />
+                                            {showValidationErrors && !formData.firstName && <p style={{ color: '#e53e3e', fontSize: '0.85rem', margin: '6px 0 0 0', display: 'flex', alignItems: 'center', gap: '5px' }}><i className="fas fa-exclamation-circle"></i> This field is required</p>}
+                                        </div>
+                                        <div className="form-group">
+                                            <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Last Name *</label>
+                                            <input type="text" value={formData.lastName} onChange={(e) => {setFormData({...formData, lastName: e.target.value}); setShowValidationErrors(false);}} className="form-control" placeholder="Doe" style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', border: (showValidationErrors && !formData.lastName) ? '1px solid #fc8181' : '1px solid #e2e8f0', background: (showValidationErrors && !formData.lastName) ? '#fff5f5' : '#f8fafc', fontSize: '0.95rem', color: '#2d3748', transition: '0.2s', outline: 'none' }} />
+                                            {showValidationErrors && !formData.lastName && <p style={{ color: '#e53e3e', fontSize: '0.85rem', margin: '6px 0 0 0', display: 'flex', alignItems: 'center', gap: '5px' }}><i className="fas fa-exclamation-circle"></i> This field is required</p>}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="form-group">
-                                    <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 600, display: 'block', marginBottom: '5px' }}>Email *</label>
-                                    <input type="email" required value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="form-control" placeholder="email@example.com" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
-                                </div>
-                                <div className="form-group">
-                                    <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 600, display: 'block', marginBottom: '5px' }}>Contact Number *</label>
-                                    <input type="tel" required value={formData.contact} onChange={(e) => setFormData({...formData, contact: e.target.value})} className="form-control" placeholder="(555) 123-4567" style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0' }} />
+
+                                <div style={{ background: 'white', padding: '25px', borderRadius: '16px', boxShadow: '0 2px 10px rgba(0,0,0,0.02)', border: '1px solid #edf2f7' }}>
+                                    <h4 style={{ margin: '0 0 20px 0', color: '#2d3748', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '2px solid #f1f5f9', paddingBottom: '10px' }}>
+                                        <i className="fas fa-envelope" style={{ color: '#2E5E3E' }}></i> Contact & Security
+                                    </h4>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                                        <div className="form-group">
+                                            <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Email Address *</label>
+                                            <input type="email" value={formData.email} onChange={(e) => {setFormData({...formData, email: e.target.value}); setShowValidationErrors(false);}} className="form-control" placeholder="jane@example.com" style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', border: (showValidationErrors && !formData.email) ? '1px solid #fc8181' : '1px solid #e2e8f0', background: (showValidationErrors && !formData.email) ? '#fff5f5' : '#f8fafc', fontSize: '0.95rem', color: '#2d3748', transition: '0.2s', outline: 'none' }} />
+                                            {showValidationErrors && !formData.email && <p style={{ color: '#e53e3e', fontSize: '0.85rem', margin: '6px 0 0 0', display: 'flex', alignItems: 'center', gap: '5px' }}><i className="fas fa-exclamation-circle"></i> This field is required</p>}
+                                        </div>
+                                        <div className="form-group">
+                                            <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Phone Number *</label>
+                                            <input type="tel" value={formData.contact} onChange={(e) => {setFormData({...formData, contact: e.target.value.replace(/\D/g, '')}); setShowValidationErrors(false);}} className="form-control" placeholder="09123456789" style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', border: (showValidationErrors && !formData.contact) ? '1px solid #fc8181' : '1px solid #e2e8f0', background: (showValidationErrors && !formData.contact) ? '#fff5f5' : '#f8fafc', fontSize: '0.95rem', color: '#2d3748', transition: '0.2s', outline: 'none' }} />
+                                            {showValidationErrors && !formData.contact && <p style={{ color: '#e53e3e', fontSize: '0.85rem', margin: '6px 0 0 0', display: 'flex', alignItems: 'center', gap: '5px' }}><i className="fas fa-exclamation-circle"></i> This field is required</p>}
+                                        </div>
+                                        <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+                                            <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Password *</label>
+                                            <input type="password" value={formData.password} onChange={(e) => {setFormData({...formData, password: e.target.value}); setShowValidationErrors(false);}} className="form-control" placeholder="Create a secure password" style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', border: (showValidationErrors && !formData.password) ? '1px solid #fc8181' : '1px solid #e2e8f0', background: (showValidationErrors && !formData.password) ? '#fff5f5' : '#f8fafc', fontSize: '0.95rem', color: '#2d3748', transition: '0.2s', outline: 'none' }} />
+                                            {showValidationErrors && !formData.password && <p style={{ color: '#e53e3e', fontSize: '0.85rem', margin: '6px 0 0 0', display: 'flex', alignItems: 'center', gap: '5px' }}><i className="fas fa-exclamation-circle"></i> This field is required</p>}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '25px', paddingTop: '15px', borderTop: '1px solid #edf2f7' }}>
-                                <button type="button" onClick={() => setIsAddModalOpen(false)} style={{ padding: '10px 20px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, color: '#4a5568' }}>Cancel</button>
-                                <button type="submit" style={{ padding: '10px 20px', background: '#2E5E3E', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 600, color: 'white' }}>Create User</button>
+                            <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '15px', padding: '25px 40px', background: '#f8fafc', borderTop: '1px solid #edf2f7', borderBottomLeftRadius: '24px', borderBottomRightRadius: '24px' }}>
+                                <button type="button" onClick={() => setIsAddModalOpen(false)} style={{ padding: '12px 24px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, color: '#4a5568', fontSize: '0.95rem', transition: '0.2s', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>Cancel</button>
+                                <button type="submit" style={{ padding: '12px 24px', background: 'linear-gradient(135deg, #2E5E3E 0%, #1a3622 100%)', border: 'none', borderRadius: '12px', cursor: 'pointer', fontWeight: 700, color: 'white', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '8px', transition: '0.2s', boxShadow: '0 4px 15px rgba(46, 94, 62, 0.3)' }}>
+                                    <i className="fas fa-check"></i> Create Account
+                                </button>
                             </div>
                         </form>
                     </div>

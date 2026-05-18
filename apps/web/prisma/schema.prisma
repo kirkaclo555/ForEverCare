@@ -1,0 +1,411 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// ENUMS
+// ==========================================
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  USER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  PAID
+}
+
+enum TelemedStatus {
+  SCHEDULED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum MonitoringStatus {
+  ACTIVE
+  RESOLVED
+  CRITICAL
+}
+
+enum ProductStatus {
+  AVAILABLE
+  OUT_OF_STOCK
+  DISCONTINUED
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum SmsStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+enum AnnouncementStatus {
+  PUBLISHED
+  DRAFT
+}
+
+enum ReactionType {
+  HEART
+  LIKE
+}
+
+// ==========================================
+// MODELS
+// ==========================================
+
+model User {
+  id           String   @id @default(uuid()) @map("user_id")
+  fullName     String   @map("full_name")
+  email        String   @unique
+  password     String
+  phoneNumber  String?  @map("phone_number")
+  address      String?
+  role         Role       @default(USER)
+  status       UserStatus @default(ACTIVE)
+  profileImage String?    @map("profile_image")
+  recoveryPhone String?   @map("recovery_phone")
+  twoFactorEnabled Boolean @default(false) @map("two_factor_enabled")
+  resetCode       String?  @map("reset_code")
+  resetCodeExpiry DateTime? @map("reset_code_expiry")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  updatedAt    DateTime   @updatedAt @map("updated_at")
+
+  // Relations
+  adminProfile         AdminProfile?
+  pets                 Pet[]
+  telemedicine         Telemedicine[]    @relation("UserTelemedicine")
+  vetTelemedicine      Telemedicine[]    @relation("VetTelemedicine")
+  appointments         Appointment[]     @relation("UserAppointments")
+  assignedAppointments Appointment[]     @relation("AdminAppointments")
+  cart                 Cart?
+  orders               Order[]
+  announcements        Announcement[]
+  announcementReactions AnnouncementReaction[]
+  tutorials            PetTutorial[]
+  sms                  SmsNotification[]
+  feedbacks            Feedback[]
+  productsCreated      Product[]         @relation("AdminProducts")
+  notifications        Notification[]
+
+  @@map("users")
+}
+
+model AdminProfile {
+  userId       String   @id @map("user_id")
+  employeeCode String   @unique @map("employee_code")
+  position     String
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("admin_staff")
+}
+
+model Pet {
+  id                String   @id @default(uuid()) @map("pet_id")
+  userId            String   @map("user_id")
+  petName           String   @map("pet_name")
+  breed             String?
+  age               Int?
+  gender            String?
+  weight            Float?
+  medicalHistory    String?  @map("medical_history")
+  vaccinationRecord String?  @map("vaccination_record")
+  species           String?
+  avatar            String?
+  color             String?
+  pastIllness       String?  @map("past_illness")
+  previousSurgeries String?  @map("previous_surgeries")
+  veterinarian      String?
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  monitoring   PetMonitoring[]
+  telemedicine Telemedicine[]
+  appointments Appointment[]
+
+  @@map("pets")
+}
+
+model PetMonitoring {
+  id              String           @id @default(uuid()) @map("monitor_id")
+  petId           String           @map("pet_id")
+  symptoms        String?
+  behaviorChanges String?          @map("behavior_changes")
+  activityChanges String?          @map("activity_changes")
+  recommendations String?
+  status          MonitoringStatus @default(ACTIVE) @map("monitoring_status")
+  reportSummary   String?          @map("report_summary")
+  isForwarded     Boolean          @default(false) @map("is_forwarded")
+  forwardedAt     DateTime?        @map("forwarded_at")
+  adminFindings   String?          @map("admin_findings")
+  superAdminFindings String?       @map("super_admin_findings")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  pet Pet @relation(fields: [petId], references: [id], onDelete: Cascade)
+
+  @@map("pet_monitoring")
+}
+
+model Telemedicine {
+  id               String        @id @default(uuid()) @map("telemed_id")
+  userId           String        @map("user_id")
+  petId            String        @map("pet_id")
+  veterinarianId   String        @map("veterinarian_id")
+  consultationDate DateTime      @map("consultation_date")
+  meetingLink      String?       @map("meeting_link")
+  concern          String
+  diagnosis        String?
+  prescription     String?
+  status           TelemedStatus @default(SCHEDULED)
+  createdAt        DateTime      @default(now()) @map("created_at")
+  updatedAt        DateTime      @updatedAt @map("updated_at")
+
+  user         User      @relation("UserTelemedicine", fields: [userId], references: [id], onDelete: Cascade)
+  pet          Pet       @relation(fields: [petId], references: [id], onDelete: Cascade)
+  veterinarian User      @relation("VetTelemedicine", fields: [veterinarianId], references: [id])
+  payments     Payment[] // Added for billing
+
+  @@map("telemedicine")
+}
+
+model Appointment {
+  id              String            @id @default(uuid()) @map("appointment_id")
+  userId          String            @map("user_id")
+  petId           String            @map("pet_id")
+  assignedAdminId String?           @map("assigned_admin_id")
+  appointmentDate DateTime          @map("appointment_date") @db.Date
+  appointmentTime String            @map("appointment_time")
+  type            String            @default("inperson")
+  purpose         String
+  sessionCode     String?           @map("session_code")
+  status          AppointmentStatus @default(PENDING)
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+
+  user          User      @relation("UserAppointments", fields: [userId], references: [id], onDelete: Cascade)
+  pet           Pet       @relation(fields: [petId], references: [id], onDelete: Cascade)
+  assignedAdmin User?     @relation("AdminAppointments", fields: [assignedAdminId], references: [id])
+  payments      Payment[] // Added for billing
+
+  @@map("appointments")
+}
+
+model Cart {
+  id        String   @id @default(uuid()) @map("cart_id")
+  userId    String   @unique @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user  User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items CartItem[]
+
+  @@map("cart")
+}
+
+model CartItem {
+  id        String @id @default(uuid()) @map("cart_item_id")
+  cartId    String @map("cart_id")
+  productId String @map("product_id")
+  quantity  Int
+  subtotal  Float
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("cart_items")
+}
+
+model Product {
+  id             String        @id @default(uuid()) @map("product_id")
+  productName    String        @map("product_name")
+  category       String
+  description    String?
+  price          Float
+  stockQuantity  Int           @map("stock_quantity")
+  expirationDate DateTime?     @map("expiration_date") @db.Date
+  productImage   String?       @map("product_image")
+  status         ProductStatus @default(AVAILABLE)
+  createdByAdmin String        @map("created_by_admin")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  admin      User        @relation("AdminProducts", fields: [createdByAdmin], references: [id])
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@map("products")
+}
+
+model Order {
+  id              String      @id @default(uuid()) @map("order_id")
+  userId          String      @map("user_id")
+  orderDate       DateTime    @default(now()) @map("order_date")
+  totalAmount     Float       @map("total_amount")
+  paymentMethod   String      @map("payment_method")
+  status          OrderStatus @default(PENDING) @map("order_status")
+  deliveryAddress String      @map("delivery_address")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items    OrderItem[]
+  payments Payment[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String @id @default(uuid()) @map("order_item_id")
+  orderId   String @map("order_id")
+  productId String @map("product_id")
+  quantity  Int
+  subtotal  Float
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@map("order_items")
+}
+
+// Extended to support Appointment and Telemedicine billing, plus receipt images
+model Payment {
+  id              String        @id @default(uuid()) @map("payment_id")
+  orderId         String?       @map("order_id")
+  appointmentId   String?       @map("appointment_id")
+  telemedId       String?       @map("telemed_id")
+  paymentAmount   Float         @map("payment_amount")
+  paymentStatus   PaymentStatus @default(PENDING) @map("payment_status")
+  paymentDate     DateTime      @default(now()) @map("payment_date")
+  referenceNumber String?       @map("reference_number")
+  receiptImage    String?       @map("receipt_image")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  order       Order?        @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  appointment Appointment?  @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  telemed     Telemedicine? @relation(fields: [telemedId], references: [id], onDelete: SetNull)
+
+  @@map("payments")
+}
+
+model Announcement {
+  id        String             @id @default(uuid()) @map("announcement_id")
+  adminId   String             @map("admin_id")
+  title     String
+  content   String
+  status    AnnouncementStatus @default(PUBLISHED)
+  createdAt DateTime           @default(now()) @map("created_at")
+  updatedAt DateTime           @updatedAt @map("updated_at")
+
+  admin     User                   @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  reactions AnnouncementReaction[]
+
+  @@map("announcements")
+}
+
+model AnnouncementReaction {
+  id             String       @id @default(uuid()) @map("reaction_id")
+  userId         String       @map("user_id")
+  announcementId String       @map("announcement_id")
+  type           ReactionType
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  announcement Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, announcementId])
+  @@map("announcement_reactions")
+}
+
+model PetTutorial {
+  id          String   @id @default(uuid()) @map("tutorial_id")
+  adminId     String   @map("admin_id")
+  title       String
+  description String?
+  videoLink   String   @map("video_link")
+  category    String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  admin User @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@map("pet_tutorials")
+}
+
+model SmsNotification {
+  id               String    @id @default(uuid()) @map("sms_id")
+  userId           String    @map("user_id")
+  message          String
+  notificationType String    @map("notification_type")
+  status           SmsStatus @default(PENDING) @map("sent_status")
+  sentAt           DateTime? @map("sent_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sms_notifications")
+}
+
+model Feedback {
+  id          String   @id @default(uuid()) @map("feedback_id")
+  userId      String   @map("user_id")
+  rating      Int
+  comments    String?
+  submittedAt DateTime @default(now()) @map("submitted_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("feedback")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@map("notifications")
+}

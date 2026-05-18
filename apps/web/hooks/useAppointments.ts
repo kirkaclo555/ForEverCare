@@ -27,8 +27,6 @@ const generateSessionCode = () => {
   return code;
 };
 
-const DEFAULT_APPOINTMENTS: Appointment[] = [];
-
 export const DEFAULT_TIME_SLOTS = [
   "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
   "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM"
@@ -38,29 +36,20 @@ export function useAppointments() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [timeSlotsData, setTimeSlotsData] = useState<Record<string, { time: string, enabled: boolean }[]>>({});
 
-  useEffect(() => {
-    const saved = localStorage.getItem('furever_appointments');
-    if (saved) {
-      try {
-        setAppointments(JSON.parse(saved));
-      } catch (e) {
-        setAppointments(DEFAULT_APPOINTMENTS);
+  const fetchAppointments = async () => {
+    try {
+      const res = await fetch('/api/appointments');
+      const data = await res.json();
+      if (data && Array.isArray(data)) {
+        setAppointments(data);
       }
-    } else {
-      setAppointments(DEFAULT_APPOINTMENTS);
-      localStorage.setItem('furever_appointments', JSON.stringify(DEFAULT_APPOINTMENTS));
+    } catch (err) {
+      console.error('Failed to fetch appointments from API:', err);
     }
+  };
 
-    // Fetch from API to get the latest synced data
-    fetch('/api/appointments')
-      .then(res => res.json())
-      .then(data => {
-        if (data && Array.isArray(data)) {
-          setAppointments(data);
-          localStorage.setItem('furever_appointments', JSON.stringify(data));
-        }
-      })
-      .catch(err => console.error('Failed to fetch appointments from API:', err));
+  useEffect(() => {
+    fetchAppointments();
 
     const savedSlots = localStorage.getItem('furever_time_slots');
     if (savedSlots) {
@@ -69,8 +58,6 @@ export function useAppointments() {
       } catch (e) {
         setTimeSlotsData({});
       }
-    } else {
-      setTimeSlotsData({});
     }
 
     // Fetch timeslots from API to get the latest synced data
@@ -85,10 +72,6 @@ export function useAppointments() {
       .catch(err => console.error('Failed to fetch timeslots from API:', err));
     
     const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === 'furever_appointments') {
-            const saved = localStorage.getItem('furever_appointments');
-            if (saved) setAppointments(JSON.parse(saved));
-        }
         if (e.key === 'furever_time_slots') {
             const savedSlots = localStorage.getItem('furever_time_slots');
             if (savedSlots) setTimeSlotsData(JSON.parse(savedSlots));
@@ -97,18 +80,6 @@ export function useAppointments() {
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
-
-  const saveAppointments = (newAppointments: Appointment[]) => {
-    setAppointments(newAppointments);
-    localStorage.setItem('furever_appointments', JSON.stringify(newAppointments));
-    
-    // Sync to centralized API
-    fetch('/api/appointments', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newAppointments)
-    }).catch(err => console.error('Failed to sync to API:', err));
-  };
 
   const saveTimeSlotsData = (newData: Record<string, { time: string, enabled: boolean }[]>) => {
     setTimeSlotsData(newData);
@@ -139,33 +110,81 @@ export function useAppointments() {
     }
   };
 
-  const addAppointment = (appointmentData: Omit<Appointment, 'id' | 'sessionCode'>) => {
-    const newId = Date.now().toString();
+  const addAppointment = async (appointmentData: any) => {
     const sessionCode = appointmentData.type === 'telemedicine' ? generateSessionCode() : undefined;
-    const newApp = { ...appointmentData, id: newId, sessionCode };
-    saveAppointments([...appointments, newApp]);
-    return newApp;
-  };
-
-  const updateAppointmentStatus = (id: string, newStatus: string) => {
-    let updatedApp: Appointment | undefined;
-    const newAppointments = appointments.map(app => {
-      if (app.id === id) {
-        let sessionCode = app.sessionCode;
-        if (newStatus === 'confirmed' && app.type === 'telemedicine' && !sessionCode) {
-          sessionCode = generateSessionCode();
-        }
-        updatedApp = { ...app, status: newStatus, sessionCode };
-        return updatedApp;
+    const payload = { ...appointmentData, sessionCode };
+    
+    try {
+      const res = await fetch('/api/appointments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success && data.appointment) {
+        setAppointments(prev => [data.appointment, ...prev]);
+        return data.appointment;
       }
-      return app;
-    });
-    saveAppointments(newAppointments);
-    return updatedApp;
+    } catch (err) {
+      console.error('Failed to add appointment:', err);
+    }
+    return null;
   };
 
-  const updateAppointmentDetails = (id: string, updates: Partial<Appointment>) => {
-    saveAppointments(appointments.map(app => app.id === id ? { ...app, ...updates } : app));
+  const updateAppointmentStatus = async (id: string, newStatus: string) => {
+    let sessionCode;
+    const targetApp = appointments.find(app => app.id === id);
+    if (targetApp && newStatus === 'confirmed' && targetApp.type === 'telemedicine' && !targetApp.sessionCode) {
+      sessionCode = generateSessionCode();
+    }
+
+    try {
+      const res = await fetch(`/api/appointments/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus, sessionCode })
+      });
+      const data = await res.json();
+      if (data.success && data.appointment) {
+        setAppointments(prev => prev.map(app => app.id === id ? data.appointment : app));
+        return data.appointment;
+      }
+    } catch (err) {
+      console.error('Failed to update appointment status:', err);
+    }
+    return null;
+  };
+
+  const updateAppointmentDetails = async (id: string, updates: Partial<Appointment>) => {
+    try {
+      const res = await fetch(`/api/appointments/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates)
+      });
+      const data = await res.json();
+      if (data.success && data.appointment) {
+        setAppointments(prev => prev.map(app => app.id === id ? data.appointment : app));
+        return data.appointment;
+      }
+    } catch (err) {
+      console.error('Failed to update appointment details:', err);
+    }
+    return null;
+  };
+
+  const deleteAppointment = async (id: string) => {
+    try {
+      const res = await fetch(`/api/appointments/${id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAppointments(prev => prev.filter(app => app.id !== id));
+      }
+    } catch (err) {
+      console.error('Failed to delete appointment:', err);
+    }
   };
 
   const getAvailableTimeSlots = (date: string) => {
@@ -183,6 +202,7 @@ export function useAppointments() {
     addAppointment,
     updateAppointmentStatus,
     updateAppointmentDetails,
+    deleteAppointment,
     getAvailableTimeSlots,
     timeSlotsData,
     toggleTimeSlot,

@@ -67,12 +67,42 @@ export default function PetsScreen({ navigation }: Props) {
     }, 2500); // 2.5s analysis delay
   };
 
-  const handleSendToClinic = (type: string) => {
-    Alert.alert(
-      "Sent to Clinic", 
-      `Your ${type} has been successfully sent to FurEver Paw Care. Our team will review it shortly.`,
-      [{ text: "OK", onPress: () => resetWizard() }]
-    );
+  const handleSendToClinic = async (type: string) => {
+    const petObj = pets.find(p => p.name === selectedPet);
+    if (!petObj) {
+      Alert.alert('Error', 'Please select a valid pet.');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://192.168.100.16:3000/api/monitoring', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          petId: petObj.id,
+          symptoms: symptomsText,
+          behaviorChanges: category === 'Behavior' ? guideQuestion : null,
+          activityChanges: category === 'Activity' ? guideQuestion : null,
+          reportSummary: `Duration: ${duration}. Happened before: ${happenedBefore}. Medication: ${onMedication}. Report Type: ${type}`,
+          recommendations: severity === 'worst' ? 'Immediate vet attention recommended' : 'Monitor closely for 24h',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        Alert.alert(
+          "Sent to Clinic", 
+          `Your ${type} has been successfully sent to FurEver Paw Care. Our team will review it shortly.`,
+          [{ text: "OK", onPress: () => resetWizard() }]
+        );
+      } else {
+        Alert.alert("Error", data.error || "Failed to send report.");
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert("Error", "Could not connect to the server.");
+    }
   };
 
   const resetWizard = () => {

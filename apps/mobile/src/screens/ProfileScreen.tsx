@@ -33,7 +33,9 @@ export default function ProfileScreen({ navigation }: Props) {
   const [phoneNumber, setPhoneNumber] = useState(user.phoneNumber);
   const [email, setEmail] = useState(user.email);
 
-  const handleSave = () => {
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSave = async () => {
     if (!firstName.trim() || !lastName.trim()) {
       Alert.alert('Validation Error', 'First name and Last name are required.');
       return;
@@ -42,13 +44,44 @@ export default function ProfileScreen({ navigation }: Props) {
       Alert.alert('Validation Error', 'Phone number is required.');
       return;
     }
-    updateUser({
-      fullName: `${firstName.trim()} ${lastName.trim()}`,
-      phoneNumber: phoneNumber.trim(),
-      email: email.trim()
-    });
-    setIsEditing(false);
-    Alert.alert('Success', 'Profile updated successfully!');
+
+    if (!user.id) {
+      Alert.alert('Error', 'No user ID found. Please log out and log back in.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('http://192.168.100.16:3000/api/auth/mobile/update', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: user.id,
+          fullName: `${firstName.trim()} ${lastName.trim()}`,
+          email: email.trim(),
+          phoneNumber: phoneNumber.trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        Alert.alert('Update Failed', data.error || 'An error occurred while updating profile.');
+      } else {
+        updateUser({
+          fullName: data.user.fullName,
+          phoneNumber: data.user.phoneNumber,
+          email: data.user.email
+        });
+        setIsEditing(false);
+        Alert.alert('Success', 'Profile updated successfully!');
+      }
+    } catch (error) {
+      console.error('Update error:', error);
+      Alert.alert('Error', 'Could not connect to the server. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handlePickImage = async () => {

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSharedInventory } from '../../../hooks/useInventory';
 import { useBilling } from '../../../hooks/useBilling';
+import { useOrders } from '../../../hooks/useOrders';
 import './products.css';
 
 export default function ProductsPage() {
@@ -11,6 +12,7 @@ export default function ProductsPage() {
 
   const { addItem, updateItem, sellItem, getSellableItems, deleteItem } = useSharedInventory();
   const { invoices, addInvoice } = useBilling();
+  const { orders, fetchOrders, updateOrderStatus } = useOrders('PENDING');
   
   const [activeCategory, setActiveCategory] = useState('all');
   const allProducts = getSellableItems();
@@ -323,24 +325,50 @@ export default function ProductsPage() {
                         <i className="fas fa-clock"></i>
                         Pending Orders
                     </h3>
-                    <span id="pending-count">8</span>
-                    <div className="clear-cart" onClick={() => console.log('refreshPendingOrders()')}>
+                    <span id="pending-count">{orders.length}</span>
+                    <div className="clear-cart" onClick={() => fetchOrders('PENDING')}>
                         <i className="fas fa-sync-alt"></i>
                     </div>
                 </div>
                 
                 <div className="cart-items" id="pending-orders-container">
-                    
+                    {orders.map(order => (
+                       <div key={order.id} className="pending-order-card" style={{ padding: '10px', borderBottom: '1px solid #edf2f7', marginBottom: '10px' }}>
+                           <div style={{ fontWeight: 'bold', color: '#2d3748', fontSize: '14px' }}>Order #{order.id.slice(0,8)}</div>
+                           <div style={{ fontSize: '12px', color: '#718096', marginBottom: '8px' }}>{new Date(order.orderDate).toLocaleString()}</div>
+                           {order.items.map(item => (
+                               <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#4a5568', marginBottom: '4px' }}>
+                                  <span>{item.quantity}x {item.product?.productName || 'Unknown Product'}</span>
+                                  <span>₱{item.subtotal.toFixed(2)}</span>
+                               </div>
+                           ))}
+                           <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed #e2e8f0', display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', color: '#2E5E3E' }}>
+                              <span>Total:</span>
+                              <span>₱{order.totalAmount.toFixed(2)}</span>
+                           </div>
+                       </div>
+                    ))}
+                    {orders.length === 0 && <div style={{ padding: '20px', textAlign: 'center', color: '#a0aec0', fontSize: '14px', fontFamily: 'Montserrat-Regular' }}>No pending orders</div>}
                 </div>
 
                 <div className="cart-total">
                     <span>Total Pending</span>
-                    <span id="pending-total">₱584.92</span>
+                    <span id="pending-total">₱{orders.reduce((sum, o) => sum + o.totalAmount, 0).toFixed(2)}</span>
                 </div>
 
-                <button className="checkout-btn" onClick={() => console.log('processOrders()')}>
+                <button className="checkout-btn" onClick={async () => {
+                   let processed = 0;
+                   for (const order of orders) {
+                      const res = await updateOrderStatus(order.id, 'PROCESSING');
+                      if (res.success) processed++;
+                   }
+                   if (processed > 0) {
+                      alert(`${processed} order(s) processed! Stock has been updated.`);
+                      window.location.reload();
+                   }
+                }} disabled={orders.length === 0} style={{ opacity: orders.length === 0 ? 0.5 : 1 }}>
                     <i className="fas fa-check-circle"></i>
-                    Process Selected
+                    Process All Pending
                 </button>
             </div>
         </div>

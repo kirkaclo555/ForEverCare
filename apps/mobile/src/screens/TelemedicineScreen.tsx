@@ -10,7 +10,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
-  ScrollView
+  ScrollView,
+  RefreshControl
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
@@ -30,8 +31,10 @@ export default function TelemedicineScreen({ navigation }: Props) {
   const [callDuration, setCallDuration] = useState(0);
   const [appointments, setAppointments] = useState<any[]>([]);
 
-  useEffect(() => {
-    fetch('http://192.168.100.78:3000/api/appointments')
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchAppointments = () => {
+    return fetch('http://192.168.100.16:3000/api/appointments')
       .then(res => res.json())
       .then(data => {
         if (data && Array.isArray(data)) {
@@ -39,6 +42,15 @@ export default function TelemedicineScreen({ navigation }: Props) {
         }
       })
       .catch(err => console.error('Failed to fetch appointments:', err));
+  };
+
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    fetchAppointments()?.finally(() => setRefreshing(false));
   }, []);
 
   // Timer for active call
@@ -62,13 +74,49 @@ export default function TelemedicineScreen({ navigation }: Props) {
     const validSession = appointments.find(app => 
       app.sessionCode?.toUpperCase() === sessionCode.trim().toUpperCase() && 
       app.type === 'telemedicine' && 
-      app.status?.toLowerCase() === 'confirmed' &&
+      (app.status?.toLowerCase() === 'confirmed' || app.status?.toLowerCase() === 'paid') &&
       app.owner?.toLowerCase() === user?.fullName?.toLowerCase()
     );
 
     if (!validSession) {
-       Alert.alert("Invalid Code", "The session code you entered is invalid or does not match your confirmed appointments.");
+       Alert.alert("Invalid Code", "The session code you entered is invalid or does not match your active appointments.");
        return;
+    }
+
+    // Time validation
+    try {
+      const appDateStr = validSession.date; // e.g. "2026-05-18"
+      const appTimeStr = validSession.time; // e.g. "09:00 AM"
+      
+      // Parse time string like "09:00 AM" to hours and minutes
+      const match = appTimeStr.match(/(\d+):(\d+)\s*(AM|PM)/i);
+      if (match) {
+        let hours = parseInt(match[1], 10);
+        const minutes = parseInt(match[2], 10);
+        const ampm = match[3].toUpperCase();
+        
+        if (ampm === 'PM' && hours < 12) hours += 12;
+        if (ampm === 'AM' && hours === 12) hours = 0;
+        
+        const scheduledTime = new Date(`${appDateStr}T00:00:00`);
+        scheduledTime.setHours(hours, minutes, 0, 0);
+        
+        const now = new Date();
+        const timeDiffMs = scheduledTime.getTime() - now.getTime();
+        const minutesUntil = timeDiffMs / (1000 * 60);
+        
+        // 15-minute early access window
+        if (minutesUntil > 15) {
+           Alert.alert(
+             "Too Early", 
+             `This code will be valid by ${appDateStr} at ${appTimeStr}. You can join up to 15 minutes before your scheduled time.`
+           );
+           return;
+        }
+      }
+    } catch (e) {
+      console.error("Time validation error", e);
+      // Fallback: allow join if time parsing fails for some reason
     }
 
     setSessionState('waiting');
@@ -100,7 +148,13 @@ export default function TelemedicineScreen({ navigation }: Props) {
     if (sessionState === 'join') {
       return (
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flexContainer}>
-          <ScrollView contentContainerStyle={styles.scrollCenterContent} showsVerticalScrollIndicator={false}>
+          <ScrollView 
+            contentContainerStyle={styles.scrollCenterContent} 
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3a7d55']} />
+            }
+          >
             <View style={styles.card}>
               <View style={styles.iconSquare}>
                 <FontAwesome5 name="phone-alt" size={24} color="white" />
@@ -129,16 +183,27 @@ export default function TelemedicineScreen({ navigation }: Props) {
                 <Text style={styles.activityTitle}>Latest Activity</Text>
               </View>
               <View style={styles.divider} />
-              <View style={styles.historyRow}>
-                <View style={styles.historyIconBox}>
-                  <FontAwesome5 name="video" size={14} color="#3a7d55" />
-                </View>
-                <View style={styles.historyDetails}>
-                  <Text style={styles.historySessionTitle}>Consultation with Dr. Reyes</Text>
-                  <Text style={styles.historySessionDate}>Yesterday, 10:30 AM</Text>
-                  <Text style={styles.historyMetaText}>Duration: 15m • Rx Issued</Text>
-                </View>
-              </View>
+              
+              {appointments
+                .filter(app => app.type === 'telemedicine' && app.owner?.toLowerCase() === user?.fullName?.toLowerCase())
+                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                .slice(0, 3)
+                .map((activity, index) => (
+                  <View key={index} style={[styles.historyRow, { marginBottom: 15 }]}>
+                    <View style={styles.historyIconBox}>
+                      <FontAwesome5 name="video" size={14} color="#3a7d55" />
+                    </View>
+                    <View style={styles.historyDetails}>
+                      <Text style={styles.historySessionTitle}>Consultation for {activity.pet || 'Pet'}</Text>
+                      <Text style={styles.historySessionDate}>{activity.date} at {activity.time}</Text>
+                      <Text style={styles.historyMetaText}>Status: {activity.status || 'Completed'}</Text>
+                    </View>
+                  </View>
+                ))}
+              
+              {appointments.filter(app => app.type === 'telemedicine' && app.owner?.toLowerCase() === user?.fullName?.toLowerCase()).length === 0 && (
+                 <Text style={{ textAlign: 'center', color: '#718096', paddingVertical: 20, fontFamily: 'Montserrat-Regular' }}>No recent telemedicine activity</Text>
+              )}
             </View>
             <View style={{height: 40}}/>
           </ScrollView>

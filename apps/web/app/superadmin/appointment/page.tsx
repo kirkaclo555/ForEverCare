@@ -9,7 +9,7 @@ import './appointment.css';
 export default function AppointmentPage() {
   const router = useRouter();
   const { addInvoice } = useBilling();
-  const { appointments, addAppointment, updateAppointmentStatus, updateAppointmentDetails, getAvailableTimeSlots } = useAppointments();
+  const { appointments, addAppointment, updateAppointmentStatus, updateAppointmentDetails, deleteAppointment, getAvailableTimeSlots } = useAppointments();
   
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [viewAppointmentDetails, setViewAppointmentDetails] = useState<any>(null);
@@ -23,11 +23,16 @@ export default function AppointmentPage() {
   const [newTime, setNewTime] = useState('');
   const availableRescheduleSlots = newDate ? getAvailableTimeSlots(newDate) : [];
   const [searchQuery, setSearchQuery] = useState('');
-  const [ownerName, setOwnerName] = useState('');
+  
+  // Database-driven states
+  const [users, setUsers] = useState<any[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState('');
+  const [pets, setPets] = useState<any[]>([]);
+  const [selectedPetId, setSelectedPetId] = useState('');
+
   const [appointmentDate, setAppointmentDate] = useState('');
   const [appointmentTime, setAppointmentTime] = useState('');
   const [contactNumber, setContactNumber] = useState('');
-  const [petName, setPetName] = useState('');
   const [species, setSpecies] = useState('');
   const [breed, setBreed] = useState('');
   const [referenceNumber, setReferenceNumber] = useState('');
@@ -35,8 +40,60 @@ export default function AppointmentPage() {
   const [receiptImage, setReceiptImage] = useState('');
   const [appointmentType, setAppointmentType] = useState('inperson');
   const [appointmentPurpose, setAppointmentPurpose] = useState('Check-up');
+
+  const BREEDS: Record<string, string[]> = {
+    Dog: ['Golden Retriever', 'Bulldog', 'Poodle', 'German Shepherd', 'Labrador Retriever', 'Beagle', 'Husky', 'Pug', 'Shih Tzu', 'Aspin', 'Other'],
+    Cat: ['Persian', 'Siamese', 'Maine Coon', 'Bengal', 'Sphynx', 'British Shorthair', 'Puspin', 'Other']
+  };
+
+  useEffect(() => {
+    fetch('/api/users?role=USER')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setUsers(data);
+      })
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (selectedUserId) {
+      const selectedUser = users.find(u => u.id === selectedUserId);
+      if (selectedUser) {
+        setContactNumber(selectedUser.phoneNumber || '');
+      }
+      
+      fetch(`/api/pets?userId=${selectedUserId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            setPets(data);
+          }
+        })
+        .catch(console.error);
+    } else {
+      setPets([]);
+      setSelectedPetId('');
+      setContactNumber('');
+      setSpecies('');
+      setBreed('');
+    }
+  }, [selectedUserId, users]);
+
+  useEffect(() => {
+    if (selectedPetId) {
+      const selectedPet = pets.find(p => p.id === selectedPetId);
+      if (selectedPet) {
+        setSpecies(selectedPet.species || '');
+        setBreed(selectedPet.breed || '');
+      }
+    } else {
+      setSpecies('');
+      setBreed('');
+    }
+  }, [selectedPetId, pets]);
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [appointmentToDelete, setAppointmentToDelete] = useState<string | null>(null);
 
   const availableSlots = appointmentDate ? getAvailableTimeSlots(appointmentDate) : [];
 
@@ -48,19 +105,20 @@ export default function AppointmentPage() {
     }
   }, [appointmentType]);
 
-  const handleSaveAppointment = (e: React.FormEvent) => {
+  const handleSaveAppointment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!ownerName || !contactNumber || !petName || !species || !appointmentDate || !appointmentTime) {
+    if (!selectedUserId || !selectedPetId || !species || !breed || !appointmentDate || !appointmentTime) {
       setFormError('Please fill in all required fields marked with *');
       return;
     }
     setFormError('');
 
     const fee = appointmentType === 'telemedicine' ? 800 : 500;
+    const selectedUser = users.find(u => u.id === selectedUserId);
     
     // Add to billing
     addInvoice({
-      clientName: ownerName,
+      clientName: selectedUser?.fullName || 'Unknown',
       date: appointmentDate,
       items: [{
         id: Date.now().toString(),
@@ -73,13 +131,10 @@ export default function AppointmentPage() {
       source: 'appointment'
     });
 
-    // Add to local state
-    addAppointment({
-        owner: ownerName,
-        contact: contactNumber || 'N/A',
-        pet: petName || 'N/A',
-        species: species || 'N/A',
-        breed: breed || 'N/A',
+    // Save to DB via API
+    await addAppointment({
+        ownerId: selectedUserId,
+        petId: selectedPetId,
         date: appointmentDate,
         time: appointmentTime,
         type: appointmentType,
@@ -91,11 +146,8 @@ export default function AppointmentPage() {
     });
 
     setIsAppointmentModalOpen(false);
-    setOwnerName('');
-    setContactNumber('');
-    setPetName('');
-    setSpecies('');
-    setBreed('');
+    setSelectedUserId('');
+    setSelectedPetId('');
     setAppointmentDate('');
     setAppointmentTime('');
     setReferenceNumber('');
@@ -104,8 +156,8 @@ export default function AppointmentPage() {
     setSuccessMessage('Appointment saved and pending Invoice generated in Billing Module!');
   };
 
-  const handleStatusChange = (id: string, newStatus: string) => {
-    const updatedApp = updateAppointmentStatus(id, newStatus);
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    const updatedApp = await updateAppointmentStatus(id, newStatus);
     if (updatedApp && updatedApp.type === 'telemedicine' && newStatus === 'confirmed') {
         alert(`SMS Successfully Sent to ${updatedApp.owner} at ${updatedApp.contact}:\n\n"Your Telemedicine session is confirmed. Your unique session code is: ${updatedApp.sessionCode}"`);
     }
@@ -131,6 +183,18 @@ export default function AppointmentPage() {
 
   const closeDropdown = () => setOpenActionMenuId(null);
 
+  const handleDeleteAppointment = (id: string) => {
+    setAppointmentToDelete(id);
+    setOpenActionMenuId(null);
+  };
+
+  const confirmDeleteAppointment = () => {
+    if (appointmentToDelete) {
+      deleteAppointment(appointmentToDelete);
+      setAppointmentToDelete(null);
+    }
+  };
+
   const filteredAppointments = appointments.filter(app => {
       const matchesStatus = statusFilter === 'all' || app.status.toLowerCase() === statusFilter.toLowerCase();
       const matchesSearch = app.owner.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -149,8 +213,8 @@ export default function AppointmentPage() {
                 <select className="filter-select" id="statusFilter" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
                     <option value="all">All Status</option>
                     <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                    <option value="Done">Done</option>
+                    <option value="paid">Paid</option>
+                    <option value="completed">Completed</option>
                 </select>
             </div>
 
@@ -207,18 +271,20 @@ export default function AppointmentPage() {
                                 <td>{app.amountPaid !== undefined && app.amountPaid !== null ? `₱${Number(app.amountPaid).toFixed(2)}` : 'N/A'}</td>
                             <td>{app.type === 'telemedicine' ? <span className="status-badge" style={{background:'#EBF8FF', color:'#2B6CB0'}}>Telemedicine</span> : <span className="status-badge" style={{background:'#F0FFF4', color:'#2F855A'}}>In-Person</span>}</td>
                             <td style={{textTransform: 'capitalize'}}>{app.purpose}</td>
-                            <td><span className={`status-badge ${app.status}`} style={{textTransform:'capitalize'}}>{app.status}</span></td>
+                            <td><span className={`status-badge status-${app.status.toLowerCase()}`} style={{textTransform:'capitalize'}}>{app.status}</span></td>
                             <td style={{ position: 'relative' }}>
                                 <button className="btn-secondary" style={{padding: '4px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center'}} onClick={(e) => { e.stopPropagation(); setOpenActionMenuId(openActionMenuId === app.id ? null : app.id); }}>
                                     <i className="fas fa-ellipsis-v"></i>
                                 </button>
-                                {openActionMenuId === app.id && (
-                                    <div style={{ position: 'absolute', right: '100%', top: 0, background: 'white', border: '1px solid #e2e8f0', borderRadius: '4px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', zIndex: 10, display: 'flex', flexDirection: 'column', minWidth: '120px' }}>
+                                {openActionMenuId === app.id && (                                    <div style={{ position: 'absolute', right: '100%', top: 0, background: 'white', border: '1px solid #e2e8f0', borderRadius: '4px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)', zIndex: 10, display: 'flex', flexDirection: 'column', minWidth: '140px' }}>
                                         <button style={{ padding: '8px 12px', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer', borderBottom: '1px solid #e2e8f0', color: '#2d3748' }} onClick={(e) => { e.stopPropagation(); handleStatusChange(app.id, 'pending'); }}>Pending</button>
-                                        <button style={{ padding: '8px 12px', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer', borderBottom: '1px solid #e2e8f0', color: '#2d3748' }} onClick={(e) => { e.stopPropagation(); handleStatusChange(app.id, 'confirmed'); }}>Confirmed</button>
-                                        <button style={{ padding: '8px 12px', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer', borderBottom: '1px solid #e2e8f0', color: '#2d3748' }} onClick={(e) => { e.stopPropagation(); handleStatusChange(app.id, 'Done'); }}>Done</button>
-                                        <button style={{ padding: '8px 12px', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer', color: '#2E5E3E' }} onClick={(e) => { e.stopPropagation(); openRescheduleModal(app); }}>
+                                        <button style={{ padding: '8px 12px', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer', borderBottom: '1px solid #e2e8f0', color: '#2d3748' }} onClick={(e) => { e.stopPropagation(); handleStatusChange(app.id, 'paid'); }}>Paid</button>
+                                        <button style={{ padding: '8px 12px', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer', borderBottom: '1px solid #e2e8f0', color: '#2d3748' }} onClick={(e) => { e.stopPropagation(); handleStatusChange(app.id, 'completed'); }}>Completed</button>
+                                        <button style={{ padding: '8px 12px', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer', borderBottom: '1px solid #e2e8f0', color: '#2E5E3E' }} onClick={(e) => { e.stopPropagation(); openRescheduleModal(app); }}>
                                             <i className="fas fa-calendar-alt" style={{marginRight: '8px'}}></i> Reschedule
+                                        </button>
+                                        <button style={{ padding: '8px 12px', textAlign: 'left', border: 'none', background: 'none', cursor: 'pointer', color: '#E53E3E' }} onClick={(e) => { e.stopPropagation(); handleDeleteAppointment(app.id); }}>
+                                            <i className="fas fa-trash-alt" style={{marginRight: '8px'}}></i> Delete
                                         </button>
                                     </div>
                                 )}
@@ -248,7 +314,12 @@ export default function AppointmentPage() {
                     <div className="appointment-form-row">
                         <div className="appointment-form-group">
                             <label><i className="fas fa-user"></i> Owner Name *</label>
-                            <input type="text" className="appointment-form-control" value={ownerName} onChange={e => setOwnerName(e.target.value)} required placeholder="Enter owner name" />
+                            <select className="appointment-form-control" value={selectedUserId} onChange={e => setSelectedUserId(e.target.value)} required>
+                                <option value="">-- Select Owner --</option>
+                                {users.map(u => (
+                                    <option key={u.id} value={u.id}>{u.fullName} ({u.email})</option>
+                                ))}
+                            </select>
                         </div>
                         <div className="appointment-form-group">
                             <label><i className="fas fa-phone"></i> Contact Number *</label>
@@ -259,17 +330,32 @@ export default function AppointmentPage() {
                     <div className="appointment-form-row">
                         <div className="appointment-form-group">
                             <label><i className="fas fa-paw"></i> Pet Name *</label>
-                            <input type="text" className="appointment-form-control" value={petName} onChange={e => setPetName(e.target.value)} required placeholder="Enter pet name" />
+                            <select className="appointment-form-control" value={selectedPetId} onChange={e => setSelectedPetId(e.target.value)} required disabled={!selectedUserId}>
+                                <option value="">{selectedUserId ? "-- Select Pet --" : "Select an owner first"}</option>
+                                {pets.map(p => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                            </select>
                         </div>
                         <div className="appointment-form-group">
-                            <label><i className="fas fa-dog"></i> Pet Type *</label>
-                            <input type="text" className="appointment-form-control" value={species} onChange={e => setSpecies(e.target.value)} required placeholder="e.g. Dog, Cat" />
+                            <label><i className="fas fa-dog"></i> Species *</label>
+                            <select className="appointment-form-control" value={species} onChange={e => { setSpecies(e.target.value); setBreed(''); }} required>
+                                <option value="">-- Select Species --</option>
+                                <option value="Dog">Dog</option>
+                                <option value="Cat">Cat</option>
+                            </select>
                         </div>
                     </div>
 
                     <div className="appointment-form-group" style={{marginBottom: '15px'}}>
-                        <label><i className="fas fa-paw"></i> Breed</label>
-                        <input type="text" className="appointment-form-control" value={breed} onChange={e => setBreed(e.target.value)} placeholder="Enter breed (optional)" />
+                        <label><i className="fas fa-paw"></i> Breed *</label>
+                        <select className="appointment-form-control" value={breed} onChange={e => setBreed(e.target.value)} required disabled={!species}>
+                            <option value="">{species ? "-- Select Breed --" : "Select species first"}</option>
+                            {species && BREEDS[species]?.map(b => (
+                                <option key={b} value={b}>{b}</option>
+                            ))}
+                            {species && !BREEDS[species] && <option value="Other">Other</option>}
+                        </select>
                     </div>
 
                     <div className="appointment-form-row">
@@ -494,6 +580,21 @@ export default function AppointmentPage() {
                 <h3 style={{ margin: '0 0 10px 0', color: '#2d3748', fontSize: '1.4rem' }}>Success!</h3>
                 <p style={{ color: '#718096', marginBottom: '25px', lineHeight: '1.5' }}>{successMessage}</p>
                 <button onClick={() => setSuccessMessage('')} style={{ padding: '10px 30px', background: '#2E5E3E', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '1rem', width: '100%' }}>OK</button>
+            </div>
+        </div>
+    )}
+    {appointmentToDelete && (
+        <div className="modal" style={{display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', zIndex: 10000}}>
+            <div className="modal-content" style={{background: 'white', padding: '30px', borderRadius: '16px', width: '90%', maxWidth: '400px', textAlign: 'center', boxShadow: '0 10px 25px rgba(0,0,0,0.1)'}}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#FED7D7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto' }}>
+                    <i className="fas fa-exclamation-triangle" style={{ color: '#E53E3E', fontSize: '2rem' }}></i>
+                </div>
+                <h3 style={{ margin: '0 0 10px 0', color: '#2d3748', fontSize: '1.4rem' }}>Confirm Deletion</h3>
+                <p style={{ color: '#718096', marginBottom: '25px', lineHeight: '1.5' }}>Are you sure you want to delete this appointment?</p>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button onClick={() => setAppointmentToDelete(null)} style={{ flex: 1, padding: '10px', background: '#edf2f7', color: '#4a5568', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>Cancel</button>
+                    <button onClick={confirmDeleteAppointment} style={{ flex: 1, padding: '10px', background: '#E53E3E', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>Yes</button>
+                </div>
             </div>
         </div>
     )}

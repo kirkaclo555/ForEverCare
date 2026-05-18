@@ -2,6 +2,7 @@ import React, { createContext, useState, useContext, ReactNode, useEffect } from
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type UserProfile = {
+  id?: string;
   fullName: string;
   email: string;
   phoneNumber: string;
@@ -14,9 +15,10 @@ type UserContextType = {
 };
 
 const defaultUser: UserProfile = {
-  fullName: 'Jealene',
-  email: 'jealene@fureverpaw.com',
-  phoneNumber: '+63 912 345 6789',
+  id: '',
+  fullName: '',
+  email: '',
+  phoneNumber: '',
   avatarUri: null,
 };
 

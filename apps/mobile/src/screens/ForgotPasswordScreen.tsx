@@ -28,31 +28,87 @@ type Props = {
 };
 
 export default function ForgotPasswordScreen({ navigation }: Props) {
-  const [step, setStep] = useState<1 | 2>(1);
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [identifier, setIdentifier] = useState('');
+  const [userId, setUserId] = useState('');
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
 
-  const handleSendCode = () => {
-    if (!phoneNumber) {
-      Alert.alert('Error', 'Please enter your registered phone number');
+  const handleSendCode = async () => {
+    if (!identifier) {
+      Alert.alert('Error', 'Please enter your registered phone number or email');
       return;
     }
-    // Simulate sending code
-    Alert.alert('Code Sent', 'A verification code has been sent to your phone number.');
-    setStep(2);
+    
+    try {
+      const res = await fetch('http://192.168.100.16:3000/api/auth/mobile/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setUserId(data.userId);
+        Alert.alert('Code Sent', 'A verification code has been sent to your email.');
+        setStep(2);
+      } else {
+        Alert.alert('Error', data.error || 'Failed to send verification code');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to connect to the server');
+    }
   };
 
-  const handleResetPassword = () => {
-    if (!code || !newPassword) {
-      Alert.alert('Error', 'Please enter the verification code and your new password');
+  const handleVerifyCode = async () => {
+    if (!code) {
+      Alert.alert('Error', 'Please enter the verification code');
       return;
     }
-    // Simulate reset
-    Alert.alert('Success', 'Your password has been reset successfully.', [
-      { text: 'OK', onPress: () => navigation.navigate('Login') }
-    ]);
+    
+    try {
+      const res = await fetch('http://192.168.100.16:3000/api/auth/mobile/verify-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, code })
+      });
+      const data = await res.json();
+      
+      if (res.ok && data.success) {
+        setStep(3);
+      } else {
+        Alert.alert('Error', data.error || 'Invalid verification code');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to connect to the server');
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!newPassword || newPassword !== confirmPassword) {
+      Alert.alert('Error', 'Please enter a valid password and ensure both passwords match');
+      return;
+    }
+    
+    try {
+      const res = await fetch('http://192.168.100.16:3000/api/auth/mobile/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, code, newPassword })
+      });
+      const data = await res.json();
+      
+      if (res.ok && data.success) {
+        Alert.alert('Success', 'Your password has been reset successfully.', [
+          { text: 'OK', onPress: () => navigation.navigate('Login') }
+        ]);
+      } else {
+        Alert.alert('Error', data.error || 'Failed to reset password');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to connect to the server');
+    }
   };
 
   return (
@@ -77,21 +133,22 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
                 {step === 1 ? (
                   <>
                     <Text style={styles.instructionText}>
-                      Enter your registered phone number and we will send you a verification code.
+                      Enter your registered phone number or email and we will send you a verification code.
                     </Text>
                     <View style={[
                       styles.inputContainer,
-                      focusedInput === 'phone' && styles.inputFocused
+                      focusedInput === 'identifier' && styles.inputFocused
                     ]}>
-                      <Ionicons name="call-outline" size={20} color={focusedInput === 'phone' ? '#3a7d55' : '#a0aec0'} style={styles.inputIcon} />
+                      <Ionicons name="person-outline" size={20} color={focusedInput === 'identifier' ? '#3a7d55' : '#a0aec0'} style={styles.inputIcon} />
                       <TextInput
                         style={styles.input}
-                        value={phoneNumber}
-                        onChangeText={setPhoneNumber}
-                        placeholder="Phone Number"
+                        value={identifier}
+                        onChangeText={setIdentifier}
+                        placeholder="Phone Number or Email"
                         placeholderTextColor="#a0aec0"
-                        keyboardType="phone-pad"
-                        onFocus={() => setFocusedInput('phone')}
+                        keyboardType="default"
+                        autoCapitalize="none"
+                        onFocus={() => setFocusedInput('identifier')}
                         onBlur={() => setFocusedInput(null)}
                       />
                     </View>
@@ -101,10 +158,10 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
                       </View>
                     </TouchableOpacity>
                   </>
-                ) : (
+                ) : step === 2 ? (
                   <>
                     <Text style={styles.instructionText}>
-                      Please enter the verification code sent to {phoneNumber} and your new password.
+                      Please enter the verification code sent to {identifier}.
                     </Text>
                     <View style={[
                       styles.inputContainer,
@@ -122,6 +179,17 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
                         onBlur={() => setFocusedInput(null)}
                       />
                     </View>
+                    <TouchableOpacity onPress={handleVerifyCode} activeOpacity={0.8} style={styles.buttonShadow}>
+                      <View style={styles.actionBtn}>
+                        <Text style={styles.actionBtnText}>Verify Code</Text>
+                      </View>
+                    </TouchableOpacity>
+                  </>
+                ) : (
+                  <>
+                    <Text style={styles.instructionText}>
+                      Please enter your new password.
+                    </Text>
                     <View style={[
                       styles.inputContainer,
                       focusedInput === 'password' && styles.inputFocused
@@ -135,6 +203,22 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
                         placeholderTextColor="#a0aec0"
                         secureTextEntry
                         onFocus={() => setFocusedInput('password')}
+                        onBlur={() => setFocusedInput(null)}
+                      />
+                    </View>
+                    <View style={[
+                      styles.inputContainer,
+                      focusedInput === 'confirmPassword' && styles.inputFocused
+                    ]}>
+                      <Ionicons name="lock-closed-outline" size={20} color={focusedInput === 'confirmPassword' ? '#3a7d55' : '#a0aec0'} style={styles.inputIcon} />
+                      <TextInput
+                        style={styles.input}
+                        value={confirmPassword}
+                        onChangeText={setConfirmPassword}
+                        placeholder="Confirm Password"
+                        placeholderTextColor="#a0aec0"
+                        secureTextEntry
+                        onFocus={() => setFocusedInput('confirmPassword')}
                         onBlur={() => setFocusedInput(null)}
                       />
                     </View>

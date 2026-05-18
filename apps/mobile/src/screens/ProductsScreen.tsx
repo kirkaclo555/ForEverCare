@@ -6,7 +6,9 @@ import {
   ScrollView,
   TouchableOpacity,
   StatusBar,
-  Alert
+  Alert,
+  Image,
+  RefreshControl
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
@@ -28,13 +30,15 @@ type Props = {
 
 // Define Types
 type Product = {
-  id: number;
+  id: string | number;
   name: string;
   price: number;
   category: string;
   icon: string;
   color: string;
   desc: string;
+  stock: number;
+  image?: string | null;
 };
 
 type CartItem = {
@@ -48,23 +52,24 @@ export default function ProductsScreen({ navigation }: Props) {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>(['All']);
 
-  useEffect(() => {
-    fetch('http://192.168.100.78:3000/api/inventory')
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchProducts = () => {
+    return fetch('http://192.168.100.16:3000/api/inventory')
       .then(res => res.json())
       .then(data => {
-        const sellableCategories = ['food', 'dog', 'cat', 'medications', 'vaccine', 'grooming', 'accessories', 'accessory', 'medicine', 'Food supplies'];
         const mappedProducts = data
-          .filter((item: any) => sellableCategories.includes((item.category || '').toLowerCase()))
           .map((item: any) => ({
             id: item.id,
             name: item.name,
             price: parseFloat(item.price) || 0,
             category: item.categoryLabel || item.category || 'Other',
-            icon: item.icon || 'box',
+            icon: (item.icon || 'box').replace('fa-', ''),
             color: '#dd6b20',
             desc: item.description || 'No description available.',
-            stock: item.stock || 0
-          })).filter((item: any) => item.stock > 0);
+            stock: item.stock || 0,
+            image: item.image || null
+          }));
         
         setProducts(mappedProducts);
         
@@ -73,6 +78,15 @@ export default function ProductsScreen({ navigation }: Props) {
         setCategories(['All', ...uniqueCats]);
       })
       .catch(e => console.log('Error fetching products', e));
+  };
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    fetchProducts()?.finally(() => setRefreshing(false));
   }, []);
 
   // View & App State
@@ -105,11 +119,15 @@ export default function ProductsScreen({ navigation }: Props) {
     Alert.alert("Added to Cart", `${product.name} was added to your shopping cart.`);
   };
 
-  const updateCartQuantity = (productId: number, delta: number) => {
+  const updateCartQuantity = (productId: string | number, delta: number) => {
     setCart(prevCart => {
       return prevCart.map(item => {
         if (item.product.id === productId) {
           const newQ = item.quantity + delta;
+          if (newQ > item.product.stock) {
+             Alert.alert("Stock Limit", `Only ${item.product.stock} available in stock.`);
+             return { ...item, quantity: item.product.stock };
+          }
           return { ...item, quantity: newQ > 0 ? newQ : 0 };
         }
         return item;
@@ -146,47 +164,30 @@ export default function ProductsScreen({ navigation }: Props) {
     };
 
     try {
-      // 1. Post to billing
-      const billingRes = await fetch('http://192.168.100.78:3000/api/billing');
-      const existingInvoices = await billingRes.json();
-      await fetch('http://192.168.100.78:3000/api/billing', {
+      const orderPayload = {
+        totalAmount: checkoutItems.reduce((acc, item) => acc + (item.product.price * item.quantity), 0),
+        paymentMethod: 'cash',
+        deliveryAddress: 'In-Clinic Pick Up',
+        items: checkoutItems.map(item => ({
+          productId: item.product.id,
+          quantity: item.quantity,
+          subtotal: item.product.price * item.quantity
+        }))
+      };
+
+      const res = await fetch('http://192.168.100.16:3000/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify([newInvoice, ...existingInvoices])
+        body: JSON.stringify(orderPayload)
       });
 
-      // 2. Post to inventory to deduct stock
-      const invRes = await fetch('http://192.168.100.78:3000/api/inventory');
-      const inventory = await invRes.json();
-      
-      const updatedInventory = inventory.map((invItem: any) => {
-        const boughtItem = checkoutItems.find(c => c.product.id === invItem.id);
-        if (boughtItem) {
-          return { ...invItem, stock: Math.max(0, invItem.stock - boughtItem.quantity) };
-        }
-        return invItem;
-      });
-
-      await fetch('http://192.168.100.78:3000/api/inventory', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(updatedInventory)
-      });
-      
-      // Update local products state stock
-      setProducts(updatedInventory.map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          price: parseFloat(item.price) || 0,
-          category: item.categoryLabel || item.category || 'Other',
-          icon: item.icon || 'box',
-          color: '#dd6b20',
-          desc: item.description || 'No description available.',
-          stock: item.stock || 0
-      })).filter((item: any) => item.stock > 0));
+      if (!res.ok) {
+        throw new Error('Failed to create order');
+      }
 
     } catch (e) {
       console.log('Error during checkout', e);
+      Alert.alert('Checkout Error', 'There was an issue processing your order.');
     }
 
     setCart([]);
@@ -225,7 +226,13 @@ export default function ProductsScreen({ navigation }: Props) {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.mainScroll} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.mainScroll} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3a7d55']} />
+        }
+      >
         {/* Categories */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
           {categories.map((cat, idx) => (
@@ -257,22 +264,32 @@ export default function ProductsScreen({ navigation }: Props) {
           {filteredProducts.map(product => (
             <TouchableOpacity
               key={product.id}
-              style={styles.productCard}
+              style={[styles.productCard, product.stock <= 0 && { opacity: 0.6 }]}
               onPress={() => {
                 setSelectedProduct(product);
                 setViewState('detail');
               }}
             >
-              <View style={[styles.productImagePlaceholder, { backgroundColor: product.color + '15' }]}>
-                <FontAwesome5 name={product.icon} size={35} color={product.color} />
+              <View style={[styles.productImagePlaceholder, { backgroundColor: product.color + '15', overflow: 'hidden' }]}>
+                {product.image ? (
+                  <Image source={{ uri: product.image }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
+                ) : (
+                  <FontAwesome5 name={product.icon} size={35} color={product.color} />
+                )}
+                {product.stock <= 0 && (
+                  <View style={{ position: 'absolute', backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}>
+                    <Text style={{ color: 'white', fontSize: 10, fontFamily: 'Montserrat-Bold' }}>SOLD OUT</Text>
+                  </View>
+                )}
               </View>
               <Text style={styles.productCategory}>{product.category}</Text>
               <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>
               <View style={styles.productFooter}>
                 <Text style={styles.productPrice}>₱{product.price.toFixed(2)}</Text>
                 <TouchableOpacity
-                  style={styles.addButton}
-                  onPress={() => addToCart(product)}
+                  style={[styles.addButton, product.stock <= 0 && { backgroundColor: '#a0aec0' }]}
+                  onPress={() => product.stock > 0 && addToCart(product)}
+                  disabled={product.stock <= 0}
                 >
                   <FontAwesome5 name="cart-plus" size={12} color="white" />
                 </TouchableOpacity>
@@ -305,8 +322,12 @@ export default function ProductsScreen({ navigation }: Props) {
         </View>
 
         <ScrollView style={styles.detailScroll} showsVerticalScrollIndicator={false}>
-          <View style={[styles.detailHeroImage, { backgroundColor: selectedProduct.color + '15' }]}>
-            <FontAwesome5 name={selectedProduct.icon} size={80} color={selectedProduct.color} />
+          <View style={[styles.detailHeroImage, { backgroundColor: selectedProduct.color + '15', overflow: 'hidden' }]}>
+             {selectedProduct.image ? (
+                  <Image source={{ uri: selectedProduct.image }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
+                ) : (
+                  <FontAwesome5 name={selectedProduct.icon} size={80} color={selectedProduct.color} />
+             )}
           </View>
 
           <View style={styles.detailContentBox}>
@@ -323,9 +344,18 @@ export default function ProductsScreen({ navigation }: Props) {
             <Text style={styles.descLabel}>About this item</Text>
             <Text style={styles.descText}>{selectedProduct.desc}</Text>
 
-            <View style={styles.stockBadge}>
-              <FontAwesome5 name="check-circle" size={14} color="#38a169" />
-              <Text style={styles.stockBadgeText}>In Stock at Clinic</Text>
+            <View style={[styles.stockBadge, selectedProduct.stock <= 0 && { backgroundColor: '#fed7d7' }]}>
+              {selectedProduct.stock > 0 ? (
+                 <>
+                   <FontAwesome5 name="check-circle" size={14} color="#38a169" />
+                   <Text style={styles.stockBadgeText}>In Stock at Clinic ({selectedProduct.stock})</Text>
+                 </>
+              ) : (
+                 <>
+                   <FontAwesome5 name="times-circle" size={14} color="#e53e3e" />
+                   <Text style={[styles.stockBadgeText, { color: '#e53e3e' }]}>Sold Out</Text>
+                 </>
+              )}
             </View>
           </View>
         </ScrollView>
@@ -333,17 +363,19 @@ export default function ProductsScreen({ navigation }: Props) {
         {/* Action Buttons (Sticky Bottom) */}
         <View style={styles.detailActionContainer}>
           <TouchableOpacity
-            style={styles.detailAddToCartBtn}
-            onPress={() => addToCart(selectedProduct)}
+            style={[styles.detailAddToCartBtn, selectedProduct.stock <= 0 && { borderColor: '#a0aec0', opacity: 0.5 }]}
+            onPress={() => selectedProduct.stock > 0 && addToCart(selectedProduct)}
+            disabled={selectedProduct.stock <= 0}
           >
-            <FontAwesome5 name="cart-plus" size={16} color="#2E5E3E" style={{ marginRight: 8 }} />
-            <Text style={styles.detailAddToCartText}>Add to Cart</Text>
+            <FontAwesome5 name="cart-plus" size={16} color={selectedProduct.stock <= 0 ? '#a0aec0' : '#2E5E3E'} style={{ marginRight: 8 }} />
+            <Text style={[styles.detailAddToCartText, selectedProduct.stock <= 0 && { color: '#a0aec0' }]}>Add to Cart</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={styles.detailBuyNowBtn}
-            onPress={() => handleBuyNow(selectedProduct)}
+            style={[styles.detailBuyNowBtn, selectedProduct.stock <= 0 && { backgroundColor: '#a0aec0' }]}
+            onPress={() => selectedProduct.stock > 0 && handleBuyNow(selectedProduct)}
+            disabled={selectedProduct.stock <= 0}
           >
-            <Text style={styles.detailBuyNowText}>Buy Now</Text>
+            <Text style={styles.detailBuyNowText}>{selectedProduct.stock <= 0 ? 'Sold Out' : 'Buy Now'}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -377,8 +409,12 @@ export default function ProductsScreen({ navigation }: Props) {
             <ScrollView style={styles.cartScroll} showsVerticalScrollIndicator={false}>
               {cart.map((item, idx) => (
                 <View key={idx} style={styles.cartItem}>
-                  <View style={[styles.cartItemImage, { backgroundColor: item.product.color + '15' }]}>
-                    <FontAwesome5 name={item.product.icon} size={24} color={item.product.color} />
+                  <View style={[styles.cartItemImage, { backgroundColor: item.product.color + '15', overflow: 'hidden' }]}>
+                    {item.product.image ? (
+                      <Image source={{ uri: item.product.image }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
+                    ) : (
+                      <FontAwesome5 name={item.product.icon} size={24} color={item.product.color} />
+                    )}
                   </View>
                   <View style={styles.cartItemDetails}>
                     <Text style={styles.cartItemName} numberOfLines={2}>{item.product.name}</Text>

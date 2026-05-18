@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSharedInventory } from '../../../hooks/useInventory';
 import { useBilling } from '../../../hooks/useBilling';
+import { useOrders } from '../../../hooks/useOrders';
 import './products.css';
 
 export default function ProductsPage() {
@@ -11,6 +12,7 @@ export default function ProductsPage() {
 
   const { addItem, updateItem, sellItem, getSellableItems } = useSharedInventory();
   const { invoices, addInvoice } = useBilling();
+  const { orders, fetchOrders, updateOrderStatus } = useOrders('PENDING');
   
   const [activeCategory, setActiveCategory] = useState('all');
   const allProducts = getSellableItems();
@@ -36,7 +38,7 @@ export default function ProductsPage() {
 
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [newProduct, setNewProduct] = useState({ name: '', price: '', category: 'food', stock: '', badge: '', image: '' });
-  const [editingProductId, setEditingProductId] = useState<number | null>(null);
+  const [editingProductId, setEditingProductId] = useState<string | number | null>(null);
   const [warningMessage, setWarningMessage] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
 
@@ -315,30 +317,55 @@ export default function ProductsPage() {
                         <i className="fas fa-clock"></i>
                         Pending Orders
                     </h3>
-                    <span id="pending-count">8</span>
-                    <div className="clear-cart" onClick={() => console.log('refreshPendingOrders()')}>
+                    <span id="pending-count">{orders.length}</span>
+                    <div className="clear-cart" onClick={() => fetchOrders('PENDING')}>
                         <i className="fas fa-sync-alt"></i>
                     </div>
                 </div>
                 
                 <div className="cart-items" id="pending-orders-container">
-                    
+                    {orders.map(order => (
+                       <div key={order.id} className="pending-order-card" style={{ padding: '10px', borderBottom: '1px solid #edf2f7', marginBottom: '10px' }}>
+                           <div style={{ fontWeight: 'bold', color: '#2d3748', fontSize: '14px' }}>Order #{order.id.slice(0,8)}</div>
+                           <div style={{ fontSize: '12px', color: '#718096', marginBottom: '8px' }}>{new Date(order.orderDate).toLocaleString()}</div>
+                           {order.items.map(item => (
+                               <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#4a5568', marginBottom: '4px' }}>
+                                  <span>{item.quantity}x {item.product?.productName || 'Unknown Product'}</span>
+                                  <span>₱{item.subtotal.toFixed(2)}</span>
+                               </div>
+                           ))}
+                           <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed #e2e8f0', display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', color: '#2E5E3E' }}>
+                              <span>Total:</span>
+                              <span>₱{order.totalAmount.toFixed(2)}</span>
+                           </div>
+                       </div>
+                    ))}
+                    {orders.length === 0 && <div style={{ padding: '20px', textAlign: 'center', color: '#a0aec0', fontSize: '14px', fontFamily: 'Montserrat-Regular' }}>No pending orders</div>}
                 </div>
 
                 <div className="cart-total">
                     <span>Total Pending</span>
-                    <span id="pending-total">₱584.92</span>
+                    <span id="pending-total">₱{orders.reduce((sum, o) => sum + o.totalAmount, 0).toFixed(2)}</span>
                 </div>
 
-                <button className="checkout-btn" onClick={() => console.log('processOrders()')}>
+                <button className="checkout-btn" onClick={async () => {
+                   let processed = 0;
+                   for (const order of orders) {
+                      const res = await updateOrderStatus(order.id, 'PROCESSING');
+                      if (res.success) processed++;
+                   }
+                   if (processed > 0) {
+                      alert(`${processed} order(s) processed! Stock has been updated.`);
+                      window.location.reload();
+                   }
+                }} disabled={orders.length === 0} style={{ opacity: orders.length === 0 ? 0.5 : 1 }}>
                     <i className="fas fa-check-circle"></i>
-                    Process Selected
+                    Process All Pending
                 </button>
             </div>
         </div>
     </div>
 
-    
     <div className="modal" id="generalSettingsModal" onClick={() => console.log('if(event.target === this) closeGeneralSettings()')}>
         <div className="modal-content">
             <div className="modal-header">
@@ -543,16 +570,16 @@ export default function ProductsPage() {
                   <form noValidate onSubmit={(e) => { e.preventDefault(); handleSaveProduct(); }}>
                       <div className="form-group">
                           <label><i className="fas fa-tag"></i> Product Name *</label>
-                          <input type="text" className="form-control" placeholder="Enter product name" 
+                          <input type="text" className="form-control" placeholder={validationErrors.name ? "Warning: Product Name is required" : "Enter product name"} 
                               value={newProduct.name} onChange={e => { setNewProduct({...newProduct, name: e.target.value}); if (validationErrors.name) setValidationErrors({...validationErrors, name: ''}); }} 
-                              style={validationErrors.name ? {borderColor: '#e53e3e'} : {}} />
+                              style={validationErrors.name ? {borderColor: '#e53e3e', color: '#e53e3e'} : {}} />
                           {validationErrors.name && <span style={{ color: '#e53e3e', fontSize: '0.8rem', marginTop: '5px', display: 'block' }}>{validationErrors.name}</span>}
                       </div>
                       <div className="form-group">
                           <label><i className="fas fa-peso-sign"></i> Price *</label>
-                          <input type="number" step="0.01" className="form-control" placeholder="0.00" 
+                          <input type="number" step="0.01" className="form-control" placeholder={validationErrors.price ? "Warning: Price is required" : "0.00"} 
                               value={newProduct.price} onChange={e => { setNewProduct({...newProduct, price: e.target.value}); if (validationErrors.price) setValidationErrors({...validationErrors, price: ''}); }} 
-                              style={validationErrors.price ? {borderColor: '#e53e3e'} : {}} />
+                              style={validationErrors.price ? {borderColor: '#e53e3e', color: '#e53e3e'} : {}} />
                           {validationErrors.price && <span style={{ color: '#e53e3e', fontSize: '0.8rem', marginTop: '5px', display: 'block' }}>{validationErrors.price}</span>}
                       </div>
                       <div className="form-group">
@@ -568,9 +595,9 @@ export default function ProductsPage() {
                       </div>
                       <div className="form-group">
                           <label><i className="fas fa-cubes"></i> Stock *</label>
-                          <input type="number" className="form-control" placeholder="Quantity" 
+                          <input type="number" className="form-control" placeholder={validationErrors.stock ? "Warning: Stock quantity is required" : "Quantity"} 
                               value={newProduct.stock} onChange={e => { setNewProduct({...newProduct, stock: e.target.value}); if (validationErrors.stock) setValidationErrors({...validationErrors, stock: ''}); }} 
-                              style={validationErrors.stock ? {borderColor: '#e53e3e'} : {}} />
+                              style={validationErrors.stock ? {borderColor: '#e53e3e', color: '#e53e3e'} : {}} />
                           {validationErrors.stock && <span style={{ color: '#e53e3e', fontSize: '0.8rem', marginTop: '5px', display: 'block' }}>{validationErrors.stock}</span>}
                       </div>
                       <div className="form-group">

@@ -70,11 +70,11 @@ export default function TelemedicinePage() {
     });
   };
 
-  const teleAppointments = appointments.filter(app => app.type === 'telemedicine' && (app.status.toLowerCase() === 'confirmed' || app.status.toLowerCase() === 'done'));
+  const teleAppointments = appointments.filter(app => app.type === 'telemedicine' && app.status.toLowerCase() !== 'cancelled');
 
-  const todaySessions = sortSessions(teleAppointments.filter(s => s.date === todayStr && s.status.toLowerCase() !== 'done'));
-  const upcomingSessions = sortSessions(teleAppointments.filter(s => s.date > todayStr && s.status.toLowerCase() !== 'done'));
-  const pastSessions = sortSessions(teleAppointments.filter(s => s.date < todayStr || s.status.toLowerCase() === 'done'), false);
+  const todaySessions = sortSessions(teleAppointments.filter(s => s.date === todayStr && s.status.toLowerCase() !== 'done' && s.status.toLowerCase() !== 'completed'));
+  const upcomingSessions = sortSessions(teleAppointments.filter(s => s.date > todayStr && s.status.toLowerCase() !== 'done' && s.status.toLowerCase() !== 'completed'));
+  const pastSessions = sortSessions(teleAppointments.filter(s => s.date < todayStr || s.status.toLowerCase() === 'done' || s.status.toLowerCase() === 'completed'), false);
 
   const renderSessionCard = (session: any, isPast: boolean) => (
     <div key={session.id} style={{ display: 'flex', flexDirection: 'column', gap: '15px', padding: '25px', marginBottom: '15px', borderRadius: '16px', border: '1px solid rgba(46, 94, 62, 0.1)', background: 'rgba(46, 94, 62, 0.05)', transition: 'all 0.3s ease' }} className="admin-tele-list-item">

@@ -14,11 +14,16 @@ import {
   Image,
   Dimensions,
   Animated,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useUser } from '../context/UserContext';
+import * as LocalAuthentication from 'expo-local-authentication';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Modal } from 'react-native';
 
 type RootStackParamList = {
   Login: undefined;
@@ -37,11 +42,17 @@ type Props = {
 const { height } = Dimensions.get('window');
 
 export default function LoginScreen({ navigation }: Props) {
-  const [email, setEmail] = useState("owner@furcare.com");
-  const [password, setPassword] = useState("owner123");
-  const [focusedInput, setFocusedInput] = useState<string | null>(null);
+  const { updateUser } = useUser();
+  const [identifier, setIdentifier] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const [is2FAModalVisible, setIs2FAModalVisible] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [expected2FACode, setExpected2FACode] = useState('');
+  const [pendingUserAuth, setPendingUserAuth] = useState<any>(null);
 
   const slideAnim = useRef(new Animated.Value(height)).current;
 
@@ -52,13 +63,104 @@ export default function LoginScreen({ navigation }: Props) {
       friction: 8,
       useNativeDriver: true,
     }).start();
+    
+    checkBiometricLogin();
   }, [slideAnim]);
 
+  const checkBiometricLogin = async () => {
+    try {
+      const credentialsString = await AsyncStorage.getItem('global_biometric_credentials');
+      if (credentialsString) {
+        const credentials = JSON.parse(credentialsString);
+        
+        const hasHardware = await LocalAuthentication.hasHardwareAsync();
+        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+        
+        if (hasHardware && isEnrolled) {
+          const result = await LocalAuthentication.authenticateAsync({
+            promptMessage: 'Login with Biometrics',
+            fallbackLabel: 'Use Password',
+          });
+          
+          if (result.success) {
+            setIdentifier(credentials.identifier);
+            setPassword(credentials.password);
+            // Auto login with credentials
+            performLogin(credentials.identifier, credentials.password);
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Biometric auto-login error:', e);
+    }
+  };
+
   const handleLogin = () => {
-    if (email === 'owner@furcare.com' && password === 'owner123') {
-      navigation.replace('PetOwnerTabs');
+    performLogin(identifier, password);
+  };
+
+  const performLogin = async (loginIdentifier: string, loginPassword: string) => {
+    if (!loginIdentifier || !loginPassword) {
+      Alert.alert('Error', 'Please enter your phone number/email and password.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('http://192.168.100.16:3000/api/auth/mobile/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: loginIdentifier, password: loginPassword }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        Alert.alert('Login Failed', data.error || 'Invalid credentials. Please try again.');
+      } else {
+        // Save latest successful login credentials for biometrics (if they have it enabled, this is handled via account security later)
+        await AsyncStorage.setItem('latest_successful_login', JSON.stringify({ identifier: loginIdentifier, password: loginPassword }));
+
+        if (data.user.twoFactorEnabled) {
+          // Mock 2FA Code Generation
+          const code = Math.floor(100000 + Math.random() * 900000).toString();
+          setExpected2FACode(code);
+          setPendingUserAuth(data.user);
+          setIs2FAModalVisible(true);
+          
+          // Display the code since there is no SMS provider
+          setTimeout(() => {
+            Alert.alert('Mock SMS Received', `Your FurEverPawCare 2FA code is: ${code}`);
+          }, 1000);
+        } else {
+          completeLogin(data.user);
+        }
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      Alert.alert('Error', 'Could not connect to the server. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const completeLogin = (user: any) => {
+    updateUser({
+      id: user.id,
+      fullName: user.fullName,
+      email: user.email,
+      phoneNumber: user.phoneNumber,
+      avatarUri: user.profileImage || null,
+    });
+    navigation.replace('PetOwnerTabs');
+  };
+
+  const verify2FA = () => {
+    if (twoFactorCode === expected2FACode) {
+      setIs2FAModalVisible(false);
+      completeLogin(pendingUserAuth);
     } else {
-      Alert.alert('Login Failed', 'Invalid credentials. Please use owner@furcare.com / owner123');
+      Alert.alert('Error', 'Invalid 2FA code. Please try again.');
     }
   };
 
@@ -82,10 +184,10 @@ export default function LoginScreen({ navigation }: Props) {
           </View>
           
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'position' : undefined}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
             style={styles.keyboardAvoidingView}
           >
-            <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="always" keyboardDismissMode="none" bounces={false} showsVerticalScrollIndicator={false}>
               <View style={styles.innerContainer}>
 
                 {/* Header Section */}
@@ -107,29 +209,20 @@ export default function LoginScreen({ navigation }: Props) {
                   </View>
 
                   {/* Input Fields */}
-                  <View style={[
-                    styles.inputContainer,
-                    focusedInput === 'email' && styles.inputFocused
-                  ]}>
-                    <Ionicons name="person-outline" size={20} color={focusedInput === 'email' ? '#2E5E3E' : '#a0aec0'} style={styles.inputIcon} />
+                  <View style={styles.inputContainer}>
+                    <Ionicons name="person-outline" size={20} color="#a0aec0" style={styles.inputIcon} />
                     <TextInput
                       style={styles.input}
-                      value={email}
-                      onChangeText={setEmail}
-                      placeholder="Username or Email"
+                      value={identifier}
+                      onChangeText={setIdentifier}
+                      placeholder="Phone Number or Email"
                       placeholderTextColor="#a0aec0"
-                      keyboardType="email-address"
                       autoCapitalize="none"
-                      onFocus={() => setFocusedInput('email')}
-                      onBlur={() => setFocusedInput(null)}
                     />
                   </View>
 
-                  <View style={[
-                    styles.inputContainer,
-                    focusedInput === 'password' && styles.inputFocused
-                  ]}>
-                    <Ionicons name="lock-closed-outline" size={20} color={focusedInput === 'password' ? '#2E5E3E' : '#a0aec0'} style={styles.inputIcon} />
+                  <View style={styles.inputContainer}>
+                    <Ionicons name="lock-closed-outline" size={20} color="#a0aec0" style={styles.inputIcon} />
                     <TextInput
                       style={styles.input}
                       value={password}
@@ -137,8 +230,6 @@ export default function LoginScreen({ navigation }: Props) {
                       placeholder="Password"
                       placeholderTextColor="#a0aec0"
                       secureTextEntry={!showPassword}
-                      onFocus={() => setFocusedInput('password')}
-                      onBlur={() => setFocusedInput(null)}
                     />
                     <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIconToggle}>
                       <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#a0aec0" />
@@ -160,8 +251,8 @@ export default function LoginScreen({ navigation }: Props) {
                   </View>
 
                   {/* Login Button */}
-                  <TouchableOpacity onPress={handleLogin} activeOpacity={0.8} style={styles.loginBtn}>
-                    <Text style={styles.loginBtnText}>Login</Text>
+                  <TouchableOpacity onPress={handleLogin} activeOpacity={0.8} style={styles.loginBtn} disabled={isLoading}>
+                    <Text style={styles.loginBtnText}>{isLoading ? "Logging in..." : "Login"}</Text>
                   </TouchableOpacity>
 
                   {/* OR Divider */}
@@ -191,8 +282,35 @@ export default function LoginScreen({ navigation }: Props) {
 
                 </Animated.View>
               </View>
-            </TouchableWithoutFeedback>
+            </ScrollView>
           </KeyboardAvoidingView>
+
+          {/* 2FA Modal */}
+          <Modal visible={is2FAModalVisible} animationType="fade" transparent>
+            <View style={styles.modalOverlay}>
+              <View style={styles.modalContent}>
+                <Text style={styles.modalTitle}>Two-Factor Authentication</Text>
+                <Text style={{marginBottom: 15, color: '#718096', fontSize: 14}}>Please enter the 6-digit code sent to your registered phone number.</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Enter 6-digit code"
+                  keyboardType="number-pad"
+                  maxLength={6}
+                  value={twoFactorCode}
+                  onChangeText={setTwoFactorCode}
+                />
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity style={styles.cancelBtn} onPress={() => setIs2FAModalVisible(false)}>
+                    <Text style={styles.cancelBtnText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.saveBtn} onPress={verify2FA}>
+                    <Text style={styles.saveBtnText}>Verify</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </Modal>
+
         </SafeAreaView>
       </LinearGradient>
     </View>
@@ -225,6 +343,9 @@ const styles = StyleSheet.create({
   },
   keyboardAvoidingView: {
     flex: 1,
+  },
+  scrollContainer: {
+    flexGrow: 1,
   },
   innerContainer: {
     flex: 1,
@@ -296,21 +417,13 @@ const styles = StyleSheet.create({
     height: 56,
     marginBottom: 16,
   },
-  inputFocused: {
-    borderColor: '#2E5E3E',
-    backgroundColor: '#ffffff',
-    shadowColor: '#2E5E3E',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
   inputIcon: {
     marginRight: 12,
   },
   input: {
     fontFamily: 'Montserrat-Regular',
     flex: 1,
+    height: '100%',
     fontSize: 16,
     color: '#2d3748',
   },
@@ -418,5 +531,61 @@ const styles = StyleSheet.create({
     fontFamily: 'Montserrat-Bold',
     fontSize: 14,
     color: '#2E5E3E',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    width: '100%',
+    borderRadius: 16,
+    padding: 25,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontFamily: 'Catcut',
+    color: '#2D5016',
+    marginBottom: 10,
+  },
+  modalInput: {
+    backgroundColor: '#f7fafc',
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 10,
+    padding: 15,
+    marginBottom: 20,
+    fontSize: 16,
+    color: '#2d3748',
+    textAlign: 'center',
+    letterSpacing: 4,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 15,
+  },
+  cancelBtn: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+  },
+  cancelBtnText: {
+    color: '#718096',
+    fontSize: 15,
+    fontFamily: 'Montserrat-SemiBold',
+  },
+  saveBtn: {
+    backgroundColor: '#2D5016',
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 10,
+  },
+  saveBtnText: {
+    color: 'white',
+    fontSize: 15,
+    fontFamily: 'Montserrat-Bold',
   }
 });

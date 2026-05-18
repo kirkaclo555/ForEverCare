@@ -9,7 +9,8 @@ import {
   Image,
   Modal,
   Switch,
-  Dimensions
+  Dimensions,
+  RefreshControl
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -29,6 +30,7 @@ type RootStackParamList = {
   Telemedicine: undefined;
   Profile: undefined;
   AccountSecurity: undefined;
+  More: { screen: string };
 };
 
 type HomeScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Home'>;
@@ -48,34 +50,26 @@ export default function HomeScreen({ navigation }: Props) {
   const [hasSeenNotifications, setHasSeenNotifications] = useState(false);
 
   const fetchNotifications = () => {
-    fetch('http://192.168.100.78:3000/api/appointments')
+    return fetch(`http://192.168.100.16:3000/api/notifications?userId=${user?.id}`)
       .then(res => res.json())
       .then(data => {
-        if (data && Array.isArray(data)) {
-          // Filter telemedicine appointments that are confirmed and belong to user (we check owner name)
-          // Note: Ideally we'd filter by user.id, but since we don't have auth backend, we use user.name
-          const teleAppointments = data.filter((app: any) => 
-            app.type === 'telemedicine' && 
-            app.status === 'confirmed' && 
-            app.sessionCode &&
-            app.owner === user?.fullName
-          );
-          
-          const dynamicNotifications = teleAppointments.map(app => ({
-            id: app.id,
-            title: 'Telemedicine Session Confirmed',
-            desc: `Your appointment on ${app.date} at ${app.time} is confirmed. Session Code: ${app.sessionCode}`,
-            time: 'Just now',
-            icon: 'video',
-            color: '#3182ce'
+        if (data && data.success && Array.isArray(data.notifications)) {
+          const dynamicNotifications = data.notifications.map((notif: any) => ({
+            id: notif.id,
+            title: notif.title,
+            desc: notif.message,
+            time: new Date(notif.createdAt).toLocaleDateString(),
+            icon: 'bell',
+            color: '#3182ce',
+            isRead: notif.isRead
           }));
           setNotifications(dynamicNotifications);
           if (!hasSeenNotifications) {
-            setUnreadCount(dynamicNotifications.length);
+            setUnreadCount(dynamicNotifications.filter((n: any) => !n.isRead).length);
           }
         }
       })
-      .catch(err => console.error('Failed to fetch appointments for notifications:', err));
+      .catch(err => console.error('Failed to fetch notifications:', err));
   };
 
   useEffect(() => {
@@ -86,6 +80,11 @@ export default function HomeScreen({ navigation }: Props) {
     setIsNotificationsVisible(true);
     setUnreadCount(0);
     setHasSeenNotifications(true);
+    fetch('http://192.168.100.16:3000/api/notifications', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'markAllRead', userId: user?.id })
+    }).catch(err => console.error('Failed to mark notifications as read', err));
   };
 
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -121,8 +120,10 @@ export default function HomeScreen({ navigation }: Props) {
   const [allAppointments, setAllAppointments] = useState<any[]>([]);
   const [disabledTimeSlots, setDisabledTimeSlots] = useState<Record<string, {time: string, enabled: boolean}[]>>({});
 
+  const [refreshing, setRefreshing] = useState(false);
+
   const fetchCalendarData = () => {
-    fetch('http://192.168.100.78:3000/api/timeslots')
+    const p1 = fetch('http://192.168.100.16:3000/api/timeslots')
       .then(res => res.json())
       .then(data => {
         if (data && typeof data === 'object' && !data.error) {
@@ -131,7 +132,7 @@ export default function HomeScreen({ navigation }: Props) {
       })
       .catch(err => console.error('Failed to fetch timeslots:', err));
 
-    fetch('http://192.168.100.78:3000/api/appointments')
+    const p2 = fetch('http://192.168.100.16:3000/api/appointments')
       .then(res => res.json())
       .then(data => {
         if (data && Array.isArray(data)) {
@@ -139,7 +140,16 @@ export default function HomeScreen({ navigation }: Props) {
         }
       })
       .catch(err => console.error('Failed to fetch appointments:', err));
+
+    return Promise.all([p1, p2]);
   };
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    Promise.all([fetchNotifications(), fetchCalendarData()]).finally(() => {
+      setRefreshing(false);
+    });
+  }, [user]);
 
   useEffect(() => {
     fetchCalendarData();
@@ -277,7 +287,13 @@ export default function HomeScreen({ navigation }: Props) {
         </View>
       </View>
 
-      <ScrollView style={styles.mainScroll} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.mainScroll} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3a7d55']} />
+        }
+      >
 
         {/* Announcements Section - Top */}
 
@@ -421,7 +437,7 @@ export default function HomeScreen({ navigation }: Props) {
               <Text style={styles.navCardText}>My Appointments</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.navCard} onPress={() => navigation.navigate('MyPets')}>
+            <TouchableOpacity style={styles.navCard} onPress={() => navigation.navigate('More', { screen: 'PetRecords' })}>
               <View style={[styles.navCardIconTile, { backgroundColor: '#FEF3C7' }]}>
                 <FontAwesome5 name="paw" size={24} color="#D97706" />
               </View>

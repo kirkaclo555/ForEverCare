@@ -1,50 +1,122 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
+import { PrismaClient } from '@prisma/client';
 
+const prisma = new PrismaClient();
 export const dynamic = 'force-dynamic';
 
-// This is a simple JSON file-based database to store appointments locally
-const dataFilePath = path.join(process.cwd(), 'appointments.json');
-
-// Initialize the file if it doesn't exist
-const initializeDataFile = () => {
-  if (!fs.existsSync(dataFilePath)) {
-    const DEFAULT_APPOINTMENTS: any[] = [];
-    fs.writeFileSync(dataFilePath, JSON.stringify(DEFAULT_APPOINTMENTS, null, 2));
-  }
-};
-
 export async function GET() {
-  initializeDataFile();
   try {
-    const data = fs.readFileSync(dataFilePath, 'utf-8');
-    const appointments = JSON.parse(data);
-    return NextResponse.json(appointments);
+    const dbAppointments = await prisma.appointment.findMany({
+      include: {
+        user: true,
+        pet: true,
+        payments: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    const formattedAppointments = dbAppointments.map((app) => {
+      const payment = app.payments?.[0]; // Assuming one payment per appointment for simplicity
+      return {
+        id: app.id,
+        owner: app.user?.fullName || 'Unknown',
+        contact: app.user?.phoneNumber || 'N/A',
+        pet: app.pet?.petName || 'Unknown',
+        species: app.pet?.species || 'N/A',
+        breed: app.pet?.breed || 'N/A',
+        date: app.appointmentDate ? new Date(app.appointmentDate).toISOString().split('T')[0] : '',
+        time: app.appointmentTime || '',
+        type: app.type || 'inperson',
+        purpose: app.purpose || '',
+        status: app.status?.toLowerCase() || 'pending',
+        sessionCode: app.sessionCode || undefined,
+        referenceNumber: payment?.referenceNumber || undefined,
+        amountPaid: payment?.paymentAmount || undefined,
+        receiptImage: payment?.receiptImage || undefined,
+      };
+    });
+
+    return NextResponse.json(formattedAppointments);
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to read appointments' }, { status: 500 });
+    console.error('Error fetching appointments:', error);
+    return NextResponse.json({ error: 'Failed to read appointments from database' }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
-  initializeDataFile();
   try {
-    const newAppointments = await request.json();
-    // We expect the entire array of appointments or a single appointment. 
-    // To keep it simple and match localstorage behavior, we can accept the full array for bulk updates,
-    // or if it's a single object without an array, we append it.
-    let dataToWrite;
-    if (Array.isArray(newAppointments)) {
-      dataToWrite = newAppointments;
-    } else {
-      const data = fs.readFileSync(dataFilePath, 'utf-8');
-      const existing = JSON.parse(data);
-      dataToWrite = [...existing, newAppointments];
-    }
+    const data = await request.json();
     
-    fs.writeFileSync(dataFilePath, JSON.stringify(dataToWrite, null, 2));
-    return NextResponse.json({ success: true, appointments: dataToWrite });
+    // We expect a single appointment object to be created.
+    // Ensure we extract proper fields:
+    const {
+      ownerId, // Passed from UI instead of string
+      petId,   // Passed from UI instead of string
+      date,
+      time,
+      type,
+      purpose,
+      status,
+      sessionCode,
+      amountPaid,
+      referenceNumber,
+      receiptImage
+    } = data;
+
+    if (!ownerId || !petId) {
+      return NextResponse.json({ error: 'ownerId and petId are required for database appointments' }, { status: 400 });
+    }
+
+    const newAppointment = await prisma.appointment.create({
+      data: {
+        userId: ownerId,
+        petId: petId,
+        appointmentDate: new Date(date),
+        appointmentTime: time,
+        type: type || 'inperson',
+        purpose: purpose || 'Check-up',
+        status: status === 'confirmed' ? 'CONFIRMED' : status === 'Done' ? 'COMPLETED' : 'PENDING',
+        sessionCode: sessionCode || null,
+        payments: (amountPaid !== undefined || referenceNumber || receiptImage) ? {
+          create: {
+            paymentAmount: amountPaid ? Number(amountPaid) : 0,
+            referenceNumber: referenceNumber || null,
+            receiptImage: receiptImage || null,
+            paymentStatus: 'COMPLETED'
+          }
+        } : undefined
+      },
+      include: {
+        user: true,
+        pet: true,
+        payments: true
+      }
+    });
+
+    const payment = newAppointment.payments?.[0];
+    const formattedAppointment = {
+        id: newAppointment.id,
+        owner: newAppointment.user?.fullName || 'Unknown',
+        contact: newAppointment.user?.phoneNumber || 'N/A',
+        pet: newAppointment.pet?.petName || 'Unknown',
+        species: newAppointment.pet?.species || 'N/A',
+        breed: newAppointment.pet?.breed || 'N/A',
+        date: newAppointment.appointmentDate ? new Date(newAppointment.appointmentDate).toISOString().split('T')[0] : '',
+        time: newAppointment.appointmentTime || '',
+        type: newAppointment.type || 'inperson',
+        purpose: newAppointment.purpose || '',
+        status: newAppointment.status?.toLowerCase() || 'pending',
+        sessionCode: newAppointment.sessionCode || undefined,
+        referenceNumber: payment?.referenceNumber || undefined,
+        amountPaid: payment?.paymentAmount || undefined,
+        receiptImage: payment?.receiptImage || undefined,
+    };
+
+    return NextResponse.json({ success: true, appointment: formattedAppointment });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to write appointments' }, { status: 500 });
+    console.error('Error creating appointment:', error);
+    return NextResponse.json({ error: 'Failed to create appointment in database' }, { status: 500 });
   }
 }

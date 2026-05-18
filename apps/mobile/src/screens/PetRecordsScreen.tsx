@@ -35,7 +35,7 @@ type Props = {
 
 import { usePetContext, PetProfile } from '../context/PetContext';
 
-const DOG_BREEDS = ["Aspin", "Golden Retriever", "Labrador", "Poodle", "Bulldog", "Beagle", "Pug", "Chihuahua", "Shih Tzu", "Husky", "German Shepherd", "Mixed"];
+const DOG_BREEDS = ["Aspin", "Golden Retriever", "Labrador", "Poodle", "Bulldog", "Beagle", "Pug", "Chihuahua", "Shih Tzu", "Husky", "German Shepherd", "Rottweiler", "Dachshund", "Boxer", "Doberman", "Great Dane", "Pomeranian", "Corgi", "Shiba Inu", "Chow Chow", "Dalmatian", "Mixed"];
 const CAT_BREEDS = ["Puspin", "Persian", "Siamese", "Maine Coon", "Bengal", "Sphynx", "British Shorthair", "Scottish Fold", "Mixed"];
 const PET_TYPES = ["Dog", "Cat"];
 
@@ -56,8 +56,7 @@ export default function PetRecordsScreen({ navigation }: Props) {
   const [formWeight, setFormWeight] = useState('');
   const [formGender, setFormGender] = useState('Male');
   const [formAvatar, setFormAvatar] = useState('');
-  const [petDropdownOpen, setPetDropdownOpen] = useState(false);
-  const [breedDropdownOpen, setBreedDropdownOpen] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<'species' | 'breed' | null>(null);
 
   // --- Handlers ---
   const handlePickImage = async () => {
@@ -88,8 +87,7 @@ export default function PetRecordsScreen({ navigation }: Props) {
     setFormWeight('');
     setFormGender('Male');
     setFormAvatar('');
-    setPetDropdownOpen(false);
-    setBreedDropdownOpen(false);
+    setActiveDropdown(null);
     setViewState('create_edit');
   };
 
@@ -210,7 +208,7 @@ export default function PetRecordsScreen({ navigation }: Props) {
         </View>
       </View>
 
-      <ScrollView style={styles.mainScroll} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.mainScroll} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
          <View style={styles.petListGrid}>
            {pets.map(pet => (
              <TouchableOpacity 
@@ -275,44 +273,17 @@ export default function PetRecordsScreen({ navigation }: Props) {
            <TextInput style={styles.input} value={formName} onChangeText={setFormName} placeholder="e.g. Bella" placeholderTextColor="#a0aec0" />
          </View>
 
-         <View style={[styles.rowForm, {zIndex: (petDropdownOpen || breedDropdownOpen) ? 100 : 1, elevation: (petDropdownOpen || breedDropdownOpen) ? 100 : 1}]}>
-           <View style={[styles.formGroup, {flex: 1, marginRight: 10, zIndex: petDropdownOpen ? 10 : 1, elevation: petDropdownOpen ? 10 : 1}]}>
+         <View style={[styles.rowForm, {zIndex: 1, elevation: 1}]}>
+           <View style={[styles.formGroup, {flex: 1, marginRight: 10}]}>
              <Text style={styles.label}>Pet</Text>
              <TouchableOpacity 
                style={styles.input} 
-               onPress={() => {
-                  setPetDropdownOpen(!petDropdownOpen);
-                  setBreedDropdownOpen(false);
-               }}
+               onPress={() => setActiveDropdown('species')}
              >
                <Text style={{ color: formSpecies ? '#2d3748' : '#a0aec0', fontSize: 15 }}>{formSpecies || "Select pet"}</Text>
              </TouchableOpacity>
-
-             {petDropdownOpen && (
-                <View style={styles.floatingDropdown}>
-                  <FlatList
-                    data={PET_TYPES}
-                    keyExtractor={item => item}
-                    style={{ maxHeight: 150 }}
-                    nestedScrollEnabled={true}
-                    keyboardShouldPersistTaps="handled"
-                    renderItem={({ item }) => (
-                      <TouchableOpacity 
-                        style={styles.floatingDropdownItem}
-                        onPress={() => {
-                          setFormSpecies(item);
-                          setFormBreed(''); // reset breed
-                          setPetDropdownOpen(false);
-                        }}
-                      >
-                        <Text style={styles.floatingDropdownText}>{item}</Text>
-                      </TouchableOpacity>
-                    )}
-                  />
-                </View>
-              )}
            </View>
-           <View style={[styles.formGroup, {flex: 1, zIndex: breedDropdownOpen ? 10 : 1, elevation: breedDropdownOpen ? 10 : 1}]}>
+           <View style={[styles.formGroup, {flex: 1}]}>
              <Text style={styles.label}>Breed</Text>
              <TouchableOpacity 
                style={[styles.input, !formSpecies && {backgroundColor: '#edf2f7'}]} 
@@ -321,36 +292,11 @@ export default function PetRecordsScreen({ navigation }: Props) {
                      Alert.alert("Notice", "Please select a pet type first.");
                      return;
                   }
-                  
-                  setBreedDropdownOpen(!breedDropdownOpen);
-                  setPetDropdownOpen(false);
+                  setActiveDropdown('breed');
                }}
              >
                <Text style={{ color: formBreed ? '#2d3748' : '#a0aec0', fontSize: 15 }} numberOfLines={1}>{formBreed || (formSpecies ? "Select breed" : "Select pet first")}</Text>
              </TouchableOpacity>
-
-             {breedDropdownOpen && (
-                <View style={styles.floatingDropdown}>
-                  <FlatList
-                    data={formSpecies === 'Cat' ? CAT_BREEDS : DOG_BREEDS}
-                    keyExtractor={item => item}
-                    style={{ maxHeight: 200 }}
-                    nestedScrollEnabled={true}
-                    keyboardShouldPersistTaps="handled"
-                    renderItem={({ item }) => (
-                      <TouchableOpacity 
-                        style={styles.floatingDropdownItem}
-                        onPress={() => {
-                          setFormBreed(item);
-                          setBreedDropdownOpen(false);
-                        }}
-                      >
-                        <Text style={styles.floatingDropdownText}>{item}</Text>
-                      </TouchableOpacity>
-                    )}
-                  />
-                </View>
-              )}
            </View>
          </View>
 
@@ -378,6 +324,42 @@ export default function PetRecordsScreen({ navigation }: Props) {
          </TouchableOpacity>
          <View style={{height: 40}}/>
       </ScrollView>
+
+      {/* Dropdown Modal */}
+      <Modal visible={activeDropdown !== null} transparent={true} animationType="fade">
+        <TouchableOpacity 
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' }} 
+          activeOpacity={1} 
+          onPress={() => setActiveDropdown(null)}
+        >
+          <View style={{ backgroundColor: 'white', width: '80%', maxHeight: '60%', borderRadius: 16, padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 5 }}>
+            <Text style={{ fontSize: 18, fontFamily: 'Montserrat-Bold', marginBottom: 15, color: '#2d3748' }}>
+              {activeDropdown === 'species' ? 'Select Pet Type' : 'Select Breed'}
+            </Text>
+            <FlatList
+              data={activeDropdown === 'species' ? PET_TYPES : (formSpecies === 'Cat' ? CAT_BREEDS : DOG_BREEDS)}
+              keyExtractor={item => item}
+              showsVerticalScrollIndicator={true}
+              renderItem={({ item }) => (
+                <TouchableOpacity 
+                  style={{ paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#edf2f7' }}
+                  onPress={() => {
+                    if (activeDropdown === 'species') {
+                      setFormSpecies(item);
+                      if (item !== formSpecies) setFormBreed('');
+                    } else {
+                      setFormBreed(item);
+                    }
+                    setActiveDropdown(null);
+                  }}
+                >
+                  <Text style={{ fontSize: 16, fontFamily: 'Montserrat-Medium', color: '#4a5568' }}>{item}</Text>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 

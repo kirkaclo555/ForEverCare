@@ -31,14 +31,17 @@ type Props = {
 };
 
 export default function SignupScreen({ navigation }: Props) {
-  const [fullName, setFullName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
   const [contactNumber, setContactNumber] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSignup = () => {
-    if (!fullName || !contactNumber || !password || !confirmPassword) {
+  const handleSignup = async () => {
+    if (!firstName || !lastName || !email || !contactNumber || !password || !confirmPassword) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -46,10 +49,36 @@ export default function SignupScreen({ navigation }: Props) {
       Alert.alert('Error', 'Passwords do not match');
       return;
     }
-    // Simulation of a successful signup leading to the Login screen
-    Alert.alert('Success', 'Account created successfully!', [
-      { text: 'OK', onPress: () => navigation.replace('Login') }
-    ]);
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('http://192.168.100.16:3000/api/auth/mobile/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          phoneNumber: contactNumber,
+          password
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        Alert.alert('Signup Failed', data.error || 'An error occurred during signup.');
+      } else {
+        Alert.alert('Success', 'Account created successfully!', [
+          { text: 'OK', onPress: () => navigation.replace('Login') }
+        ]);
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      Alert.alert('Error', 'Could not connect to the server. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -90,24 +119,59 @@ export default function SignupScreen({ navigation }: Props) {
                   </View>
 
                   <View style={styles.formGroup}>
-                    <Text style={styles.label}>Full Name</Text>
+                    <Text style={styles.label}>First Name</Text>
                     <TextInput
                       style={[
                         styles.input,
-                        focusedInput === 'fullname' && styles.inputFocused
+                        focusedInput === 'firstName' && styles.inputFocused
                       ]}
-                      value={fullName}
-                      onChangeText={setFullName}
-                      placeholder="Jane Doe"
+                      value={firstName}
+                      onChangeText={setFirstName}
+                      placeholder="Jane"
                       placeholderTextColor="#a0aec0"
                       autoCapitalize="words"
-                      onFocus={() => setFocusedInput('fullname')}
+                      onFocus={() => setFocusedInput('firstName')}
                       onBlur={() => setFocusedInput(null)}
                     />
                   </View>
 
                   <View style={styles.formGroup}>
-                    <Text style={styles.label}>Contact Number</Text>
+                    <Text style={styles.label}>Last Name</Text>
+                    <TextInput
+                      style={[
+                        styles.input,
+                        focusedInput === 'lastName' && styles.inputFocused
+                      ]}
+                      value={lastName}
+                      onChangeText={setLastName}
+                      placeholder="Doe"
+                      placeholderTextColor="#a0aec0"
+                      autoCapitalize="words"
+                      onFocus={() => setFocusedInput('lastName')}
+                      onBlur={() => setFocusedInput(null)}
+                    />
+                  </View>
+
+                  <View style={styles.formGroup}>
+                    <Text style={styles.label}>Email Address</Text>
+                    <TextInput
+                      style={[
+                        styles.input,
+                        focusedInput === 'email' && styles.inputFocused
+                      ]}
+                      value={email}
+                      onChangeText={setEmail}
+                      placeholder="jane.doe@example.com"
+                      placeholderTextColor="#a0aec0"
+                      keyboardType="email-address"
+                      autoCapitalize="none"
+                      onFocus={() => setFocusedInput('email')}
+                      onBlur={() => setFocusedInput(null)}
+                    />
+                  </View>
+
+                  <View style={styles.formGroup}>
+                    <Text style={styles.label}>Phone Number</Text>
                     <TextInput
                       style={[
                         styles.input,
@@ -158,8 +222,8 @@ export default function SignupScreen({ navigation }: Props) {
                     />
                   </View>
 
-                  <TouchableOpacity onPress={handleSignup} activeOpacity={0.8} style={styles.signupBtn}>
-                    <Text style={styles.signupBtnText}>Sign Up</Text>
+                  <TouchableOpacity onPress={handleSignup} activeOpacity={0.8} style={styles.signupBtn} disabled={isLoading}>
+                    <Text style={styles.signupBtnText}>{isLoading ? "Creating Account..." : "Sign Up"}</Text>
                   </TouchableOpacity>
 
                   <View style={styles.loginHintContainer}>

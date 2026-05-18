@@ -11,7 +11,8 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
-  Image
+  Image,
+  RefreshControl
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
@@ -29,13 +30,13 @@ export default function AppointmentsScreen() {
   const [filter, setFilter] = useState('All');
   const [selectedPetId, setSelectedPetId] = useState(pets.length > 0 ? pets[0].id : '');
 
-  // APPOINTMENTS DATA FROM API
   const [appointments, setAppointments] = useState<any[]>([]);
   const [allAppointments, setAllAppointments] = useState<any[]>([]);
   const [disabledTimeSlots, setDisabledTimeSlots] = useState<Record<string, {time: string, enabled: boolean}[]>>({});
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchAppointments = () => {
-    fetch('http://192.168.100.78:3000/api/timeslots')
+    fetch('http://192.168.100.16:3000/api/timeslots')
       .then(res => res.json())
       .then(data => {
         if (data && typeof data === 'object' && !data.error) {
@@ -44,7 +45,7 @@ export default function AppointmentsScreen() {
       })
       .catch(err => console.error('Failed to fetch timeslots:', err));
 
-    return fetch('http://192.168.100.78:3000/api/appointments')
+    return fetch('http://192.168.100.16:3000/api/appointments')
       .then(res => res.json())
       .then(data => {
         if (data && Array.isArray(data)) {
@@ -72,6 +73,12 @@ export default function AppointmentsScreen() {
       })
       .catch(err => console.error('Failed to fetch appointments:', err));
   };
+
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    // Since fetchAppointments returns the second fetch promise, we can chain finally
+    fetchAppointments()?.finally(() => setRefreshing(false));
+  }, []);
 
 
   const stats = [
@@ -135,13 +142,16 @@ export default function AppointmentsScreen() {
 
       const selectedPet = pets.find(p => p.id === selectedPetId);
 
+      if (!user?.id || user.id === '' || !selectedPet?.id || String(selectedPet.id).includes('.')) {
+        Alert.alert("Error", "Invalid user or pet ID. Please ensure your profile and pets are synced to the database before booking.");
+        setIsProcessing(false);
+        setCurrentStep(4);
+        return;
+      }
+
       const newAppointment = {
-        id: Date.now().toString(),
-        owner: user?.fullName || "Mobile User",
-        contact: user?.phoneNumber || "123-456-7890",
-        pet: selectedPet ? selectedPet.name : "Unknown",
-        species: selectedPet ? selectedPet.species : "Unknown",
-        breed: selectedPet ? selectedPet.breed : "Unknown",
+        ownerId: user?.id,
+        petId: selectedPet?.id,
         date: formattedDate,
         time: selectedTime,
         type: consultType === 'In-Person Visit' ? 'inperson' : 'telemedicine',
@@ -151,12 +161,18 @@ export default function AppointmentsScreen() {
         amountPaid: feeAmount,
       };
 
-      fetch('http://192.168.100.78:3000/api/appointments', {
+      fetch('http://192.168.100.16:3000/api/appointments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newAppointment)
       })
-        .then(res => res.json())
+        .then(async res => {
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `HTTP Error ${res.status}`);
+          }
+          return res.json();
+        })
         .then(() => fetchAppointments())
         .then(() => {
           setIsProcessing(false);
@@ -221,18 +237,12 @@ export default function AppointmentsScreen() {
   };
 
   const processCancel = (appId: string) => {
-    fetch('http://192.168.100.78:3000/api/appointments')
+    fetch(`http://192.168.100.16:3000/api/appointments/${appId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'Cancelled' })
+    })
       .then(res => res.json())
-      .then(data => {
-        const updated = data.map((app: any) => 
-          app.id === appId ? { ...app, status: 'Cancelled' } : app
-        );
-        return fetch('http://192.168.100.78:3000/api/appointments', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updated)
-        });
-      })
       .then(() => fetchAppointments())
       .catch(err => Alert.alert("Error", "Failed to cancel appointment."));
   };
@@ -281,18 +291,12 @@ export default function AppointmentsScreen() {
     
     const formattedDate = rescheduleDate;
 
-    fetch('http://192.168.100.78:3000/api/appointments')
+    fetch(`http://192.168.100.16:3000/api/appointments/${rescheduleAppId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ date: formattedDate, time: rescheduleTime })
+    })
       .then(res => res.json())
-      .then(data => {
-        const updated = data.map((app: any) => 
-          app.id === rescheduleAppId ? { ...app, date: formattedDate, time: rescheduleTime } : app
-        );
-        return fetch('http://192.168.100.78:3000/api/appointments', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(updated)
-        });
-      })
       .then(() => {
         fetchAppointments();
         setRescheduleModalVisible(false);
@@ -346,7 +350,10 @@ export default function AppointmentsScreen() {
 
           <TouchableOpacity
             style={[styles.typeCard, consultType === 'Telemedicine' && styles.typeCardSelected]}
-            onPress={() => setConsultType('Telemedicine')}
+            onPress={() => {
+              setConsultType('Telemedicine');
+              setAppointmentReason('Consultation');
+            }}
           >
             <FontAwesome5 name="video" size={24} color={consultType === 'Telemedicine' ? '#3a7d55' : '#a0aec0'} />
             <View style={styles.typeCardTextGroup}>
@@ -498,15 +505,28 @@ export default function AppointmentsScreen() {
         <View style={styles.stepContainer}>
           <Text style={styles.stepHeader}>Primary Reason</Text>
           <View style={styles.chipGrid}>
-            {reasons.map(r => (
-              <TouchableOpacity
-                key={r}
-                style={[styles.reasonChip, appointmentReason === r && styles.reasonChipActive]}
-                onPress={() => setAppointmentReason(r)}
-              >
-                <Text style={[styles.reasonChipText, appointmentReason === r && styles.reasonChipTextActive]}>{r}</Text>
-              </TouchableOpacity>
-            ))}
+            {reasons.map(r => {
+              const isDisabled = consultType === 'Telemedicine' && r !== 'Consultation';
+              return (
+                <TouchableOpacity
+                  key={r}
+                  style={[
+                    styles.reasonChip, 
+                    appointmentReason === r && !isDisabled && styles.reasonChipActive,
+                    isDisabled && { opacity: 0.4, backgroundColor: '#f7fafc', borderColor: '#e2e8f0' }
+                  ]}
+                  onPress={() => setAppointmentReason(r)}
+                  disabled={isDisabled}
+                  activeOpacity={isDisabled ? 1 : 0.7}
+                >
+                  <Text style={[
+                    styles.reasonChipText, 
+                    appointmentReason === r && !isDisabled && styles.reasonChipTextActive,
+                    isDisabled && { color: '#a0aec0' }
+                  ]}>{r}</Text>
+                </TouchableOpacity>
+              )
+            })}
           </View>
           <Text style={[styles.stepHeader, { marginTop: 20 }]}>Additional Notes (Optional)</Text>
           <TextInput
@@ -725,7 +745,13 @@ export default function AppointmentsScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.mainScroll} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.mainScroll} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3a7d55']} />
+        }
+      >
 
         {/* Stats Grid */}
         <View style={styles.statsContainer}>

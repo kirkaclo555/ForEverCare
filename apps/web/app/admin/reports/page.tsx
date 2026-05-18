@@ -10,17 +10,38 @@ export default function ReportsPage() {
   const [activeCategory, setActiveCategory] = useState('pet_health');
 
   // Pet Health Data
-  const [petMonitorReports, setPetMonitorReports] = useState([
-    { id: 999, pet: 'Bella (Poodle)', owner: 'Sarah Davis', date: 'Just Now', diagnosis: 'Excessive scratching, possible allergies', status: 'Forward to Superadmin', severity: 'Medium', details: 'Bella is scratching constantly around the ears and neck. No visible fleas. Suspected seasonal allergies or dermatitis. Recommend a soothing bath and a vet consultation for antihistamines.' },
-    { id: 1, pet: 'Buddy (Golden Retriever)', owner: 'John Doe', date: 'Today, 10:30 AM', diagnosis: 'Slight fever detected, recommended checkup', status: 'Forward to Superadmin', severity: 'Medium', details: 'Buddy has been experiencing a mild fever for the last 24 hours. The owner reported lethargy and loss of appetite. Immediate vet checkup is highly recommended to rule out infections.' },
-    { id: 2, pet: 'Luna (Siamese Cat)', owner: 'Jane Smith', date: 'Yesterday', diagnosis: 'Normal activity, good health', status: 'Submitted by User', severity: 'Low', details: 'Luna appears perfectly healthy. Regular bi-weekly update from the owner shows high activity levels, normal feeding habits, and no signs of distress.' },
-    { id: 3, pet: 'Max (Beagle)', owner: 'Mike Johnson', date: 'Mon, 02:15 PM', diagnosis: 'Lethargy reported, schedule vet visit', status: 'Forward to Superadmin', severity: 'High', details: 'Max has not moved much from his bed in 2 days. The owner noted pale gums and whimpering when touched. This was flagged as high severity and requires immediate attention.' },
-    { id: 4, pet: 'Bella (Poodle)', owner: 'Sarah Davis', date: 'Sun, 09:00 AM', diagnosis: 'Excessive scratching, possible allergies', status: 'Submitted by User', severity: 'Medium', details: 'Bella is scratching constantly around the ears and neck. No visible fleas. Suspected seasonal allergies or dermatitis. Recommend a soothing bath and a vet consultation for antihistamines.' },
-    { id: 5, pet: 'Rocky (German Shepherd)', owner: 'David Wilson', date: 'Sat, 11:45 AM', diagnosis: 'Post-surgery recovery going well', status: 'Submitted by User', severity: 'Low', details: 'Rocky is recovering beautifully from his knee surgery. Incision looks clean, no redness. He is bearing light weight on the leg as instructed.' },
-    { id: 6, pet: 'Chloe (Persian Cat)', owner: 'Emily Brown', date: 'Sat, 08:30 AM', diagnosis: 'Vomiting, requires monitoring', status: 'Forward to Superadmin', severity: 'High', details: 'Chloe has vomited 4 times since yesterday evening. Owner was advised to withhold food and monitor for next 12 hours. If vomiting persists, immediate IV fluids may be necessary.' },
-    { id: 7, pet: 'Zeus (Husky)', owner: 'Chris Taylor', date: 'Fri, 04:20 PM', diagnosis: 'Limping on right front leg', status: 'Submitted by User', severity: 'Medium', details: 'Zeus started limping after a run at the park. No swelling visible, but he avoids putting weight on it. Needs a physical examination to check for sprains or fractures.' },
-    { id: 8, pet: 'Milo (Maine Coon)', owner: 'Ashley White', date: 'Thu, 01:10 PM', diagnosis: 'Routine wellness update', status: 'Submitted by User', severity: 'Low', details: 'Milo is maintaining a steady weight of 18 lbs. Coat is shiny, eyes are clear. Next vaccination is due in 3 months.' },
-  ]);
+  const [petMonitorReports, setPetMonitorReports] = useState<any[]>([]);
+
+  const fetchReports = async () => {
+    try {
+      const res = await fetch('/api/monitoring?role=ADMIN');
+      const data = await res.json();
+      if (data.success) {
+        const formatted = data.reports.map((r: any) => ({
+          id: r.id,
+          pet: `${r.pet.petName} (${r.pet.breed})`,
+          owner: r.pet.user.fullName,
+          date: new Date(r.createdAt).toLocaleString(),
+          diagnosis: r.symptoms || 'Report Submitted',
+          status: r.isForwarded ? 'Forwarded to Superadmin' : 'Submitted by User',
+          severity: r.recommendations?.includes('Immediate') ? 'High' : 'Medium',
+          details: r.reportSummary,
+          adminFindings: r.adminFindings || '',
+          superAdminFindings: r.superAdminFindings || '',
+          rawReportId: r.id
+        }));
+        setPetMonitorReports(formatted);
+      }
+    } catch (error) {
+      console.error('Error fetching reports', error);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchReports();
+    const interval = setInterval(fetchReports, 10000); // Auto-refresh every 10s
+    return () => clearInterval(interval);
+  }, []);
 
   // Pagination & Modal State for Reports
   const [currentPage, setCurrentPage] = useState(1);
@@ -185,15 +206,15 @@ export default function ReportsPage() {
                                         display: 'flex', 
                                         alignItems: 'center', 
                                         gap: '6px', 
-                                        color: report.status === 'Forward to Superadmin' ? '#805ad5' : '#3182ce', 
+                                        color: report.status.includes('Forwarded') ? '#805ad5' : '#3182ce', 
                                         fontWeight: 600, 
                                         fontSize: '0.85rem', 
-                                        background: report.status === 'Forward to Superadmin' ? '#faf5ff' : '#ebf8ff', 
+                                        background: report.status.includes('Forwarded') ? '#faf5ff' : '#ebf8ff', 
                                         padding: '6px 12px', 
                                         borderRadius: '20px',
-                                        border: `1px solid ${report.status === 'Forward to Superadmin' ? '#e9d8fd' : '#bee3f8'}`
+                                        border: `1px solid ${report.status.includes('Forwarded') ? '#e9d8fd' : '#bee3f8'}`
                                     }}>
-                                        <i className={`fas ${report.status === 'Forward to Superadmin' ? 'fa-user-shield' : 'fa-user'}`}></i> 
+                                        <i className={`fas ${report.status.includes('Forwarded') ? 'fa-user-shield' : 'fa-user'}`}></i> 
                                         {report.status}
                                     </span>
                                 </div>
@@ -536,16 +557,69 @@ export default function ReportsPage() {
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 20px', background: selectedReport.status === 'Forward to Superadmin' ? '#faf5ff' : '#ebf8ff', borderRadius: '12px', border: `1px solid ${selectedReport.status === 'Forward to Superadmin' ? '#e9d8fd' : '#bee3f8'}` }}>
+                    {selectedReport.adminFindings && (
+                        <div>
+                            <span style={{ display: 'block', color: '#a0aec0', fontSize: '0.85rem', fontWeight: 600, marginBottom: '8px', textTransform: 'uppercase' }}>Admin Findings</span>
+                            <div style={{ background: '#ebf8ff', borderLeft: '4px solid #3182ce', padding: '15px 20px', borderRadius: '0 12px 12px 0', color: '#2b6cb0', lineHeight: '1.6', fontSize: '0.95rem' }}>
+                                {selectedReport.adminFindings}
+                            </div>
+                        </div>
+                    )}
+                    
+                    {selectedReport.superAdminFindings && (
+                        <div>
+                            <span style={{ display: 'block', color: '#a0aec0', fontSize: '0.85rem', fontWeight: 600, marginBottom: '8px', textTransform: 'uppercase' }}>Super Admin Findings</span>
+                            <div style={{ background: '#faf5ff', borderLeft: '4px solid #805ad5', padding: '15px 20px', borderRadius: '0 12px 12px 0', color: '#553c9a', lineHeight: '1.6', fontSize: '0.95rem' }}>
+                                {selectedReport.superAdminFindings}
+                            </div>
+                        </div>
+                    )}
+
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px 20px', background: selectedReport.status.includes('Forwarded') ? '#faf5ff' : '#ebf8ff', borderRadius: '12px', border: `1px solid ${selectedReport.status.includes('Forwarded') ? '#e9d8fd' : '#bee3f8'}` }}>
                         <span style={{ color: '#4a5568', fontWeight: 600 }}>Report Status:</span>
-                        <span style={{ color: selectedReport.status === 'Forward to Superadmin' ? '#805ad5' : '#3182ce', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <i className={`fas ${selectedReport.status === 'Forward to Superadmin' ? 'fa-user-shield' : 'fa-user'}`}></i> 
+                        <span style={{ color: selectedReport.status.includes('Forwarded') ? '#805ad5' : '#3182ce', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <i className={`fas ${selectedReport.status.includes('Forwarded') ? 'fa-user-shield' : 'fa-user'}`}></i> 
                             {selectedReport.status}
                         </span>
                     </div>
                 </div>
 
-                <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '15px', marginTop: '30px', paddingTop: '20px', borderTop: '2px solid #edf2f7' }}>
+                <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '15px', marginTop: '30px', paddingTop: '20px', borderTop: '2px solid #edf2f7', flexWrap: 'wrap' }}>
+                    <button onClick={async () => {
+                        const finding = prompt("Enter your findings:");
+                        if (finding) {
+                            try {
+                                await fetch('/api/monitoring/findings', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ reportId: selectedReport.rawReportId, findings: finding, role: 'ADMIN' })
+                                });
+                                fetchReports();
+                                setSelectedReport(null);
+                            } catch (e) {}
+                        }
+                    }} style={{ padding: '12px 24px', background: 'white', border: '1px solid #3182ce', borderRadius: '12px', cursor: 'pointer', fontWeight: 600, color: '#3182ce', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}>
+                        <i className="fas fa-comment-medical"></i> Add Findings
+                    </button>
+
+                    {!selectedReport.status.includes('Forwarded') && (
+                        <button onClick={async () => {
+                            if (confirm('Forward this report to Superadmin?')) {
+                                try {
+                                    await fetch('/api/monitoring/forward', {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({ reportId: selectedReport.rawReportId })
+                                    });
+                                    fetchReports();
+                                    setSelectedReport(null);
+                                } catch (e) {}
+                            }
+                        }} style={{ padding: '12px 24px', background: 'white', border: '1px solid #805ad5', borderRadius: '12px', cursor: 'pointer', fontWeight: 600, color: '#805ad5', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}>
+                            <i className="fas fa-share"></i> Forward
+                        </button>
+                    )}
+                    
                     <button onClick={printReport} style={{ padding: '12px 24px', background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', cursor: 'pointer', fontWeight: 600, color: '#4a5568', display: 'flex', alignItems: 'center', gap: '8px', transition: 'all 0.2s' }}>
                         <i className="fas fa-print"></i> Print Document
                     </button>

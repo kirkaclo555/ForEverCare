@@ -25,10 +25,37 @@ const getStoredNotifications = (): AppNotification[] => {
 
 export const useNotifications = () => {
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
+    const [dbNotifications, setDbNotifications] = useState<AppNotification[]>([]);
+
+    const fetchDbNotifications = async () => {
+        if (typeof window === 'undefined') return;
+        const role = window.location.pathname.includes('superadmin') ? 'SUPER_ADMIN' : 'ADMIN';
+        try {
+            const res = await fetch(`/api/notifications?role=${role}`);
+            const data = await res.json();
+            if (data.success) {
+                const formatted = data.notifications.map((n: any) => ({
+                    id: n.id,
+                    title: n.title,
+                    description: n.message,
+                    time: new Date(n.createdAt).toLocaleString(),
+                    read: n.isRead,
+                    icon: n.title.includes('Report') || n.title.includes('Forwarded') ? 'fas fa-file-medical-alt' : 'fas fa-bell'
+                }));
+                setDbNotifications(formatted);
+            }
+        } catch (e) {
+            console.error('Failed to fetch DB notifications', e);
+        }
+    };
 
     // We do this in useEffect to avoid hydration mismatch
     useEffect(() => {
         setNotifications(getStoredNotifications());
+        fetchDbNotifications();
+
+        const interval = setInterval(fetchDbNotifications, 10000); // Poll every 10s
+        return () => clearInterval(interval);
     }, []);
 
     useEffect(() => {
@@ -66,17 +93,47 @@ export const useNotifications = () => {
         window.dispatchEvent(new Event('notificationsUpdated'));
     };
 
-    const markAllAsRead = () => {
+    const markAllAsRead = async () => {
+        // Mark local as read
         const updated = getStoredNotifications().map(n => ({ ...n, read: true }));
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
         setNotifications(updated);
         window.dispatchEvent(new Event('notificationsUpdated'));
+
+        // Mark DB as read
+        try {
+            // we don't have a reliable userId to send, so we just mark all currently loaded ones as read via their IDs
+            for (const n of dbNotifications) {
+                if (!n.read) {
+                    await fetch('/api/notifications', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: n.id })
+                    });
+                }
+            }
+            fetchDbNotifications();
+        } catch (e) {
+            console.error(e);
+        }
     };
     
-    const unreadCount = notifications.filter(n => !n.read).length;
+    // Combine local and DB notifications, sort by most recent (assuming unread comes first or roughly ordered)
+    // We'll just concat them and rely on UI to handle the array. 
+    // Wait, let's keep DB notifications at the top.
+    const allNotifications = [...dbNotifications, ...notifications].reduce((acc: AppNotification[], current) => {
+        const x = acc.find(item => item.id === current.id);
+        if (!x) {
+            return acc.concat([current]);
+        } else {
+            return acc;
+        }
+    }, []);
+
+    const unreadCount = allNotifications.filter(n => !n.read).length;
 
     return {
-        notifications,
+        notifications: allNotifications,
         addNotification,
         markAllAsRead,
         unreadCount
