@@ -179,7 +179,7 @@ html, body {
             top: 0;
             height: 100vh;
             width: 280px;
-            background: #2E5E3E;
+            background: #134E3A;
             box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
             transform: translateX(0);
             transition: transform 0.3s ease, background-color 0.3s ease;
@@ -301,7 +301,7 @@ html, body {
             justify-content: space-between;
             padding: 0 25px;
             height: 60px;
-            background: #2E5E3E;
+            background: #134E3A;
             color: white;
             margin-bottom: 25px;
             transition: background-color 0.3s ease;

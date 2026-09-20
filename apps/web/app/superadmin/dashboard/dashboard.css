@@ -113,7 +113,7 @@ body.dark-mode .form-control::placeholder {
     top: 0;
     height: 100vh;
     width: 280px;
-    background: #2a5e3a;
+    background: #134E3A;
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
     transform: translateX(0);
     transition: background-color 0.3s ease;
@@ -230,7 +230,7 @@ body.dark-mode .menu-item i {
     align-items: center;
     justify-content: space-between;
     padding: 15px 25px;
-    background: #2a5e3a;
+    background: #134E3A;
     border-radius: 16px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
     margin-bottom: 25px;
