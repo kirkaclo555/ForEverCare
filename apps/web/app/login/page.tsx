@@ -66,7 +66,7 @@ export default function LoginPage() {
     e.preventDefault();
 
     // Check if custom password might be set - validate via API
-    const adminEmails = ["admin@furcare.com", "admin@gmail.com", "admin@furevercare.com", "fureverpawcareadmin@gmail.com"];
+    const adminEmails = ["admin@furcare.com", "admin@gmail.com", "admin@furevercare.com", "adminfureverpawcare@gmail.com"];
     const superadminEmails = ["superadmin@furcare.com", "superadmin@gmail.com", "superadmin@furevercare.com", "fureverpawcare@gmail.com", "fureverpawcaresuperadmin@gmail.com"];
     
     const isAdminEmail = adminEmails.includes(email);

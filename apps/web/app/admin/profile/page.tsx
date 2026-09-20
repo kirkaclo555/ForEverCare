@@ -48,7 +48,7 @@ export default function ProfilePage() {
   // Personal and Staff Information
   const [personalInfo, setPersonalInfo] = useState({
     fullName: "System Admin",
-    email: "fureverpawcareadmin@gmail.com",
+    email: "adminfureverpawcare@gmail.com",
     contact: "",
     address: "",
     staffId: "EMP-ADM-0001",
@@ -111,7 +111,7 @@ export default function ProfilePage() {
 
       const populated = {
         fullName: data.fullName || localParsed.fullName || "System Admin",
-        email: data.email || localParsed.email || "fureverpawcareadmin@gmail.com",
+        email: data.email || localParsed.email || "adminfureverpawcare@gmail.com",
         contact: data.phoneNumber || localParsed.contact || "",
         address: data.address || localParsed.address || "",
         staffId: data.staffId || "EMP-ADM-1865",

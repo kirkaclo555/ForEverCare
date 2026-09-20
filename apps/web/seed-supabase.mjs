@@ -15,7 +15,7 @@ async function main() {
     },
     {
       fullName: 'System Admin',
-      email: 'fureverpawcareadmin@gmail.com',
+      email: 'adminfureverpawcare@gmail.com',
       password: 'admin123',
       role: 'ADMIN',
     },

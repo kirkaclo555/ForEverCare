@@ -428,7 +428,7 @@ export default function TopBar({ toggleSidebar }: { toggleSidebar: () => void })
 
             <div>
               <div style={{ fontWeight: 600, color: '#ffffff' }}>{pathname.includes('superadmin') ? 'Superadmin' : 'Admin'}</div>
-              <div style={{ fontSize: '0.65rem', color: '#ffffff', opacity: 0.9 }}>{pathname.includes('superadmin') ? 'fureverpawcaresuperadmin@gmail.com' : 'fureverpawcareadmin@gmail.com'}</div>
+              <div style={{ fontSize: '0.65rem', color: '#ffffff', opacity: 0.9 }}>{pathname.includes('superadmin') ? 'fureverpawcaresuperadmin@gmail.com' : 'adminfureverpawcare@gmail.com'}</div>
             </div>
           </div>
         </div>
