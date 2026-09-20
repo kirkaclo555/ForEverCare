@@ -147,14 +147,24 @@ export default function TopBar({ toggleSidebar }: { toggleSidebar: () => void })
     localStorage.setItem('darkMode', String(newDarkMode));
   };
 
-  const handleLogout = () => {
-    setShowLogoutModal(true);
+  const handleLogout = (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     setShowSettings(false);
+    setShowLogoutModal(true);
   };
 
   const confirmLogout = () => {
     setShowLogoutModal(false);
-    router.push('/');
+    setShowSettings(false);
+    try {
+      localStorage.removeItem('user_role');
+      localStorage.removeItem('auth_token');
+      sessionStorage.clear();
+    } catch (_) {}
+    window.location.replace('/login');
   };
 
   // Close dropdowns when clicking outside
@@ -392,9 +402,16 @@ export default function TopBar({ toggleSidebar }: { toggleSidebar: () => void })
                 <i className="fas fa-gavel"></i>
                 <span>{t('communityRules')}</span>
               </div>
-              <div className="settings-item logout" onClick={handleLogout}>
+              <div 
+                className="settings-item logout" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleLogout(e);
+                }}
+                style={{ cursor: 'pointer' }}
+              >
                 <i className="fas fa-sign-out-alt"></i>
-                <span>{t('logout')}</span>
+                <span>{t('logout') || 'Log Out'}</span>
               </div>
             </div>
           </div>
@@ -549,20 +566,85 @@ export default function TopBar({ toggleSidebar }: { toggleSidebar: () => void })
         )}
         {/* Logout Confirmation Modal */}
         {showLogoutModal && (
-          <div className="modal" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 10000, position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <div className="modal-content" style={{ background: document.body.classList.contains('dark-mode') ? '#2d3748' : 'white', padding: '25px', borderRadius: '16px', width: '400px', maxWidth: '90%', textAlign: 'center', boxShadow: '0 10px 40px rgba(0,0,0,0.2)' }}>
+          <div 
+            className="modal show" 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              zIndex: 999999, 
+              position: 'fixed', 
+              top: 0, 
+              left: 0, 
+              right: 0, 
+              bottom: 0, 
+              backgroundColor: 'rgba(0,0,0,0.6)',
+              backdropFilter: 'blur(3px)'
+            }}
+            onClick={(e) => { if (e.target === e.currentTarget) setShowLogoutModal(false); }}
+          >
+            <div 
+              className="modal-content" 
+              style={{ 
+                background: darkMode ? '#2d3748' : 'white', 
+                color: darkMode ? '#e2e8f0' : '#2d3748',
+                padding: '28px', 
+                borderRadius: '16px', 
+                width: '420px', 
+                maxWidth: '90%', 
+                textAlign: 'center', 
+                boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+                zIndex: 1000000
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
               <div className="modal-header" style={{ borderBottom: 'none', justifyContent: 'center', paddingBottom: 0 }}>
-                <h3 style={{ color: '#E53E3E', fontSize: '1.5rem', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                <h3 style={{ color: '#E53E3E', fontSize: '1.4rem', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
                   <i className="fas fa-sign-out-alt"></i>
-                  Confirm Logout
+                  {t('confirmLogout') || 'Confirm Logout'}
                 </h3>
               </div>
               <div className="modal-body" style={{ padding: '20px 0' }}>
-                <p style={{ color: document.body.classList.contains('dark-mode') ? '#a0aec0' : '#4a5568', fontSize: '1.1rem' }}>Are you sure you want to log out?</p>
+                <p style={{ color: darkMode ? '#cbd5e0' : '#4a5568', fontSize: '1.05rem', margin: 0 }}>
+                  {t('logoutConfirmText') || 'Are you sure you want to log out of your account?'}
+                </p>
               </div>
-              <div className="modal-actions" style={{ display: 'flex', justifyContent: 'center', gap: '15px', borderTop: 'none', paddingTop: 0 }}>
-                <button className="btn btn-secondary" onClick={() => setShowLogoutModal(false)} style={{ padding: '10px 25px', borderRadius: '8px', border: document.body.classList.contains('dark-mode') ? '1px solid #4a5568' : '1px solid #cbd5e0', background: document.body.classList.contains('dark-mode') ? '#4a5568' : 'white', color: document.body.classList.contains('dark-mode') ? 'white' : '#4a5568', cursor: 'pointer', fontSize: '1rem' }}>Cancel</button>
-                <button className="btn btn-primary" onClick={confirmLogout} style={{ padding: '10px 25px', borderRadius: '8px', background: '#E53E3E', border: 'none', color: 'white', cursor: 'pointer', fontSize: '1rem', fontWeight: 600 }}>Log Out</button>
+              <div className="modal-actions" style={{ display: 'flex', justifyContent: 'center', gap: '14px', borderTop: 'none', paddingTop: '10px' }}>
+                <button 
+                  type="button"
+                  className="btn btn-secondary" 
+                  onClick={() => setShowLogoutModal(false)} 
+                  style={{ 
+                    padding: '10px 24px', 
+                    borderRadius: '8px', 
+                    border: '1px solid #cbd5e0', 
+                    background: darkMode ? '#4a5568' : 'white', 
+                    color: darkMode ? 'white' : '#4a5568', 
+                    cursor: 'pointer', 
+                    fontSize: '0.95rem',
+                    fontWeight: 500
+                  }}
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="button"
+                  className="btn btn-primary" 
+                  onClick={confirmLogout} 
+                  style={{ 
+                    padding: '10px 24px', 
+                    borderRadius: '8px', 
+                    background: '#E53E3E', 
+                    border: 'none', 
+                    color: 'white', 
+                    cursor: 'pointer', 
+                    fontSize: '0.95rem', 
+                    fontWeight: 600,
+                    boxShadow: '0 4px 12px rgba(229, 62, 62, 0.3)'
+                  }}
+                >
+                  {t('logOutButton') || 'Log Out'}
+                </button>
               </div>
             </div>
           </div>
