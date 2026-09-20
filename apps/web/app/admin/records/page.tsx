@@ -222,7 +222,7 @@ export default function RecordsPage() {
                     }
                 }
             `}</style>
-            <div className="section-container" style={{ width: '100%', maxWidth: '1200px', margin: '0 auto', background: 'transparent', boxShadow: 'none' }}>
+            <div className="section-container" style={{ width: '100%', background: 'transparent', boxShadow: 'none' }}>
 
                 {/* Main Table Section */}
                 <div style={{ background: 'white', borderRadius: '24px', padding: '24px', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
