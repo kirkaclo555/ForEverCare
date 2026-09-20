@@ -2080,8 +2080,11 @@ export default function ProductsPage() {
               <i className="fas fa-box-open"></i>
             </div>
             <h3 style={{ margin: '0 0 8px', fontSize: '1.2rem', color: '#1E293B' }}>Ready for Pick Up?</h3>
-            <p style={{ margin: '0 0 20px', color: '#64748B', fontSize: '0.9rem' }}>
+            <p style={{ margin: '0 0 12px', color: '#64748B', fontSize: '0.9rem' }}>
               Mark Order <strong>#{orderToDeliver.id.slice(0, 8).toUpperCase()}</strong> as Ready for Pick Up?
+            </p>
+            <p style={{ margin: '0 0 20px', color: '#059669', fontSize: '0.82rem', background: '#ECFDF5', padding: '8px 12px', borderRadius: '6px' }}>
+              <i className="fas fa-envelope" style={{ marginRight: '6px' }}></i> An email with pick-up instructions will be sent to the customer.
             </p>
             <div style={{ display: 'flex', gap: '10px' }}>
               <button className="prod-btn prod-btn-outline" style={{ flex: 1 }} onClick={() => { setShowDeliverConfirmModal(false); setOrderToDeliver(null); }}>Cancel</button>
@@ -2091,10 +2094,12 @@ export default function ProductsPage() {
                 onClick={async () => {
                   const res = await updateOrderStatus(orderToDeliver.id, 'DELIVERED');
                   if (res.success) {
-                    setProcessSuccessMessage('Order marked as Ready for Pick Up!');
+                    setProcessSuccessMessage('Order marked as Ready for Pick Up! Customer notified via email.');
                     setIsHistoryOrderDetailsModalOpen(false);
                     fetchOrders('PENDING');
                     fetchAllOrders();
+                  } else {
+                    setWarningMessage('Failed to update order: ' + (res.error || 'Unknown error'));
                   }
                   setShowDeliverConfirmModal(false);
                   setOrderToDeliver(null);
