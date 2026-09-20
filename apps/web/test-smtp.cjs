@@ -42,5 +42,20 @@ transporter.verify(function(err, success) {
     console.error('Full error:', JSON.stringify(err, null, 2));
   } else {
     console.log('SUCCESS! SMTP connection verified. Server is ready to accept messages.');
+    const targetEmail = 'ranidojealenemae@gmail.com';
+    console.log('Sending test email to ' + targetEmail + '...');
+    transporter.sendMail({
+      from: `"FurEverPawCare" <${env.SMTP_USER}>`,
+      to: targetEmail,
+      subject: '🐾 FurEverPawCare - SMTP Test Email',
+      text: 'Hello! This is a test email from FurEverPawCare confirming that the email sending service is working properly!',
+      html: '<h2>🐾 FurEverPawCare Test Email</h2><p>Hello Jealene Mae!</p><p>Great news! The FurEverPawCare email sending service using the new Gmail credentials is <b>working 100% properly</b>!</p>'
+    }, (sendErr, info) => {
+      if (sendErr) {
+        console.error('FAILED TO SEND EMAIL:', sendErr);
+      } else {
+        console.log('EMAIL SENT SUCCESSFULLY! 🎉 Message ID:', info.messageId);
+      }
+    });
   }
 });
