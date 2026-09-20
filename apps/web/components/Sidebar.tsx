@@ -64,8 +64,8 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose:
       <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 20px', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '10px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <img src="/logo.png" alt="Logo" style={{ width: '45px', height: 'auto', objectFit: 'contain' }} />
-          <h2 style={{ margin: 0, textAlign: 'left', lineHeight: '1.2', fontSize: '1.25rem' }}>
-            FurEverCare
+          <h2 style={{ margin: 0, textAlign: 'left', lineHeight: '1.2', fontSize: '1.15rem' }}>
+            FurEver Paw Care
             <span style={{ display: 'block', fontSize: '0.7rem', marginTop: '2px' }}>{t('VeterinarySystem')}</span>
           </h2>
         </div>

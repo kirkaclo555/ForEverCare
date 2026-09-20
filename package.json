@@ -1,5 +1,5 @@
 {
-  "name": "srmall-capstone",
+  "name": "furever-paw-care",
   "private": true,
   "scripts": {
     "build": "turbo run build",

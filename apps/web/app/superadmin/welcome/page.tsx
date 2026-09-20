@@ -28,7 +28,7 @@ export default function WelcomePage() {
             <div className="logo">
                 <i className="fas fa-paw"></i>
             </div>
-            <h1 className="brand-title">FurEverCare</h1>
+            <h1 className="brand-title">FurEver Paw Care</h1>
             <p className="brand-subtitle">Veterinary Management System</p>
         </div>
 

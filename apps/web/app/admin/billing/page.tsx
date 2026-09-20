@@ -140,7 +140,7 @@ export default function BillingPage() {
         </head>
         <body>
           <div class="header">
-            <h1>FurEverCare Veterinary</h1>
+            <h1>FurEver Paw Care Veterinary Clinic</h1>
             <p>123 Paws Avenue, Pet City</p>
           </div>
           <div class="details">
