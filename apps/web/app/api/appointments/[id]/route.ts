@@ -497,13 +497,11 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         console.error('[Notification] Failed to create payment verified notification:', notifErr);
       }
 
-      // ── STEP 4: Send SMS synchronously ──
+      // ── STEP 4: Send SMS in background — non-blocking (Twilio API takes 1-3s) ──
       if (userPhone) {
-        try {
-          await sendSMS(userPhone, paidMsg);
-        } catch (smsErr) {
+        sendSMS(userPhone, paidMsg).catch((smsErr) => {
           console.error('[SMS] Failed to send payment verified SMS:', smsErr);
-        }
+        });
       }
 
       // ── STEP 5: Send email receipt — fire-and-forget (SMTP is slow, ~1-3s) ──

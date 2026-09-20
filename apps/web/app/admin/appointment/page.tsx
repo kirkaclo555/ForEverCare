@@ -91,6 +91,7 @@ export default function AppointmentPage() {
   const [appointmentToArchive, setAppointmentToArchive] = useState<string | null>(null);
   const [appointmentToMarkPaid, setAppointmentToMarkPaid] = useState<string | null>(null);
   const [appointmentToMarkCompleted, setAppointmentToMarkCompleted] = useState<string | null>(null);
+  const [isProcessingStatus, setIsProcessingStatus] = useState(false);
 
   // Pricing configuration states
   const [inpersonPrice, setInpersonPrice] = useState(500);
@@ -1242,8 +1243,49 @@ export default function AppointmentPage() {
                 <h3 style={{ margin: '0 0 10px 0', color: '#2d3748', fontSize: '1.4rem', textAlign: 'center' }}>Confirm Payment Verification</h3>
                 <p style={{ color: '#718096', marginBottom: '25px', lineHeight: '1.6', textAlign: 'center' }}>Are you sure you want to approve this appointment? This confirms that the payment has been received and verified by the clinic.</p>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                    <button onClick={() => setAppointmentToMarkPaid(null)} style={{ flex: 1, padding: '12px', background: '#edf2f7', color: '#4a5568', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>Cancel</button>
-                    <button onClick={async () => { await handleStatusChange(appointmentToMarkPaid, 'paid'); setAppointmentToMarkPaid(null); }} style={{ flex: 1, padding: '12px', background: '#2B6CB0', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer' }}>Yes, Verify Payment</button>
+                    <button 
+                        disabled={isProcessingStatus} 
+                        onClick={() => !isProcessingStatus && setAppointmentToMarkPaid(null)} 
+                        style={{ flex: 1, padding: '12px', background: '#edf2f7', color: isProcessingStatus ? '#a0aec0' : '#4a5568', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: isProcessingStatus ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        disabled={isProcessingStatus} 
+                        onClick={async () => { 
+                            if (isProcessingStatus || !appointmentToMarkPaid) return;
+                            setIsProcessingStatus(true);
+                            try {
+                                await handleStatusChange(appointmentToMarkPaid, 'paid'); 
+                            } finally {
+                                setIsProcessingStatus(false);
+                                setAppointmentToMarkPaid(null); 
+                            }
+                        }} 
+                        style={{ 
+                            flex: 1, 
+                            padding: '12px', 
+                            background: isProcessingStatus ? '#63b3ed' : '#2B6CB0', 
+                            color: 'white', 
+                            border: 'none', 
+                            borderRadius: '8px', 
+                            fontWeight: 'bold', 
+                            cursor: isProcessingStatus ? 'not-allowed' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            transition: 'all 0.2s'
+                        }}
+                    >
+                        {isProcessingStatus ? (
+                            <>
+                                <i className="fas fa-spinner fa-spin"></i> Verifying...
+                            </>
+                        ) : (
+                            'Yes, Verify Payment'
+                        )}
+                    </button>
                 </div>
             </div>
         </div>
@@ -1258,8 +1300,49 @@ export default function AppointmentPage() {
                 <h3 style={{ margin: '0 0 10px 0', color: '#1F2937', fontSize: '1.4rem', textAlign: 'center', fontWeight: 700 }}>Mark as Completed</h3>
                 <p style={{ color: '#6B7280', marginBottom: '25px', lineHeight: '1.6', textAlign: 'center' }}>Are you sure you want to mark this appointment as completed? This action confirms that the visit has been fulfilled.</p>
                 <div style={{ display: 'flex', gap: '10px' }}>
-                    <button onClick={() => setAppointmentToMarkCompleted(null)} style={{ flex: 1, padding: '12px', background: '#F3F4F6', color: '#374151', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s' }}>Cancel</button>
-                    <button onClick={async () => { await handleStatusChange(appointmentToMarkCompleted, 'completed'); setAppointmentToMarkCompleted(null); }} style={{ flex: 1, padding: '12px', background: '#2E7D32', color: 'white', border: 'none', borderRadius: '8px', fontWeight: 700, cursor: 'pointer', transition: 'background 0.2s' }}>Yes, Complete</button>
+                    <button 
+                        disabled={isProcessingStatus} 
+                        onClick={() => !isProcessingStatus && setAppointmentToMarkCompleted(null)} 
+                        style={{ flex: 1, padding: '12px', background: '#F3F4F6', color: isProcessingStatus ? '#9CA3AF' : '#374151', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: isProcessingStatus ? 'not-allowed' : 'pointer', transition: 'background 0.2s' }}
+                    >
+                        Cancel
+                    </button>
+                    <button 
+                        disabled={isProcessingStatus} 
+                        onClick={async () => { 
+                            if (isProcessingStatus || !appointmentToMarkCompleted) return;
+                            setIsProcessingStatus(true);
+                            try {
+                                await handleStatusChange(appointmentToMarkCompleted, 'completed'); 
+                            } finally {
+                                setIsProcessingStatus(false);
+                                setAppointmentToMarkCompleted(null); 
+                            }
+                        }} 
+                        style={{ 
+                            flex: 1, 
+                            padding: '12px', 
+                            background: isProcessingStatus ? '#86efac' : '#2E7D32', 
+                            color: 'white', 
+                            border: 'none', 
+                            borderRadius: '8px', 
+                            fontWeight: 700, 
+                            cursor: isProcessingStatus ? 'not-allowed' : 'pointer', 
+                            transition: 'background 0.2s',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px'
+                        }}
+                    >
+                        {isProcessingStatus ? (
+                            <>
+                                <i className="fas fa-spinner fa-spin"></i> Completing...
+                            </>
+                        ) : (
+                            'Yes, Complete'
+                        )}
+                    </button>
                 </div>
             </div>
         </div>
