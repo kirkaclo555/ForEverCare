@@ -1,6 +1,8 @@
 "use client";
 
-import AnalyticsDashboard from '../../superadmin/analytics/page';
+import AnalyticsDashboard from '../../../components/AnalyticsDashboard';
+
+export const dynamic = 'force-dynamic';
 
 export default function AdminAnalyticsPage() {
   return <AnalyticsDashboard />;

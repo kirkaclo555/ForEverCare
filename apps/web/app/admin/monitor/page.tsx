@@ -1,3 +1,9 @@
-import PetMonitorPage from '../../superadmin/monitor/page';
+"use client";
 
-export default PetMonitorPage;
+import PetMonitorDashboard from '../../../components/PetMonitorDashboard';
+
+export const dynamic = 'force-dynamic';
+
+export default function AdminMonitorPage() {
+  return <PetMonitorDashboard />;
+}

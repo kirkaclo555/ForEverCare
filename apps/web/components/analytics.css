@@ -1,0 +1,404 @@
+/* Analytics Module - Page-specific styles only */
+
+.analytics-container {
+    width: 100%;
+}
+
+/* Outbreak Alert Banner */
+.alert-banner {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 24px;
+    border-radius: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.alert-banner.critical {
+    background: linear-gradient(135deg, #FFF5F5 0%, #FED7D7 100%);
+    border-left: 6px solid #E53E3E;
+    color: #9B2C2C;
+}
+
+.alert-banner.warning {
+    background: linear-gradient(135deg, #FFFAF0 0%, #FEEBC8 100%);
+    border-left: 6px solid #DD6B20;
+    color: #9C4221;
+}
+
+.alert-icon-wrapper {
+    width: 60px;
+    height: 60px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    flex-shrink: 0;
+}
+
+.alert-banner.critical .alert-icon-wrapper {
+    background: rgba(229, 62, 62, 0.15);
+    color: #E53E3E;
+}
+
+.alert-banner.warning .alert-icon-wrapper {
+    background: rgba(221, 107, 32, 0.15);
+    color: #DD6B20;
+}
+
+.alert-info h3 {
+    margin: 0 0 5px 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.alert-info p {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    opacity: 0.9;
+}
+
+/* Two Column Layout for Main Charts */
+.analytics-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 25px;
+    margin-bottom: 25px;
+}
+
+.analytics-card {
+    background: white;
+    border-radius: 24px;
+    padding: 25px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+    border: 1px solid #edf2f7;
+    transition: all 0.3s ease;
+}
+
+.analytics-card:hover {
+    box-shadow: 0 8px 30px rgba(46, 94, 62, 0.05);
+}
+
+.card-header-clean {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #f7fafc;
+    padding-bottom: 15px;
+}
+
+.card-header-clean h2 {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Pure SVG Graph Styling */
+.chart-container-svg {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-svg {
+    width: 100%;
+    height: 100%;
+}
+
+.bar-dog {
+    fill: #2E5E3E;
+    transition: fill 0.3s ease, opacity 0.3s ease;
+}
+
+.bar-cat {
+    fill: #E9D8FD;
+    transition: fill 0.3s ease, opacity 0.3s ease;
+}
+
+.bar-dog:hover {
+    fill: #1C3A26;
+    cursor: pointer;
+}
+
+.bar-cat:hover {
+    fill: #B7791F;
+    cursor: pointer;
+}
+
+.grid-line {
+    stroke: #edf2f7;
+    stroke-width: 1;
+    stroke-dasharray: 4;
+}
+
+.axis-text {
+    fill: #718096;
+    font-size: 11px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+}
+
+.legend-container {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin-top: 15px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.legend-color {
+    width: 14px;
+    height: 14px;
+    border-radius: 4px;
+}
+
+/* Distribution list styling */
+.dist-item {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.dist-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #4a5568;
+}
+
+.dist-name {
+    color: #2d3748;
+}
+
+.dist-percentage {
+    color: #2e5e3e;
+}
+
+.dist-bar-bg {
+    width: 100%;
+    height: 10px;
+    background: #f7fafc;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.dist-bar-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dietary Food Warnings Panel */
+.food-warnings-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.food-warning-card {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    border: 1px solid #fed7d7;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.food-warning-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: #E53E3E;
+    border-radius: 20px 20px 0 0;
+}
+
+.food-warning-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(229, 62, 62, 0.08);
+}
+
+.food-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.food-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #2d3748;
+    margin: 0;
+}
+
+.food-badge {
+    background: #fff5f5;
+    color: #e53e3e;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border: 1px solid #fed7d7;
+}
+
+.food-warning-card p {
+    font-size: 0.85rem;
+    color: #718096;
+    margin: 0 0 12px 0;
+    line-height: 1.4;
+}
+
+.symptoms-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.symptom-tag {
+    background: #edf2f7;
+    color: #4a5568;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Sickness table design */
+.table-container {
+    background: white;
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    overflow-x: auto;
+}
+
+.search-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    max-width: 300px;
+    background: #f7fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 8px 12px;
+}
+
+.search-wrapper input {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 0.9rem;
+    color: #4a5568;
+    width: 100%;
+}
+
+/* Dark Mode Styles */
+body.dark-mode .analytics-card,
+body.dark-mode .food-warning-card {
+    background: #2d3748;
+    border-color: #4a5568;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+}
+
+body.dark-mode .card-header-clean h2,
+body.dark-mode .dist-name,
+body.dark-mode .food-title {
+    color: #f7fafc;
+}
+
+body.dark-mode .axis-text,
+body.dark-mode .legend-item {
+    color: #a0aec0;
+}
+
+body.dark-mode .grid-line {
+    stroke: #4a5568;
+}
+
+body.dark-mode .dist-bar-bg {
+    background: #4a5568;
+}
+
+body.dark-mode .search-wrapper {
+    background: #1a202c;
+    border-color: #4a5568;
+}
+
+body.dark-mode .search-wrapper input {
+    color: #f7fafc;
+}
+
+body.dark-mode .dist-meta {
+    color: #cbd5e0;
+}
+
+/* Dark mode outbreak banners */
+body.dark-mode .alert-banner.critical {
+    background: linear-gradient(135deg, #742a2a 0%, #9b2c2c 100%);
+    color: #fff5f5;
+    border-left-color: #feb2b2;
+}
+
+body.dark-mode .alert-banner.warning {
+    background: linear-gradient(135deg, #7b341e 0%, #dd6b20 100%);
+    color: #fffaf0;
+    border-left-color: #fbd38d;
+}
+
+body.dark-mode .alert-banner.critical .alert-icon-wrapper {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+body.dark-mode .alert-banner.warning .alert-icon-wrapper {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+
+/* Responsive grid layout */
+@media (max-width: 1024px) {
+    .analytics-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .food-warnings-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .food-warnings-grid {
+        grid-template-columns: 1fr;
+    }
+}
