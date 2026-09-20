@@ -403,7 +403,7 @@ body {
     max-width: 100% !important;
 }
 
-/* iPad & Tablet Responsive Sidebar Pinning & Exact Color Match (#134E3A) */
+/* iPad & Tablet Responsive Sidebar Pinning & Exact Color Match (#2E5E3E) */
 .sidebar {
     position: fixed !important;
     left: 0 !important;
@@ -417,13 +417,13 @@ body {
     flex-direction: column !important;
     overflow: hidden !important;
     z-index: 1000 !important;
-    background: #134E3A !important;
-    background-color: #134E3A !important;
+    background: #2E5E3E !important;
+    background-color: #2E5E3E !important;
 }
 
 .top-bar {
-    background: #134E3A !important;
-    background-color: #134E3A !important;
+    background: #2E5E3E !important;
+    background-color: #2E5E3E !important;
 }
 
 .sidebar-menu {

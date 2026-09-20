@@ -74,7 +74,7 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose:
         maxHeight: '100dvh',
         overflow: 'hidden',
         zIndex: 1000,
-        backgroundColor: '#134E3A'
+        backgroundColor: '#2E5E3E'
       }}
     >
       <div 
