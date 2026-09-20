@@ -1539,8 +1539,7 @@ body.dark-mode .notification-desc {
     display: grid;
     grid-template-columns: 1fr 480px;
     gap: 30px;
-    max-width: 1600px;
-    margin: 0 auto;
+    width: 100%;
 }
 
 /* Consultations Sidebar - REDESIGNED */

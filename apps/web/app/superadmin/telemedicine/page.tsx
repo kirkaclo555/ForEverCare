@@ -173,7 +173,7 @@ export default function TelemedicinePage() {
   return (
     <>
     <div className="module-content" style={{ width: "100%", padding: 0, margin: 0 }} >
-        <div className="telemedicine-layout" style={{ display: 'block', maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
+        <div className="telemedicine-layout" style={{ display: 'block', width: '100%', padding: '20px' }}>
             
             <div className="telemedicine-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <div style={{ textAlign: 'left' }}>

@@ -1450,8 +1450,7 @@ body.dark-mode .info-box p {
             min-height: 100vh;
             color: var(--c-ink);
             padding: 15px 20px 20px 20px;
-            max-width: 1200px;
-            margin: 0 auto;
+            width: 100%;
         }
 
         .tele-title {
