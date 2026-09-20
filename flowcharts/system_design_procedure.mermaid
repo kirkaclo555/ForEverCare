@@ -1,0 +1,109 @@
+flowchart LR
+    classDef phase fill:#2E5E3E,stroke:#1E3E28,stroke-width:3px,color:#FFFFFF;
+    classDef step fill:#EAF3DE,stroke:#2E5E3E,stroke-width:1.5px,color:#2E5E3E;
+    classDef output fill:#FFFFFF,stroke:#CCCCCC,stroke-width:1.5px,color:#333333;
+    classDef decision fill:#FFF2CC,stroke:#D6B656,stroke-width:2px,color:#5A4A1C;
+
+    Start([Start]) --> Row1
+
+    subgraph Row1 [Planning and Design Phases]
+        direction LR
+
+        subgraph P1 [Phase 1: Requirements]
+            direction TB
+            p1_title["PHASE 1<br>Gather Requirements"]
+            p1_s1["1.1 Identify Users<br><hr>- Pet Owners<br>- Clinic Staff<br>- Super Admin"]
+            p1_s2["1.2 Define Features<br><hr>- Pet Records and Booking<br>- Online Consultation<br>- Shop and Billing"]
+            p1_s3["1.3 Define System Rules<br><hr>- Multi-clinic support<br>- Real-time health data<br>- Secure login with roles"]
+            p1_out["OUTPUT: Requirements Document"]
+            p1_title --> p1_s1 --> p1_s2 --> p1_s3 --> p1_out
+        end
+
+        subgraph P2 [Phase 2: System Design]
+            direction TB
+            p2_title["PHASE 2<br>Design System Structure"]
+            p2_s1["2.1 Choose Architecture<br><hr>- Shared code repository<br>- Layered app design<br>- Web API communication"]
+            p2_s2["2.2 Choose Technologies<br><hr>- Next.js Web App<br>- React Native Mobile<br>- PostgreSQL Database"]
+            p2_s3["2.3 Define Boundaries<br><hr>- Set platform scope<br>- Identify external services<br>- Map data flow paths"]
+            p2_out["OUTPUT: System Design Document"]
+            p2_title --> p2_s1 --> p2_s2 --> p2_s3 --> p2_out
+        end
+
+        subgraph P3 [Phase 3: Feature Breakdown]
+            direction TB
+            p3_title["PHASE 3<br>Break Down Features"]
+            p3_s1["3.1 Divide by Portal<br><hr>- Pet Owner App<br>- Clinic Staff Portal<br>- Super Admin Portal"]
+            p3_s2["3.2 List All Modules<br><hr>- Login and Appointments<br>- Consultations and Inventory<br>- SMS and Reports"]
+            p3_s3["3.3 Map User Actions<br><hr>- Assign features to roles<br>- Trace user journeys<br>- Plan alternative paths"]
+            p3_out["OUTPUT: Feature List and Use Cases"]
+            p3_title --> p3_s1 --> p3_s2 --> p3_s3 --> p3_out
+        end
+
+        subgraph P4 [Phase 4: Database Design]
+            direction TB
+            p4_title["PHASE 4<br>Design the Database"]
+            p4_s1["4.1 Identify Tables<br><hr>- Users and Staff<br>- Pets and Appointments<br>- Products and Payments"]
+            p4_s2["4.2 Define Relationships<br><hr>- Owners own Pets<br>- Users book Appointments<br>- Orders have Payments"]
+            p4_s3["4.3 Build Schema<br><hr>- Write database models<br>- Set up connections<br>- Create data dictionary"]
+            p4_out["OUTPUT: ERD and Data Dictionary"]
+            p4_title --> p4_s1 --> p4_s2 --> p4_s3 --> p4_out
+        end
+
+        P1 --> P2 --> P3 --> P4
+    end
+
+    P4 --> P5
+
+    subgraph Row2 [Development and Deployment Phases]
+        direction LR
+
+        subgraph P5 [Phase 5: UI Design]
+            direction TB
+            p5_title["PHASE 5<br>Design User Interface"]
+            p5_s1["5.1 Map Screen Flows<br><hr>- Mobile screen paths<br>- Admin sidebar navigation<br>- Login pages"]
+            p5_s2["5.2 Design Layouts<br><hr>- Tab navigation views<br>- Dashboard grids<br>- Forms and dialogs"]
+            p5_s3["5.3 Set Design Standards<br><hr>- Green color palette<br>- Typography and fonts<br>- Spacing rules"]
+            p5_out["OUTPUT: Flowcharts and Design Guide"]
+            p5_title --> p5_s1 --> p5_s2 --> p5_s3 --> p5_out
+        end
+
+        subgraph P6 [Phase 6: Connect Services]
+            direction TB
+            p6_title["PHASE 6<br>Connect Services"]
+            p6_s1["6.1 Build Web APIs<br><hr>- Login and Appointment APIs<br>- Billing and Shop APIs<br>- Consultation APIs"]
+            p6_s2["6.2 External Services<br><hr>- Payment processing<br>- SMS messaging<br>- Push notifications"]
+            p6_s3["6.3 Add Security<br><hr>- Session management<br>- Role permissions<br>- Input validation"]
+            p6_out["OUTPUT: API Documentation"]
+            p6_title --> p6_s1 --> p6_s2 --> p6_s3 --> p6_out
+        end
+
+        subgraph P7 [Phase 7: Build System]
+            direction TB
+            p7_title["PHASE 7<br>Develop Application"]
+            p7_s1["7.1 Set Up Project<br><hr>- Create folder structure<br>- Configure packages<br>- Install dependencies"]
+            p7_s2["7.2 Build Features<br><hr>- Develop components<br>- Build server logic<br>- Run database updates"]
+            p7_s3["7.3 Test and Review<br><hr>- Check for errors<br>- Follow coding standards<br>- Run build tests"]
+            p7_out["OUTPUT: Working Application"]
+            p7_title --> p7_s1 --> p7_s2 --> p7_s3 --> p7_out
+        end
+
+        subgraph P8 [Phase 8: Launch]
+            direction TB
+            p8_title["PHASE 8<br>Deploy and Maintain"]
+            p8_s1["8.1 Prepare Server<br><hr>- Set up production server<br>- Configure database<br>- Set security keys"]
+            p8_s2["8.2 Go Live<br><hr>- Test on staging<br>- Deploy final version<br>- Run migrations"]
+            p8_s3["8.3 Maintenance<br><hr>- Monitor system health<br>- Review activity logs<br>- Apply feedback updates"]
+            p8_out["OUTPUT: Live System"]
+            p8_title --> p8_s1 --> p8_s2 --> p8_s3 --> p8_out
+        end
+
+        P5 --> P6 --> P7 --> P8
+    end
+
+    P8 --> End([System is Live])
+
+    class p1_title,p2_title,p3_title,p4_title,p5_title,p6_title,p7_title,p8_title phase;
+    class p1_s1,p1_s2,p1_s3,p2_s1,p2_s2,p2_s3,p3_s1,p3_s2,p3_s3,p4_s1,p4_s2,p4_s3 step;
+    class p5_s1,p5_s2,p5_s3,p6_s1,p6_s2,p6_s3,p7_s1,p7_s2,p7_s3,p8_s1,p8_s2,p8_s3 step;
+    class p1_out,p2_out,p3_out,p4_out,p5_out,p6_out,p7_out,p8_out output;
+    class Start,End decision;

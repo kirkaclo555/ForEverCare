@@ -18,6 +18,7 @@ export default function UsersPage() {
     // View Modal state
     const [isViewModalOpen, setIsViewModalOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [isViewAllPetsOpen, setIsViewAllPetsOpen] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
 
     // Add Modal state
@@ -129,10 +130,28 @@ export default function UsersPage() {
         }
 
         return (
-            <tr key={user.id}>
+            <tr 
+                key={user.id}
+                onClick={() => { setSelectedUser(user); setIsViewModalOpen(true); }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f7fafc'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                style={{ cursor: 'pointer', transition: 'background-color 0.15s ease' }}
+                title="Click to view details"
+            >
                 <td style={{ textAlign: 'center', fontWeight: 'bold', color: '#4a5568' }}>{index + 1}</td>
                 <td><strong>{user.displayId || user.id}</strong></td>
-                <td style={{ fontWeight: 600 }}>{user.name}</td>
+                <td>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: user.role === 'admin' ? 'linear-gradient(135deg, #3182ce, #2b6cb0)' : 'linear-gradient(135deg, #38a169, #2f855a)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0, color: 'white' }}>
+                            {user.profileImage ? (
+                                <img src={user.profileImage} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                                <i className={user.role === 'admin' ? "fas fa-user-shield" : "fas fa-user"} style={{ fontSize: '0.85rem' }}></i>
+                            )}
+                        </div>
+                        <span style={{ fontWeight: 600, color: '#2d3748' }}>{user.name}</span>
+                    </div>
+                </td>
                 <td>{user.email}</td>
                 <td>{user.contact}</td>
                 <td>
@@ -159,29 +178,30 @@ export default function UsersPage() {
                         {user.status}
                     </span>
                 </td>
-                <td>
+                <td onClick={(e) => e.stopPropagation()}>
                     <div className="action-dropdown-container" style={{ position: 'relative', display: 'flex', justifyContent: 'center' }}>
                         <button 
-                            onClick={() => setActiveDropdownId(activeDropdownId === user.id ? null : user.id)} 
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveDropdownId(activeDropdownId === user.id ? null : user.id);
+                            }} 
                             style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '8px', color: '#a0aec0' }}
+                            title="Actions"
                         >
                             <i className="fas fa-ellipsis-v"></i>
                         </button>
                         {activeDropdownId === user.id && (
-                            <div style={{ position: 'absolute', top: '100%', right: '50%', transform: 'translateX(50%)', background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 10, width: '120px', overflow: 'hidden' }}>
-                                <button onClick={() => { setSelectedUser(user); setIsViewModalOpen(true); setActiveDropdownId(null); }} style={{ width: '100%', padding: '10px', background: 'none', border: 'none', borderBottom: '1px solid #edf2f7', textAlign: 'left', cursor: 'pointer', color: '#4a5568' }}>
-                                    <i className="fas fa-eye" style={{ width: '20px', color: '#3182ce' }}></i> View
-                                </button>
+                            <div style={{ position: 'absolute', top: '100%', right: '50%', transform: 'translateX(50%)', background: 'white', borderRadius: '8px', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', zIndex: 10, width: '120px', overflow: 'hidden' }}>
                                 {user.status === 'Active' ? (
-                                    <button onClick={() => { toggleStatus(user); setActiveDropdownId(null); }} style={{ width: '100%', padding: '10px', background: 'none', border: 'none', borderBottom: '1px solid #edf2f7', textAlign: 'left', cursor: 'pointer', color: '#4a5568' }}>
+                                    <button onClick={(e) => { e.stopPropagation(); toggleStatus(user); setActiveDropdownId(null); }} style={{ width: '100%', padding: '10px', background: 'none', border: 'none', borderBottom: '1px solid #edf2f7', textAlign: 'left', cursor: 'pointer', color: '#4a5568' }}>
                                         <i className="fas fa-ban" style={{ width: '20px', color: '#e53e3e' }}></i> Disable
                                     </button>
                                 ) : (
-                                    <button onClick={() => { toggleStatus(user); setActiveDropdownId(null); }} style={{ width: '100%', padding: '10px', background: 'none', border: 'none', borderBottom: '1px solid #edf2f7', textAlign: 'left', cursor: 'pointer', color: '#4a5568' }}>
+                                    <button onClick={(e) => { e.stopPropagation(); toggleStatus(user); setActiveDropdownId(null); }} style={{ width: '100%', padding: '10px', background: 'none', border: 'none', borderBottom: '1px solid #edf2f7', textAlign: 'left', cursor: 'pointer', color: '#4a5568' }}>
                                         <i className="fas fa-check-circle" style={{ width: '20px', color: '#38a169' }}></i> Enable
                                     </button>
                                 )}
-                                <button onClick={() => { deleteUser(user.id); addNotification('User Removed', `${user.name} was deleted.`, 'fas fa-trash-alt'); setActiveDropdownId(null); }} style={{ width: '100%', padding: '10px', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', color: '#e53e3e' }}>
+                                <button onClick={(e) => { e.stopPropagation(); deleteUser(user.id); addNotification('User Removed', `${user.name} was deleted.`, 'fas fa-trash-alt'); setActiveDropdownId(null); }} style={{ width: '100%', padding: '10px', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', color: '#e53e3e' }}>
                                     <i className="fas fa-trash" style={{ width: '20px' }}></i> Remove
                                 </button>
                             </div>
@@ -422,21 +442,27 @@ export default function UsersPage() {
 
             {/* View User Modal - Redesigned to match Pet Records */}
             {isViewModalOpen && selectedUser && (() => {
-                const linkedPet = records.find(r => r.ownerName === selectedUser.name || r.userName === selectedUser.email);
+                const currentUser = users.find(u => u.id === selectedUser.id) || selectedUser;
+                const linkedPets = records.filter(r => r.ownerName === currentUser.name || r.userName === currentUser.email);
+                const primaryPet = linkedPets.length > 0 ? linkedPets[0] : null;
                 return (
                     <div className="modal" style={{ display: 'flex', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', zIndex: 1000, alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { if (e.target === e.currentTarget) setIsViewModalOpen(false); }}>
                         <div className="modal-content" style={{ background: '#f0f4f8', borderRadius: '24px', width: '95%', maxWidth: '900px', maxHeight: '90vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: 0 }}>
                             {/* Header Section */}
                             <div style={{ background: 'white', padding: '30px', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid #e2e8f0' }}>
                                 <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                                    <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: selectedUser.role === 'admin' ? 'linear-gradient(135deg, #3182ce, #2b6cb0)' : 'linear-gradient(135deg, #38a169, #2f855a)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '2.5rem', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)' }}>
-                                        <i className={selectedUser.role === 'admin' ? "fas fa-user-shield" : "fas fa-user"}></i>
+                                    <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: currentUser.role === 'admin' ? 'linear-gradient(135deg, #3182ce, #2b6cb0)' : 'linear-gradient(135deg, #38a169, #2f855a)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '2.5rem', boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)', overflow: 'hidden' }}>
+                                        {currentUser.profileImage ? (
+                                            <img src={currentUser.profileImage} alt={currentUser.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        ) : (
+                                            <i className={currentUser.role === 'admin' ? "fas fa-user-shield" : "fas fa-user"}></i>
+                                        )}
                                     </div>
                                     <div>
-                                        <h2 style={{ margin: '0 0 5px 0', color: '#2d3748', fontSize: '2rem', fontWeight: 800 }}>{selectedUser.name}</h2>
+                                        <h2 style={{ margin: '0 0 5px 0', color: '#2d3748', fontSize: '2rem', fontWeight: 800 }}>{currentUser.name}</h2>
                                         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                                            <span style={{ background: '#edf2f7', color: '#4a5568', padding: '4px 10px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600 }}>{selectedUser.displayId || selectedUser.id}</span>
-                                            <span style={{ color: '#718096', fontSize: '0.95rem' }}>{selectedUser.role === 'admin' ? 'Administrator' : 'Pet Owner'}</span>
+                                            <span style={{ background: '#edf2f7', color: '#4a5568', padding: '4px 10px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600 }}>{currentUser.displayId || currentUser.id}</span>
+                                            <span style={{ color: '#718096', fontSize: '0.95rem' }}>{currentUser.role === 'admin' ? 'Administrator' : 'Pet Owner'}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -446,33 +472,40 @@ export default function UsersPage() {
                             </div>
                             
                             {/* Body Layout */}
-                            <div className="modal-body" style={{ padding: '30px', display: 'grid', gridTemplateColumns: linkedPet ? '1fr 1fr' : '1fr', gap: '25px', gridAutoRows: 'min-content' }}>
+                            <div className="modal-body" style={{ padding: '30px', display: 'grid', gridTemplateColumns: primaryPet ? '1fr 1fr' : '1fr', gap: '25px', gridAutoRows: 'min-content' }}>
                                 {/* Left Column: Pet Info (if exists) or just User Profile */}
-                                {linkedPet && (
+                                {primaryPet && (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '25px' }}>
                                         <div style={{ background: 'white', padding: '25px', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                                                 <h3 style={{ margin: 0, color: '#2d3748', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }}><i className="fas fa-paw" style={{ color: '#2E5E3E' }}></i> Pet Information</h3>
-                                                <span style={{ background: '#ebf8ff', color: '#3182ce', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 600 }}>{linkedPet.displayId || linkedPet.id}</span>
+                                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                                    <span style={{ background: '#ebf8ff', color: '#3182ce', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', fontWeight: 600 }}>{primaryPet.displayId || primaryPet.id}</span>
+                                                    {linkedPets.length > 1 && (
+                                                        <button onClick={() => setIsViewAllPetsOpen(true)} style={{ padding: '6px 12px', background: '#2E5E3E', color: 'white', border: 'none', borderRadius: '12px', cursor: 'pointer', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                                                            See all {linkedPets.length} pets
+                                                        </button>
+                                                    )}
+                                                </div>
                                             </div>
                                             
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
                                                 <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: '#f7fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4a5568', fontSize: '1.5rem', border: '1px solid #e2e8f0' }}>
-                                                    <i className={linkedPet.species.toLowerCase() === 'cat' ? "fas fa-cat" : "fas fa-dog"}></i>
+                                                    <i className={primaryPet.species.toLowerCase() === 'cat' ? "fas fa-cat" : "fas fa-dog"}></i>
                                                 </div>
                                                 <div>
-                                                    <p style={{ margin: 0, color: '#2d3748', fontWeight: 700, fontSize: '1.1rem' }}>{linkedPet.petName}</p>
-                                                    <p style={{ margin: '2px 0 0 0', color: '#718096', fontSize: '0.9rem' }}>{linkedPet.species} • {linkedPet.breed || 'Unknown Breed'}</p>
+                                                    <p style={{ margin: 0, color: '#2d3748', fontWeight: 700, fontSize: '1.1rem' }}>{primaryPet.petName}</p>
+                                                    <p style={{ margin: '2px 0 0 0', color: '#718096', fontSize: '0.9rem' }}>{primaryPet.species} • {primaryPet.breed || 'Unknown Breed'}</p>
                                                 </div>
                                             </div>
                                             
                                             <hr style={{ border: 'none', borderTop: '1px dashed #e2e8f0', marginBottom: '20px' }} />
                                             
                                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                                                <div><p style={{ margin: 0, fontSize: '0.85rem', color: '#a0aec0', fontWeight: 600, textTransform: 'uppercase' }}>Gender</p><p style={{ margin: '5px 0 0 0', color: '#4a5568', fontWeight: 500 }}>{linkedPet.gender || 'Unknown'}</p></div>
-                                                <div><p style={{ margin: 0, fontSize: '0.85rem', color: '#a0aec0', fontWeight: 600, textTransform: 'uppercase' }}>Age</p><p style={{ margin: '5px 0 0 0', color: '#4a5568', fontWeight: 500 }}>{linkedPet.age || 'Unknown'}</p></div>
-                                                <div><p style={{ margin: 0, fontSize: '0.85rem', color: '#a0aec0', fontWeight: 600, textTransform: 'uppercase' }}>Color</p><p style={{ margin: '5px 0 0 0', color: '#4a5568', fontWeight: 500 }}>{linkedPet.color || 'Unknown'}</p></div>
-                                                <div><p style={{ margin: 0, fontSize: '0.85rem', color: '#a0aec0', fontWeight: 600, textTransform: 'uppercase' }}>Weight</p><p style={{ margin: '5px 0 0 0', color: '#4a5568', fontWeight: 500 }}>{linkedPet.weight || 'Unknown'}</p></div>
+                                                <div><p style={{ margin: 0, fontSize: '0.85rem', color: '#a0aec0', fontWeight: 600, textTransform: 'uppercase' }}>Gender</p><p style={{ margin: '5px 0 0 0', color: '#4a5568', fontWeight: 500 }}>{primaryPet.gender || 'Unknown'}</p></div>
+                                                <div><p style={{ margin: 0, fontSize: '0.85rem', color: '#a0aec0', fontWeight: 600, textTransform: 'uppercase' }}>Age</p><p style={{ margin: '5px 0 0 0', color: '#4a5568', fontWeight: 500 }}>{primaryPet.age || 'Unknown'}</p></div>
+                                                <div><p style={{ margin: 0, fontSize: '0.85rem', color: '#a0aec0', fontWeight: 600, textTransform: 'uppercase' }}>Color</p><p style={{ margin: '5px 0 0 0', color: '#4a5568', fontWeight: 500 }}>{primaryPet.color || 'Unknown'}</p></div>
+                                                <div><p style={{ margin: 0, fontSize: '0.85rem', color: '#a0aec0', fontWeight: 600, textTransform: 'uppercase' }}>Weight</p><p style={{ margin: '5px 0 0 0', color: '#4a5568', fontWeight: 500 }}>{primaryPet.weight || 'Unknown'}</p></div>
                                             </div>
                                         </div>
 
@@ -487,33 +520,33 @@ export default function UsersPage() {
                                                         borderRadius: '20px',
                                                         fontSize: '0.9rem',
                                                         fontWeight: 700,
-                                                        background: linkedPet.vaccine === 'Up to Date' ? '#c6f6d5' : linkedPet.vaccine === 'Overdue' ? '#fed7d7' : '#feebc8',
-                                                        color: linkedPet.vaccine === 'Up to Date' ? '#22543d' : linkedPet.vaccine === 'Overdue' ? '#9b2c2c' : '#7b341e',
+                                                        background: primaryPet.vaccine === 'Up to Date' ? '#c6f6d5' : primaryPet.vaccine === 'Overdue' ? '#fed7d7' : '#feebc8',
+                                                        color: primaryPet.vaccine === 'Up to Date' ? '#22543d' : primaryPet.vaccine === 'Overdue' ? '#9b2c2c' : '#7b341e',
                                                         display: 'inline-flex',
                                                         alignItems: 'center',
                                                         gap: '6px'
                                                     }}>
-                                                        <i className={linkedPet.vaccine === 'Up to Date' ? "fas fa-check-circle" : linkedPet.vaccine === 'Overdue' ? "fas fa-exclamation-circle" : "fas fa-clock"}></i>
-                                                        {linkedPet.vaccine}
+                                                        <i className={primaryPet.vaccine === 'Up to Date' ? "fas fa-check-circle" : primaryPet.vaccine === 'Overdue' ? "fas fa-exclamation-circle" : "fas fa-clock"}></i>
+                                                        {primaryPet.vaccine}
                                                     </span>
                                                 </div>
                                             </div>
 
                                             <div style={{ background: '#fff5f5', padding: '15px', borderRadius: '12px', marginBottom: '15px', borderLeft: '4px solid #fc8181' }}>
                                                 <p style={{ margin: '0 0 5px 0', color: '#c53030', fontWeight: 700, fontSize: '0.9rem' }}><i className="fas fa-procedures"></i> Past Illnesses</p>
-                                                <p style={{ margin: 0, color: '#4a5568', fontSize: '0.95rem' }}>{linkedPet.pastIllness || 'None reported'}</p>
+                                                <p style={{ margin: 0, color: '#4a5568', fontSize: '0.95rem' }}>{primaryPet.pastIllness || 'None reported'}</p>
                                             </div>
 
                                             <div style={{ background: '#ebf4ff', padding: '15px', borderRadius: '12px', borderLeft: '4px solid #63b3ed' }}>
                                                 <p style={{ margin: '0 0 5px 0', color: '#2b6cb0', fontWeight: 700, fontSize: '0.9rem' }}><i className="fas fa-syringe"></i> Previous Surgeries</p>
-                                                <p style={{ margin: 0, color: '#4a5568', fontSize: '0.95rem' }}>{linkedPet.previousSurgeries || 'None reported'}</p>
+                                                <p style={{ margin: 0, color: '#4a5568', fontSize: '0.95rem' }}>{primaryPet.previousSurgeries || 'None reported'}</p>
                                             </div>
                                         </div>
                                     </div>
                                 )}
 
                                 {/* Right Column: Status Info & Contact */}
-                                <div style={{ display: 'grid', gridTemplateColumns: linkedPet ? '1fr' : '1fr 1fr', gap: '25px', alignContent: 'start' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: primaryPet ? '1fr' : '1fr 1fr', gap: '25px', alignContent: 'start' }}>
                                     <div style={{ background: 'white', padding: '25px', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' }}>
                                         <h3 style={{ margin: '0 0 20px 0', color: '#2d3748', fontSize: '1.2rem', display: 'flex', alignItems: 'center', gap: '10px' }}><i className="fas fa-address-card" style={{ color: selectedUser.role === 'admin' ? '#3182ce' : '#38a169' }}></i> Contact Information</h3>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
@@ -526,12 +559,12 @@ export default function UsersPage() {
                                                 <p style={{ margin: '0 0 5px 0', fontSize: '0.85rem', color: '#a0aec0', fontWeight: 600, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '8px' }}><i className="fas fa-phone"></i> Phone Number</p>
                                                 <p style={{ margin: 0, color: '#4a5568', fontWeight: 500 }}>{selectedUser.contact}</p>
                                             </div>
-                                            {linkedPet && linkedPet.address && (
+                                            {primaryPet && primaryPet.address && (
                                                 <>
                                                     <hr style={{ border: 'none', borderTop: '1px solid #edf2f7', margin: 0 }} />
                                                     <div>
                                                         <p style={{ margin: '0 0 5px 0', fontSize: '0.85rem', color: '#a0aec0', fontWeight: 600, textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '8px' }}><i className="fas fa-map-marker-alt"></i> Address</p>
-                                                        <p style={{ margin: 0, color: '#4a5568', fontWeight: 500 }}>{linkedPet.address}</p>
+                                                        <p style={{ margin: 0, color: '#4a5568', fontWeight: 500 }}>{primaryPet.address}</p>
                                                     </div>
                                                 </>
                                             )}
@@ -571,6 +604,57 @@ export default function UsersPage() {
                                         </div>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
+
+            {/* View All Pets Modal */}
+            {isViewAllPetsOpen && selectedUser && (() => {
+                const linkedPets = records.filter(r => r.ownerName === selectedUser.name || r.userName === selectedUser.email);
+                return (
+                    <div className="modal" style={{ display: 'flex', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.6)', zIndex: 1100, alignItems: 'center', justifyContent: 'center' }} onClick={(e) => { if (e.target === e.currentTarget) setIsViewAllPetsOpen(false); }}>
+                        <div className="modal-content" style={{ background: '#f0f4f8', borderRadius: '24px', width: '90%', maxWidth: '800px', maxHeight: '85vh', overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: 0 }}>
+                            <div style={{ background: 'white', padding: '25px', borderTopLeftRadius: '24px', borderTopRightRadius: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0' }}>
+                                <h3 style={{ margin: 0, color: '#2d3748', fontSize: '1.4rem', display: 'flex', alignItems: 'center', gap: '10px' }}><i className="fas fa-paw" style={{ color: '#2E5E3E' }}></i> Pets Owned by {selectedUser.name}</h3>
+                                <button className="modal-close" onClick={() => setIsViewAllPetsOpen(false)} style={{ background: 'white', border: '1px solid #e2e8f0', padding: '8px 12px', borderRadius: '12px', color: '#a0aec0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 5px rgba(0,0,0,0.02)' }}><i className="fas fa-times"></i></button>
+                            </div>
+                            <div style={{ padding: '30px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                {linkedPets.map(pet => (
+                                    <div key={pet.id} style={{ background: 'white', padding: '20px', borderRadius: '16px', boxShadow: '0 4px 15px rgba(0,0,0,0.02)', display: 'grid', gridTemplateColumns: 'auto 1fr auto', gap: '20px', alignItems: 'center' }}>
+                                        <div style={{ width: '60px', height: '60px', borderRadius: '12px', background: '#f7fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#4a5568', fontSize: '1.8rem', border: '1px solid #e2e8f0' }}>
+                                            <i className={pet.species.toLowerCase() === 'cat' ? "fas fa-cat" : "fas fa-dog"}></i>
+                                        </div>
+                                        <div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '5px' }}>
+                                                <h4 style={{ margin: 0, color: '#2d3748', fontSize: '1.2rem' }}>{pet.petName}</h4>
+                                                <span style={{ background: '#ebf8ff', color: '#3182ce', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 600 }}>{pet.displayId || pet.id}</span>
+                                            </div>
+                                            <p style={{ margin: '0 0 5px 0', color: '#718096', fontSize: '0.9rem' }}>{pet.species} • {pet.breed || 'Unknown Breed'} • {pet.gender || 'Unknown'}</p>
+                                            <div style={{ display: 'flex', gap: '15px' }}>
+                                                <span style={{ fontSize: '0.85rem', color: '#a0aec0' }}><i className="fas fa-weight" style={{marginRight: '5px'}}></i>{pet.weight || 'N/A'}</span>
+                                                <span style={{ fontSize: '0.85rem', color: '#a0aec0' }}><i className="fas fa-birthday-cake" style={{marginRight: '5px'}}></i>{pet.age || 'N/A'}</span>
+                                            </div>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <span style={{
+                                                padding: '6px 12px',
+                                                borderRadius: '20px',
+                                                fontSize: '0.8rem',
+                                                fontWeight: 700,
+                                                background: pet.vaccine === 'Up to Date' ? '#c6f6d5' : pet.vaccine === 'Overdue' ? '#fed7d7' : '#feebc8',
+                                                color: pet.vaccine === 'Up to Date' ? '#22543d' : pet.vaccine === 'Overdue' ? '#9b2c2c' : '#7b341e',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '6px'
+                                            }}>
+                                                <i className={pet.vaccine === 'Up to Date' ? "fas fa-check-circle" : pet.vaccine === 'Overdue' ? "fas fa-exclamation-circle" : "fas fa-clock"}></i>
+                                                Vaccine: {pet.vaccine}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>

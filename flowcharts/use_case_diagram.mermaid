@@ -1,0 +1,71 @@
+graph LR
+    %% Global Link Styling for Cyan Arrows
+    linkStyle default stroke:#00D2D2,stroke-width:3px;
+
+    %% Class Definitions
+    classDef actor fill:#2E5E3E,stroke:#1E3E28,color:#FFFFFF,stroke-width:2px;
+    classDef usecase fill:#EAF3DE,stroke:#2E5E3E,color:#1E293B,stroke-width:1.5px;
+
+    PetOwnerActor(((Pet Owner)))
+    
+    subgraph SystemBoundary [FurEver PawCare System]
+        %% Core Use Cases
+        UC_BookAppt(["Book Appointment"])
+        UC_BrowseProducts(["Browse & Buy Products"])
+        UC_JoinTelemed(["Join Consultation"])
+        UC_TrackVitals(["Monitor Pet Vitals"])
+        UC_ViewRecords(["View Medical Records"])
+        
+        UC_ManageAppt(["Manage Appointments"])
+        UC_StartTelemed(["Start Consultation"])
+        UC_EditRecords(["Update Medical Records"])
+        UC_GenerateBilling(["Create Invoices"])
+        UC_TrackInventory(["Manage Inventory"])
+        
+        UC_ManageUsers(["Manage Users"])
+        UC_RestoreData(["Restore Deleted Records"])
+        UC_SystemSettings(["Manage System Settings"])
+        UC_ViewLogs(["View Activity Logs"])
+        
+        %% Includes & Extensions
+        UC_ProcessPayment(["Process Payment"])
+        UC_RescheduleAppt(["Reschedule Appointment"])
+        UC_TriggerAlert(["Trigger Health Alert"])
+        
+        UC_BookAppt -.->|&lt;&lt;include&gt;&gt;| UC_ProcessPayment
+        UC_BrowseProducts -.->|&lt;&lt;include&gt;&gt;| UC_ProcessPayment
+        UC_ManageAppt -.->|&lt;&lt;extend&gt;&gt;| UC_RescheduleAppt
+        UC_TrackVitals -.->|&lt;&lt;extend&gt;&gt;| UC_TriggerAlert
+    end
+
+    AdminActor(((Clinic Admin)))
+    SuperAdminActor(((Super Admin)))
+
+    %% Actor Generalization (Inheritance)
+    SuperAdminActor --|> AdminActor
+
+    %% Pet Owner Connections
+    PetOwnerActor --> UC_BookAppt
+    PetOwnerActor --> UC_BrowseProducts
+    PetOwnerActor --> UC_JoinTelemed
+    PetOwnerActor --> UC_TrackVitals
+    PetOwnerActor --> UC_ViewRecords
+
+    %% Clinic Admin Connections
+    AdminActor --> UC_ManageAppt
+    AdminActor --> UC_StartTelemed
+    AdminActor --> UC_EditRecords
+    AdminActor --> UC_GenerateBilling
+    AdminActor --> UC_TrackInventory
+
+    %% Super Admin Connections
+    SuperAdminActor --> UC_ManageUsers
+    SuperAdminActor --> UC_RestoreData
+    SuperAdminActor --> UC_SystemSettings
+    SuperAdminActor --> UC_ViewLogs
+
+    class PetOwnerActor,AdminActor,SuperAdminActor actor;
+    class UC_BookAppt,UC_BrowseProducts,UC_JoinTelemed,UC_TrackVitals,UC_ViewRecords usecase;
+    class UC_ManageAppt,UC_StartTelemed,UC_EditRecords,UC_GenerateBilling,UC_TrackInventory usecase;
+    class UC_ManageUsers,UC_RestoreData,UC_SystemSettings,UC_ViewLogs usecase;
+    class UC_ProcessPayment,UC_RescheduleAppt,UC_TriggerAlert usecase;

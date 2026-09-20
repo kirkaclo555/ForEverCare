@@ -1,7 +1,8 @@
 {
   "expo": {
-    "name": "mobile",
-    "slug": "mobile",
+    "name": "FurEverPawCare",
+    "slug": "fureverpawcare",
+    "scheme": "fureverpawcare",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -12,22 +13,41 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app requires camera access to join telemedicine video calls with your veterinarian.",
+        "NSMicrophoneUsageDescription": "This app requires microphone access to talk to your veterinarian during telemedicine video calls."
+      }
     },
     "android": {
+      "package": "com.fureverpawcare.mobile",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "softInputMode": "adjustResize",
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO",
+        "MODIFY_AUDIO_SETTINGS"
+      ],
+      "usesCleartextTraffic": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
-    ]
+      "expo-font",
+      "expo-video"
+    ],
+    "extra": {
+      "googleWebClientId": "763437324119-neuj1g0eqp1ksu0lshq25coj3hlcchod.apps.googleusercontent.com",
+      "eas": {
+        "projectId": "9f93ea8c-f09a-4484-a9c2-67b6f6ca195c"
+      }
+    }
   }
 }

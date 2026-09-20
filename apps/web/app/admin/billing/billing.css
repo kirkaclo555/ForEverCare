@@ -900,4 +900,21 @@
             .search-container { display: none; }
             .billing-controls { flex-direction: column; align-items: stretch; }
         }
+
+        .clickable-row {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .clickable-row:hover {
+            background-color: #f7fafc !important;
+        }
+
+        body.dark-mode .clickable-row:hover {
+            background-color: #374151 !important;
+        }
+
+        .clickable-row:active {
+            background-color: #edf2f7 !important;
+        }
     

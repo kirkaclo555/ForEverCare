@@ -1,0 +1,108 @@
+graph TD
+    %% Styling
+    classDef root fill:#2E5E3E,stroke:#1E3E28,stroke-width:3px,color:#FFFFFF;
+    classDef portal fill:#EAF3DE,stroke:#2E5E3E,stroke-width:2px,color:#2E5E3E;
+    classDef module fill:#FFFFFF,stroke:#CCCCCC,stroke-width:1.5px,color:#333333;
+
+    %% Root
+    Root["FurEver PawCare Platform"]
+
+    %% Portals
+    MobilePortal["Mobile App<br>(Pet Owner)"]
+    AdminPortal["Web Admin Portal<br>(Clinic Staff)"]
+    SuperAdminPortal["Web Management Portal<br>(Super Admin)"]
+
+    Root --> MobilePortal
+    Root --> AdminPortal
+    Root --> SuperAdminPortal
+
+    %% ==========================================
+    %% MOBILE APP MODULES
+    %% ==========================================
+    subgraph MobileApp ["Mobile App Modules"]
+        M_Auth["Login and Registration<br><hr>- Login and Sign Up<br>- Forgot Password<br>- Create Pet Profile<br>- Account Settings"]
+        M_Health["Pet Health Records<br><hr>- Medical History<br>- Vaccination Records<br>- Vet Notes"]
+        M_Monitor["Pet Monitoring<br><hr>- Pet Health Log<br>- Track Vitals<br>- Health Alerts"]
+        M_Appt["Appointments<br><hr>- Browse Veterinarians<br>- Book Appointment<br>- View Booking History<br>- Calendar View"]
+        M_Telemed["Online Consultations<br><hr>- Live Video Call<br>- Secure Chat<br>- View Prescriptions"]
+        M_Shop["Online Shop<br><hr>- Browse Products<br>- Cart and Checkout<br>- Order Tracking<br>- Payment"]
+        M_Support["Support and Learning<br><hr>- Pet Care Tutorials<br>- Submit Feedback"]
+    end
+
+    MobilePortal --> M_Auth
+    MobilePortal --> M_Health
+    MobilePortal --> M_Monitor
+    MobilePortal --> M_Appt
+    MobilePortal --> M_Telemed
+    MobilePortal --> M_Shop
+    MobilePortal --> M_Support
+
+    M_Auth ~~~ M_Health
+    M_Health ~~~ M_Monitor
+    M_Monitor ~~~ M_Appt
+    M_Appt ~~~ M_Telemed
+    M_Telemed ~~~ M_Shop
+    M_Shop ~~~ M_Support
+
+    %% ==========================================
+    %% WEB ADMIN MODULES
+    %% ==========================================
+    subgraph WebAdmin ["Web Admin Modules"]
+        A_Dash["Dashboard<br><hr>- Summary Charts<br>- Staff Schedules<br>- Alerts and Notifications"]
+        A_Appt["Appointment Management<br><hr>- Calendar View<br>- Approve or Decline Requests<br>- Reschedule Appointments"]
+        A_Telemed["Online Consultation Management<br><hr>- Start Live Session<br>- Chat with Pet Owner<br>- Write Prescriptions"]
+        A_Records["Pet Records Management<br><hr>- Pet and Owner Directory<br>- Edit Medical History<br>- Update Vaccinations"]
+        A_Shop["Inventory and Products<br><hr>- Manage Product Catalog<br>- Archive and Restore Products<br>- Stock Level Warnings"]
+        A_Billing["Billing and Invoicing<br><hr>- Create Invoices<br>- Track Order Payments<br>- Payment History"]
+        A_Comm["Communications<br><hr>- SMS Notifications<br>- Announcements<br>- Automatic Reminders"]
+        A_Access["Feedback and Tutorials<br><hr>- View Client Reviews<br>- Manage Tutorial Content"]
+    end
+
+    AdminPortal --> A_Dash
+    AdminPortal --> A_Appt
+    AdminPortal --> A_Telemed
+    AdminPortal --> A_Records
+    AdminPortal --> A_Shop
+    AdminPortal --> A_Billing
+    AdminPortal --> A_Comm
+    AdminPortal --> A_Access
+
+    A_Dash ~~~ A_Appt
+    A_Appt ~~~ A_Telemed
+    A_Telemed ~~~ A_Records
+    A_Records ~~~ A_Shop
+    A_Shop ~~~ A_Billing
+    A_Billing ~~~ A_Comm
+    A_Comm ~~~ A_Access
+
+    %% ==========================================
+    %% WEB SUPER ADMIN MODULES
+    %% ==========================================
+    subgraph WebSuperAdmin ["Web Super Admin Modules"]
+        SA_Dash["Dashboard<br><hr>- Platform Growth Charts<br>- Total Transactions<br>- System Health Status"]
+        SA_Users["User Management<br><hr>- Register Clinic Staff<br>- Manage Account Roles"]
+        SA_Config["System Settings<br><hr>- Payment Settings<br>- Feature Toggles<br>- Email Server Settings"]
+        SA_Finance["Billing Reports<br><hr>- Clinic Billing Summaries<br>- Platform Payment Logs"]
+        SA_Audit["Activity Logs and Archive<br><hr>- Activity History<br>- Security Event Log<br>- Restore Deleted Records"]
+        SA_Resources["Content Management<br><hr>- Manage Tutorials<br>- Platform Help Pages"]
+    end
+
+    SuperAdminPortal --> SA_Dash
+    SuperAdminPortal --> SA_Users
+    SuperAdminPortal --> SA_Config
+    SuperAdminPortal --> SA_Finance
+    SuperAdminPortal --> SA_Audit
+    SuperAdminPortal --> SA_Resources
+
+    SA_Dash ~~~ SA_Users
+    SA_Users ~~~ SA_Config
+    SA_Config ~~~ SA_Finance
+    SA_Finance ~~~ SA_Audit
+    SA_Audit ~~~ SA_Resources
+
+    %% Styling
+    class Root root;
+    class MobilePortal,AdminPortal,SuperAdminPortal portal;
+    class M_Auth,M_Health,M_Monitor,M_Appt,M_Telemed,M_Shop,M_Support module;
+    class A_Dash,A_Appt,A_Telemed,A_Records,A_Shop,A_Billing,A_Comm,A_Access module;
+    class SA_Dash,SA_Users,SA_Config,SA_Finance,SA_Audit,SA_Resources module;

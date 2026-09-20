@@ -1,0 +1,78 @@
+graph TD
+    %% Global Link Styling for Cyan Arrows
+    linkStyle default stroke:#00D2D2,stroke-width:3px;
+
+    %% Class Definitions
+    classDef greenShape fill:#2E5E3E,stroke:#1E3E28,color:#FFFFFF,stroke-width:2px;
+    classDef startStop fill:#3B7A51,stroke:#2E5E3E,color:#FFFFFF,stroke-width:2px;
+    classDef forkJoin fill:#000000,stroke:#000000,color:#FFFFFF,stroke-width:3px;
+
+    subgraph PetOwner [Pet Owner Actions]
+        Start((●)) --> OpenApp(Open Mobile App)
+        OpenApp --> InputCredentials(Input Login Details)
+        
+        Dashboard(Access User Dashboard) --> ChooseAppt(Request Appointment Booking)
+        ChooseAppt --> FillAppt(Select Type, Date & Pet)
+        
+        Dashboard --> ChooseShop(Browse Store Shop)
+        ChooseShop --> SelectCart(Select Products & Checkout)
+        
+        Dashboard --> ChooseVitals(Log Pet Health Vitals)
+        ChooseVitals --> FillVitals(Input Symptoms & Logs)
+        
+        Dashboard --> ClickLogout(Click Logout Button)
+    end
+
+    subgraph System [Mobile Backend & Database]
+        InputCredentials --> ValidateLogin{Verify Account & JWT}
+        ValidateLogin -- Invalid --> AlertLogin(Show Login Error) --> InputCredentials
+        ValidateLogin -- Valid --> Dashboard
+        
+        FillAppt --> QuerySlots(Verify Scheduling Availability)
+        QuerySlots --> IsFree{Slot Available?}
+        IsFree -- No --> AlertAppt(Show Slot Busy Message) --> ChooseAppt
+        
+        IsFree -- Yes --> ForkAppt[ ]
+        class ForkAppt forkJoin;
+        
+        %% Forking into parallel flows
+        ForkAppt --> ProcessApptPay(Charge Booking Fee)
+        ForkAppt --> ReserveSlot(Temporarily Hold Booking Slot)
+        
+        ProcessApptPay --> JoinAppt[ ]
+        ReserveSlot --> JoinAppt
+        class JoinAppt forkJoin;
+        
+        JoinAppt --> WriteAppt(Insert Scheduled Booking in DB)
+        WriteAppt --> SendApptSMS(Dispatch SMS Booking Ticket) --> Dashboard
+        
+        SelectCart --> QueryStock(Check Inventory Stock Levels)
+        QueryStock --> HasStock{Stock Available?}
+        HasStock -- No --> AlertStock(Show Product Out-of-Stock) --> ChooseShop
+        
+        HasStock -- Yes --> ForkShop[ ]
+        class ForkShop forkJoin;
+        
+        ForkShop --> ProcessShopPay(Charge Cart Total)
+        ForkShop --> HoldStock(Reserve Inventory Items)
+        
+        ProcessShopPay --> JoinShop[ ]
+        HoldStock --> JoinShop
+        class JoinShop forkJoin;
+        
+        JoinShop --> DeductStock(Update Stock Qty & Write Invoice) --> Dashboard
+        
+        FillVitals --> ParseVitals(Analyze Health Tolerances)
+        ParseVitals --> IsNormal{Vitals Normal?}
+        IsNormal -- Yes --> SaveHealthy(Insert Health Log in DB) --> Dashboard
+        IsNormal -- No --> AlertEmergency(Insert Alarm Alert in DB)
+        AlertEmergency --> DispatchEmergencySMS(Dispatch Alert SMS to Clinic) --> Dashboard
+        
+        ClickLogout --> DestroySession(Clear Client JWT Session)
+        DestroySession --> End(((◎)))
+    end
+
+    class Start,End startStop;
+    class OpenApp,InputCredentials,ChooseAppt,FillAppt,ChooseShop,SelectCart,ChooseVitals,FillVitals,ClickLogout greenShape;
+    class AlertLogin,QuerySlots,ProcessApptPay,ReserveSlot,WriteAppt,SendApptSMS,AlertAppt greenShape;
+    class QueryStock,AlertStock,ProcessShopPay,HoldStock,DeductStock,ParseVitals,SaveHealthy,AlertEmergency,DispatchEmergencySMS,DestroySession greenShape;

@@ -3,21 +3,25 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useLanguage } from '../context/LanguageContext';
 
 export default function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const [profilePic, setProfilePic] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const loadProfilePic = () => {
-      const pic = localStorage.getItem('adminProfilePic');
-      if (pic) setProfilePic(pic);
+      const isSuperAdmin = (pathname || '').startsWith('/superadmin');
+      const key = isSuperAdmin ? 'superadminProfilePic' : 'adminProfilePic';
+      const pic = localStorage.getItem(key);
+      setProfilePic(pic || null);
     };
     loadProfilePic();
     window.addEventListener('profilePicUpdated', loadProfilePic);
     return () => window.removeEventListener('profilePicUpdated', loadProfilePic);
-  }, []);
+  }, [pathname]);
 
   const safePathname = pathname || '';
   const basePath = safePathname.startsWith('/superadmin') ? '/superadmin' : '/admin';
@@ -47,6 +51,7 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose:
         { name: 'Pet Records', path: `${basePath}/records`, icon: 'fa-paw' },
         { name: 'Users', path: `${basePath}/users`, icon: 'fa-users' },
         { name: 'Reports', path: `${basePath}/reports`, icon: 'fa-chart-bar' },
+        { name: 'Analytics', path: `${basePath}/analytics`, icon: 'fa-chart-line' },
         { name: 'Tutorials', path: `${basePath}/tutorials`, icon: 'fa-graduation-cap' },
         { name: 'Announcements', path: `${basePath}/announcement`, icon: 'fa-bullhorn' },
         { name: 'Feedback', path: `${basePath}/feedback`, icon: 'fa-comments' },
@@ -61,7 +66,7 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose:
           <img src="/logo.png" alt="Logo" style={{ width: '45px', height: 'auto', objectFit: 'contain' }} />
           <h2 style={{ margin: 0, textAlign: 'left', lineHeight: '1.2', fontSize: '1.25rem' }}>
             FurEverCare
-            <span style={{ display: 'block', fontSize: '0.7rem', marginTop: '2px' }}>Veterinary System</span>
+            <span style={{ display: 'block', fontSize: '0.7rem', marginTop: '2px' }}>{t('VeterinarySystem')}</span>
           </h2>
         </div>
         <button className="close-sidebar" onClick={onClose} style={{ color: 'white', background: 'none', border: 'none', cursor: 'pointer' }}>
@@ -73,24 +78,70 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose:
         {sections.map((section, idx) => (
           <div key={idx} style={{ marginBottom: '20px' }}>
             <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '1px', marginBottom: '10px', paddingLeft: '15px' }}>
-              {section.title}
+              {t(section.title)}
             </div>
             {section.items.map((item) => {
-              if (item.name === 'Pet Monitor' && basePath === '/admin') return null;
               const isActive = safePathname === item.path || (safePathname === '/' && item.path === '/dashboard');
               return (
-                <Link 
+                <Link
                   key={item.path}
                   href={item.path}
                   className={`menu-item ${isActive ? 'active' : ''}`}
                 >
                   <i className={`fas ${item.icon}`}></i>
-                  <span>{item.name}</span>
+                  <span>{t(item.name)}</span>
                 </Link>
               );
             })}
           </div>
         ))}
+      </div>
+
+      {/* Profile Footer */}
+      <div
+        onClick={() => router.push(basePath === '/superadmin' ? '/superadmin/profile' : '/admin/profile')}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          padding: '16px 20px',
+          borderTop: '1px solid rgba(255,255,255,0.1)',
+          cursor: 'pointer',
+          transition: 'background 0.2s',
+          marginTop: 'auto'
+        }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
+        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+      >
+        <div style={{
+          width: '40px',
+          height: '40px',
+          borderRadius: '50%',
+          overflow: 'hidden',
+          flexShrink: 0,
+          background: 'rgba(255,255,255,0.15)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          border: '2px solid rgba(255,255,255,0.25)'
+        }}>
+          {profilePic ? (
+            <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          ) : (
+            <span style={{ color: 'white', fontWeight: 700, fontSize: '1rem' }}>
+              {basePath === '/superadmin' ? 'SA' : 'A'}
+            </span>
+          )}
+        </div>
+        <div style={{ overflow: 'hidden' }}>
+          <div style={{ color: 'white', fontWeight: 600, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {basePath === '/superadmin' ? 'Superadmin' : 'Admin'}
+          </div>
+          <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.75rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            View Profile
+          </div>
+        </div>
+        <i className="fas fa-chevron-right" style={{ marginLeft: 'auto', color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem' }}></i>
       </div>
 
     </div>

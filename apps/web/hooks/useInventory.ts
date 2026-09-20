@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { isSellableCategory } from '../lib/categoryUtils';
 
 export interface InventoryItem {
   id: string | number;
@@ -9,79 +10,202 @@ export interface InventoryItem {
   dosageForm?: string;
   expiryDate?: string;
   price: string;
+  costPrice?: string;
   stock: number;
   badge?: string;
   icon?: string;
   image?: string;
+  status?: string;
+  isArchived?: boolean;
 }
 
-const DEFAULT_ITEMS: InventoryItem[] = [
-  { id: 1, category: 'food', categoryLabel: 'Dog Food', name: 'Premium Dog Food', description: 'High quality dog food', dosageForm: '', expiryDate: '2025-12-31', price: '45.99', stock: 45, icon: 'fa-dog' },
-  { id: 2, category: 'food', categoryLabel: 'Cat Food', name: 'Gourmet Cat Food', description: 'Gourmet cat food', dosageForm: '', expiryDate: '2025-10-15', price: '38.99', stock: 32, badge: 'sale', icon: 'fa-cat' },
-  { id: 3, category: 'medications', categoryLabel: 'Medication', name: 'Flea & Tick Treatment', description: 'Effective treatment', dosageForm: 'Drops', expiryDate: '2026-05-20', price: '24.99', stock: 8, icon: 'fa-pills' },
-  { id: 4, category: 'grooming', categoryLabel: 'Grooming', name: 'Pet Grooming Kit', description: 'Complete kit', dosageForm: '', expiryDate: '', price: '67.99', stock: 23, icon: 'fa-cut' },
-  { id: 5, category: 'accessories', categoryLabel: 'Accessories', name: 'Orthopedic Pet Bed', description: 'Comfortable bed', dosageForm: '', expiryDate: '', price: '89.99', stock: 15, badge: 'new', icon: 'fa-bed' },
-  { id: 6, category: 'accessories', categoryLabel: 'Dental', name: 'Dental Care Kit', description: 'Dental kit', dosageForm: '', expiryDate: '', price: '29.99', stock: 42, icon: 'fa-tooth' },
-  { id: 7, category: 'food', categoryLabel: 'Treats', name: 'Natural Dog Treats', description: 'Healthy treats', dosageForm: '', expiryDate: '2025-08-10', price: '15.99', stock: 78, icon: 'fa-bone' },
-  { id: 8, category: 'medications', categoryLabel: 'Vaccines', name: 'Rabies Vaccine', description: 'Core vaccine', dosageForm: 'Injection', expiryDate: '2026-01-01', price: '18.99', stock: 6, icon: 'fa-syringe' },
-  { id: 9, category: 'equipment', categoryLabel: 'Equipment', name: 'Surgical Table', description: 'Steel operating table', dosageForm: '', expiryDate: '', price: '450.00', stock: 2, icon: 'fa-stethoscope' }
-];
+const DEFAULT_ITEMS: InventoryItem[] = [];
 
-export const SELLABLE_CATEGORIES = ['food', 'dog', 'cat', 'medications', 'vaccine', 'grooming', 'accessories', 'accessory', 'medicine', 'Food supplies'];
+export const SELLABLE_CATEGORIES = [
+  'food',
+  'dog',
+  'cat',
+  'medications',
+  'vaccine',
+  'grooming',
+  'accessories',
+  'accessory',
+  'medicine',
+  'Food supplies',
+  'Pet Food',
+  'Dog Supplies',
+  'Cat Supplies',
+];
 
 export function useSharedInventory() {
   const [items, setItemsState] = useState<InventoryItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+
+  const fetchInventory = useCallback(async (retryCount = 0): Promise<InventoryItem[]> => {
+    try {
+      const res = await fetch('/api/inventory');
+      if (!res.ok) {
+        // Try to extract the real error from the response body for better diagnostics
+        let serverError = '';
+        try {
+          const errBody = await res.json();
+          serverError = errBody?.details || errBody?.error || JSON.stringify(errBody);
+        } catch {
+          serverError = await res.text().catch(() => '');
+        }
+        throw new Error(`HTTP ${res.status}: ${serverError || res.statusText}`);
+      }
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setItemsState(data);
+        setLoading(false);
+        return data;
+      } else if (data && typeof data === 'object' && Array.isArray((data as any).items)) {
+        setItemsState((data as any).items);
+        setLoading(false);
+        return (data as any).items;
+      }
+    } catch (err) {
+      // Retry once after 1.5 s — handles Next.js dev cold-start latency
+      if (retryCount === 0) {
+        console.warn('[Inventory] Fetch failed, retrying in 1.5s…', err);
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        return fetchInventory(1);
+      }
+      console.error('[Inventory] Failed to fetch inventory after retry:', err);
+    } finally {
+      setLoading(false);
+    }
+    return [];
+  }, []);
 
   useEffect(() => {
-    fetch('/api/inventory')
-      .then(res => res.json())
-      .then(data => setItemsState(data))
-      .catch(err => setItemsState(DEFAULT_ITEMS));
-  }, []);
+    fetchInventory();
+  }, [fetchInventory]);
 
   const setItems = (newItems: InventoryItem[]) => {
     setItemsState(newItems);
-    fetch('/api/inventory', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newItems)
-    });
+    const persistItems = newItems.filter(
+      item => !(typeof item.id === 'string' && item.id.startsWith('temp-'))
+    );
+    if (persistItems.length > 0) {
+      fetch('/api/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(persistItems),
+      }).catch(err => console.error('Error bulk syncing inventory:', err));
+    }
   };
 
-  const addItem = (item: Omit<InventoryItem, 'id'>) => {
-    const newId = `temp-${Date.now()}`;
-    const newItem = { ...item, id: newId };
-    setItems([...items, newItem]);
-  };
+  const addItem = async (item: Omit<InventoryItem, 'id'>) => {
+    const tempId = `temp-${Date.now()}`;
+    const tempItem = { ...item, id: tempId } as InventoryItem;
+    setItemsState(prev => [...(Array.isArray(prev) ? prev : []), tempItem]);
 
-  const updateItem = (id: string | number, updates: Partial<InventoryItem>) => {
-    setItems(items.map(item => item.id === id ? { ...item, ...updates } : item));
-  };
-
-  const deleteItem = (id: string | number) => {
-    setItems(items.filter(item => item.id !== id));
-  };
-
-  const sellItem = (id: string | number, quantity: number) => {
-    setItems(items.map(item => {
-      if (item.id === id) {
-        return { ...item, stock: Math.max(0, item.stock - quantity) };
+    try {
+      const res = await fetch('/api/inventory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(item),
+      });
+      const data = await res.json();
+      if (data.item) {
+        setItemsState(prev =>
+          prev.map(i => (i.id === tempId ? (data.item as InventoryItem) : i))
+        );
       }
-      return item;
-    }));
+      await fetchInventory();
+    } catch (err) {
+      console.error('Error adding item to inventory:', err);
+    }
+  };
+
+  const updateItem = async (id: string | number, updates: Partial<InventoryItem>) => {
+    setItemsState(prev =>
+      (Array.isArray(prev) ? prev : []).map(item =>
+        item.id === id ? { ...item, ...updates } : item
+      )
+    );
+
+    try {
+      await fetch('/api/inventory', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, ...updates }),
+      });
+      await fetchInventory();
+    } catch (err) {
+      console.error('Error updating item in DB:', err);
+    }
+  };
+
+  const deleteItem = async (id: string | number) => {
+    setItemsState(prev => (Array.isArray(prev) ? prev : []).filter(item => item.id !== id));
+
+    try {
+      await fetch(`/api/inventory?id=${id}`, {
+        method: 'DELETE',
+      });
+    } catch (err) {
+      console.error('Failed to delete item from DB:', err);
+    }
+  };
+
+  const archiveItem = async (id: string | number) => {
+    setItemsState(prev => (Array.isArray(prev) ? prev : []).filter(item => item.id !== id));
+
+    try {
+      await fetch('/api/inventory', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, isArchived: true }),
+      });
+    } catch (err) {
+      console.error('Failed to archive item:', err);
+    }
+  };
+
+  const sellItem = async (id: string | number, quantity: number) => {
+    let newStock = 0;
+    setItemsState(prev =>
+      (Array.isArray(prev) ? prev : []).map(item => {
+        if (item.id === id) {
+          newStock = Math.max(0, item.stock - quantity);
+          return { ...item, stock: newStock };
+        }
+        return item;
+      })
+    );
+
+    try {
+      await fetch('/api/inventory', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, stock: newStock }),
+      });
+    } catch (err) {
+      console.error('Failed to update stock after selling item:', err);
+    }
   };
 
   const getSellableItems = () => {
-    return items.filter(item => SELLABLE_CATEGORIES.includes(item.category.toLowerCase()));
+    const currentItems = Array.isArray(items) ? items : [];
+    return currentItems.filter(item => {
+      if (!item || !item.category) return false;
+      return isSellableCategory(item.category);
+    });
   };
 
   return {
-    items,
+    items: Array.isArray(items) ? items : [],
+    loading,
     setItems,
+    fetchInventory,
     addItem,
     updateItem,
     deleteItem,
+    archiveItem,
     sellItem,
-    getSellableItems
+    getSellableItems,
   };
 }

@@ -3,11 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppointments, DEFAULT_TIME_SLOTS } from '../../../hooks/useAppointments';
+import AppointmentDonutChart from '../../components/AppointmentDonutChart';
+import { QuickActionsRow, AlertsFeed, TelemedicineQueue, RevenueTrendChart, FeedbackCarousel } from '../../components/DashboardWidgets';
 import './dashboard.css';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { appointments } = useAppointments();
+  const { appointments, timeSlotsData, toggleTimeSlot, initTimeSlotsForDate, getAvailableTimeSlots } = useAppointments();
 
   // Calendar State
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -15,27 +17,13 @@ export default function DashboardPage() {
   const [showEditSlotsModal, setShowEditSlotsModal] = useState(false);
   const [showViewAllScheduleModal, setShowViewAllScheduleModal] = useState(false);
   
-  // time slots dictionary: 'YYYY-MM-DD' -> [{ time: '09:00 AM', enabled: true }, ...]
-  const [timeSlotsData, setTimeSlotsData] = useState<Record<string, { time: string, enabled: boolean }[]>>({});
-
   const defaultSlots = DEFAULT_TIME_SLOTS;
 
   useEffect(() => {
     // Initialize today on mount
     const today = new Date();
     const dateKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    setTimeSlotsData(prev => ({
-        ...prev,
-        [dateKey]: [
-          { time: "09:00 AM", enabled: true },
-          { time: "10:00 AM", enabled: false },
-          { time: "11:00 AM", enabled: true },
-          { time: "12:00 PM", enabled: true },
-          { time: "01:00 PM", enabled: false },
-          { time: "02:00 PM", enabled: true },
-          { time: "03:00 PM", enabled: true },
-        ]
-    }));
+    initTimeSlotsForDate(dateKey);
   }, []);
 
   const getDaysInMonth = (year: number, month: number) => {
@@ -59,25 +47,13 @@ export default function DashboardPage() {
     setSelectedDate(newSelectedDate);
     
     const dateKey = `${newSelectedDate.getFullYear()}-${String(newSelectedDate.getMonth() + 1).padStart(2, '0')}-${String(newSelectedDate.getDate()).padStart(2, '0')}`;
-    if (!timeSlotsData[dateKey]) {
-      setTimeSlotsData(prev => ({
-        ...prev,
-        [dateKey]: defaultSlots.map(time => ({ time, enabled: true }))
-      }));
-    }
+    initTimeSlotsForDate(dateKey);
   };
 
   const handleSlotToggle = (timeIndex: number) => {
     if (!selectedDate) return;
     const dateKey = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}`;
-    
-    setTimeSlotsData(prev => {
-      const daySlots = [...(prev[dateKey] || [])];
-      if (daySlots[timeIndex]) {
-        daySlots[timeIndex] = { ...daySlots[timeIndex], enabled: !daySlots[timeIndex].enabled };
-      }
-      return { ...prev, [dateKey]: daySlots };
-    });
+    toggleTimeSlot(dateKey, timeIndex);
   };
 
   const formatDateLabel = (date: Date | null) => {
@@ -90,10 +66,13 @@ export default function DashboardPage() {
 
   return (
     <>
-    <div className="module-content" id="mainContent">
-        <div className="dashboard-title">
-            <h1 id="greetingMessage">Good morning, Admin!</h1>
-            <p id="subGreeting"> </p>
+    <div className="module-content" >
+        <div className="dashboard-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+            <div>
+              <h1 id="greetingMessage">Good morning, Admin!</h1>
+              <p id="subGreeting"> </p>
+            </div>
+            <QuickActionsRow />
         </div>
 
         <div className="stats-grid">
@@ -135,7 +114,8 @@ export default function DashboardPage() {
         </div>
 
         <div className="dashboard-grid">
-            <div className="calendar-section">
+            <div className="left-column" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div className="calendar-section">
                 <div className="section-header">
                     <h2><i className="far fa-calendar-alt" style={{marginRight:"8px"}}></i> <span id="calendarTitle">Calendar Activities</span></h2>
                     <button 
@@ -186,12 +166,18 @@ export default function DashboardPage() {
                     })}
                 </div>
             </div>
+            
+            <AlertsFeed />
+            </div>
 
             <div className="right-column">
+                <AppointmentDonutChart appointments={appointments} />
+            <TelemedicineQueue appointments={appointments} />
+
                 <div className="today-schedule">
-                    <div className="section-header" style={{ marginBottom: '15px', flexWrap: 'nowrap' }}>
-                        <h2 style={{ fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><i className="far fa-clock" style={{marginRight:"4px"}}></i> <span id="scheduleTitle">Schedule for {formatDateLabel(selectedDate)}</span></h2>
-                        <button className="view-all-btn" onClick={() => setShowViewAllScheduleModal(true)} style={{ fontSize: '0.75rem', padding: '4px 8px', background: '#f7fafc', borderRadius: '6px', whiteSpace: 'nowrap', flexShrink: 0 }}><span>View All</span></button>
+                    <div className="section-header">
+                        <h2><i className="far fa-clock" style={{marginRight:"8px"}}></i> <span id="scheduleTitle">Schedule for {formatDateLabel(selectedDate)}</span></h2>
+                        <button className="view-all-btn" onClick={() => setShowViewAllScheduleModal(true)}><span>View All</span></button>
                     </div>
                     <div className="schedule-list" id="scheduleList">
                         {todaysAppointments.length === 0 ? (
@@ -229,14 +215,14 @@ export default function DashboardPage() {
                           </div>
                         ) : (
                           <div className="time-slot-grid">
-                            {(timeSlotsData[selectedDateStr] || defaultSlots.map(t => ({ time: t, enabled: true }))).map((slot, idx) => {
-                              const isBooked = appointments.some(app => app.date === selectedDateStr && app.time === slot.time && (app.status.toLowerCase() !== 'cancelled'));
-                              const isAvailable = slot.enabled && !isBooked;
+                            {selectedDateStr && getAvailableTimeSlots(selectedDateStr).map((slot, idx) => {
+                              const isBooked = !slot.available && slot.enabled;
                               return (
                                 <div 
                                   key={idx}
-                                  className={`time-slot-btn ${isAvailable ? 'enabled' : 'disabled'} read-only`}
-                                  title={isBooked ? "Booked" : (!slot.enabled ? "Manually Disabled" : "Available")}
+                                  className={`time-slot-btn ${slot.available ? 'enabled' : 'disabled'} read-only`}
+                                  style={isBooked ? { background: '#e2e8f0', color: '#a0aec0', borderColor: '#cbd5e0' } : {}}
+                                  title={isBooked ? "Already Booked" : (!slot.enabled ? "Manually Disabled" : "Available")}
                                 >
                                   {slot.time}
                                 </div>
@@ -247,6 +233,11 @@ export default function DashboardPage() {
                     </div>
                 </div>
             </div>
+        </div>
+
+        <div className="bottom-grid">
+            <RevenueTrendChart />
+            <FeedbackCarousel />
         </div>
     </div>
 
@@ -300,15 +291,20 @@ export default function DashboardPage() {
             <div className="modal-body">
                 <p style={{marginBottom: "15px", color: "#718096", fontSize: "0.9rem"}}>Click on a time slot to enable or disable it for this date.</p>
                 <div className="time-slot-grid">
-                    {(timeSlotsData[selectedDateStr] || defaultSlots.map(t => ({ time: t, enabled: true }))).map((slot, idx) => (
+                    {selectedDateStr && getAvailableTimeSlots(selectedDateStr).map((slot, idx) => {
+                        const isBooked = !slot.available && slot.enabled;
+                        return (
                         <button 
                             key={idx}
-                            onClick={() => handleSlotToggle(idx)}
-                            className={`time-slot-btn ${slot.enabled ? 'enabled' : 'disabled'}`}
+                            onClick={() => !isBooked && handleSlotToggle(idx)}
+                            className={`time-slot-btn ${slot.available ? 'enabled' : 'disabled'}`}
+                            style={isBooked ? { opacity: 0.6, cursor: 'not-allowed', background: '#e2e8f0', color: '#a0aec0', borderColor: '#cbd5e0' } : {}}
+                            title={isBooked ? "Cannot edit a booked slot" : (slot.enabled ? "Enabled" : "Disabled")}
                         >
-                            {slot.time}
+                            {slot.time} {isBooked && <span style={{fontSize: '0.7rem', display: 'block', marginTop: '2px'}}>(Booked)</span>}
                         </button>
-                    ))}
+                        );
+                    })}
                 </div>
             </div>
             <div className="modal-actions">

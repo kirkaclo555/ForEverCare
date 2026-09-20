@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppointments, DEFAULT_TIME_SLOTS } from '../../../hooks/useAppointments';
+import AppointmentDonutChart from '../../components/AppointmentDonutChart';
+import { QuickActionsRow, AlertsFeed, TelemedicineQueue, RevenueTrendChart, FeedbackCarousel } from '../../components/DashboardWidgets';
 import './dashboard.css';
 
 export default function DashboardPage() {
@@ -65,9 +67,12 @@ export default function DashboardPage() {
   return (
     <>
     <div className="module-content" >
-        <div className="dashboard-title">
-            <h1 id="greetingMessage">Good morning, Super Admin!</h1>
-            <p id="subGreeting"> </p>
+        <div className="dashboard-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '20px' }}>
+            <div>
+              <h1 id="greetingMessage">Good morning, Super Admin!</h1>
+              <p id="subGreeting"> </p>
+            </div>
+            <QuickActionsRow />
         </div>
 
         <div className="stats-grid">
@@ -109,7 +114,8 @@ export default function DashboardPage() {
         </div>
 
         <div className="dashboard-grid">
-            <div className="calendar-section">
+            <div className="left-column" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div className="calendar-section">
                 <div className="section-header">
                     <h2><i className="far fa-calendar-alt" style={{marginRight:"8px"}}></i> <span id="calendarTitle">Calendar Activities</span></h2>
                     <button 
@@ -160,8 +166,14 @@ export default function DashboardPage() {
                     })}
                 </div>
             </div>
+            
+            <AlertsFeed />
+            </div>
 
             <div className="right-column">
+                <AppointmentDonutChart appointments={appointments} />
+            <TelemedicineQueue appointments={appointments} />
+
                 <div className="today-schedule">
                     <div className="section-header">
                         <h2><i className="far fa-clock" style={{marginRight:"8px"}}></i> <span id="scheduleTitle">Schedule for {formatDateLabel(selectedDate)}</span></h2>
@@ -221,6 +233,11 @@ export default function DashboardPage() {
                     </div>
                 </div>
             </div>
+        </div>
+
+        <div className="bottom-grid">
+            <RevenueTrendChart />
+            <FeedbackCarousel />
         </div>
     </div>
 

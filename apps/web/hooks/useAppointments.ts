@@ -3,10 +3,17 @@ import { useState, useEffect } from 'react';
 export interface Appointment {
   id: string;
   owner: string;
+  email?: string;
   contact: string;
+  address?: string;
   pet: string;
+  doctor?: string;
   species: string;
   breed: string;
+  age?: number | null;
+  petGender?: string;
+  petWeight?: number | null;
+  petAvatar?: string;
   date: string;
   time: string;
   type: string;
@@ -16,6 +23,7 @@ export interface Appointment {
   referenceNumber?: string;
   amountPaid?: number;
   receiptImage?: string;
+  createdAt?: string;
 }
 
 const generateSessionCode = () => {
@@ -111,8 +119,7 @@ export function useAppointments() {
   };
 
   const addAppointment = async (appointmentData: any) => {
-    const sessionCode = appointmentData.type === 'telemedicine' ? generateSessionCode() : undefined;
-    const payload = { ...appointmentData, sessionCode };
+    const payload = { ...appointmentData };
     
     try {
       const res = await fetch('/api/appointments', {
@@ -134,7 +141,7 @@ export function useAppointments() {
   const updateAppointmentStatus = async (id: string, newStatus: string) => {
     let sessionCode;
     const targetApp = appointments.find(app => app.id === id);
-    if (targetApp && newStatus === 'confirmed' && targetApp.type === 'telemedicine' && !targetApp.sessionCode) {
+    if (targetApp && newStatus.toLowerCase() === 'paid' && targetApp.type === 'telemedicine' && !targetApp.sessionCode) {
       sessionCode = generateSessionCode();
     }
 
@@ -190,11 +197,36 @@ export function useAppointments() {
   const getAvailableTimeSlots = (date: string) => {
     const bookedSlots = appointments.filter(app => app.date === date && app.status.toLowerCase() !== 'cancelled').map(app => app.time);
     const daySlots = timeSlotsData[date] || DEFAULT_TIME_SLOTS.map(time => ({ time, enabled: true }));
-    return daySlots.map(slot => ({
-      time: slot.time,
-      enabled: slot.enabled,
-      available: slot.enabled && !bookedSlots.includes(slot.time)
-    }));
+    
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${year}-${month}-${day}`;
+
+    return daySlots.map(slot => {
+      let isPast = false;
+      if (date === todayStr) {
+        const match = slot.time.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
+        if (match && match[1] && match[2] && match[3]) {
+          let hours = parseInt(match[1], 10);
+          const minutes = parseInt(match[2], 10);
+          const ampm = match[3].toUpperCase();
+          if (ampm === 'PM' && hours < 12) hours += 12;
+          if (ampm === 'AM' && hours === 12) hours = 0;
+          const currentHours = today.getHours();
+          const currentMinutes = today.getMinutes();
+          if (hours < currentHours || (hours === currentHours && minutes <= currentMinutes)) {
+            isPast = true;
+          }
+        }
+      }
+      return {
+        time: slot.time,
+        enabled: slot.enabled,
+        available: slot.enabled && !bookedSlots.includes(slot.time) && !isPast
+      };
+    });
   };
 
   return {

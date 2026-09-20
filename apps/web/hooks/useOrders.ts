@@ -22,7 +22,7 @@ export interface Order {
   orderDate: string;
   totalAmount: number;
   paymentMethod: string;
-  status: 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+  status: 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'COMPLETED' | 'CANCELLED';
   deliveryAddress: string;
   items: OrderItem[];
   user?: {
@@ -30,6 +30,7 @@ export interface Order {
     fullName: string;
     email: string;
   };
+  payments?: any[];
 }
 
 export function useOrders(initialStatus?: string) {

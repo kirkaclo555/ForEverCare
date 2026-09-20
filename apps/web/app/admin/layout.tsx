@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import Sidebar from '../../components/Sidebar';
 import TopBar from '../../components/TopBar';
+import { LanguageProvider } from '../../context/LanguageContext';
+import { NotificationProvider } from '../../context/NotificationContext';
 import './admin.css'; // Global admin styles migrated from HTML
 
 export default function DashboardLayout({
@@ -13,12 +15,14 @@ export default function DashboardLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <>
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <div className={`main-content ${sidebarOpen ? 'shifted' : ''}`} id="mainContent">
-        <TopBar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-        {children}
-      </div>
-    </>
+    <LanguageProvider>
+      <NotificationProvider>
+        <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <div className={`main-content ${sidebarOpen ? 'shifted' : ''}`} id="mainContent">
+          <TopBar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+          {children}
+        </div>
+      </NotificationProvider>
+    </LanguageProvider>
   );
 }

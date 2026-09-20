@@ -1,4 +1,6 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
         * {
             margin: 0;
             padding: 0;
@@ -1415,328 +1417,431 @@ body.dark-mode .info-box p {
             }
         }
 
-                /* Two Column Layout */
-        .telemedicine-layout {
-            display: grid;
-            grid-template-columns: 1fr 480px;
-            gap: 30px;
-            max-width: 1600px;
+                /* --- REDESIGNED TELEMEDICINE LAYOUT --- */
+        :root {
+            --c-paper: #F1F5F1;
+            --c-card: #FFFFFF;
+            --c-ink: #10231A;
+            --c-muted: #5D7167;
+            --c-line: #DCE6DE;
+            --c-forest: #1B4D33;
+            --c-forest-deep: #123626;
+            --c-moss: #E7F0E8;
+            --c-amber: #9C6A0E;
+            --c-amber-bg: #FBF0DA;
+        }
+
+        body.dark-mode {
+            --c-paper: #10231A;
+            --c-card: #152C21;
+            --c-ink: #F1F5F1;
+            --c-muted: #9BAE9F;
+            --c-line: #224330;
+            --c-forest: #3AB472;
+            --c-forest-deep: #2E945D;
+            --c-moss: #1A3527;
+            --c-amber: #D9A036;
+            --c-amber-bg: #4A3A1A;
+        }
+
+        .tele-wrapper {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--c-paper);
+            min-height: 100vh;
+            color: var(--c-ink);
+            padding: 15px 20px 20px 20px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
-        /* Consultations Sidebar - REDESIGNED */
-        /* Consultations Sidebar - REMOVED STICKY HEIGHT */
-.consultations-sidebar {
-    background: white;
-    border-radius: 24px;
-    padding: 25px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-    margin-bottom: 20px;
-    display: flex;
-    flex-direction: column;
-}
-
-body.dark-mode .consultations-sidebar {
-    background: #1e293b;
-}
-
-.consultations-sidebar h3 {
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: #1a4d2e;
-    margin-bottom: 20px;
-    padding-bottom: 15px;
-    border-bottom: 2px solid #e2e8f0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-body.dark-mode .consultations-sidebar h3 {
-    color: #86efac;
-    border-bottom-color: #334155;
-}
-
-.consultations-list {
-    max-height: 400px;
-    overflow-y: auto;
-    padding-right: 8px;
-}
-
-        /* Custom scrollbar */
-        .consultations-list::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .consultations-list::-webkit-scrollbar-track {
-            background: #e2e8f0;
-            border-radius: 10px;
-        }
-
-        .consultations-list::-webkit-scrollbar-thumb {
-            background: #2d6a4f;
-            border-radius: 10px;
-        }
-
-        /* REDESIGNED Consultation Card - LARGER & MORE DETAILED */
-        .consultation-card {
-            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 18px;
-            border: 1px solid #e2e8f0;
-            transition: all 0.3s ease;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .consultation-card::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            bottom: 0;
-            width: 4px;
-            background: linear-gradient(135deg, #1a4d2e 0%, #2d6a4f 100%);
-            border-radius: 4px;
-        }
-
-        .consultation-card:hover {
-            transform: translateX(5px);
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-        }
-
-        body.dark-mode .consultation-card {
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            border-color: #334155;
-        }
-
-        /* Card Header */
-        .card-header {
+        .tele-title {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-size: 30px;
+            color: #2d3748;
+            margin: 0;
+            font-weight: bold;
             display: flex;
             align-items: center;
+            gap: 10px;
+        }
+
+        .tele-subtitle {
+            color: var(--c-muted);
+            font-size: 1.1rem;
+        }
+
+        .tele-header-row {
+            display: flex;
             justify-content: space-between;
-            margin-bottom: 15px;
-            padding-bottom: 12px;
-            border-bottom: 1px dashed #e2e8f0;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px 20px 10px 20px;
         }
 
-        body.dark-mode .card-header {
-            border-bottom-color: #334155;
+        .tele-btn-primary {
+            background: var(--c-forest);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
-        .pet-name {
-            font-size: 1.2rem;
+        /* Hero Panel */
+        .tele-hero {
+            background: var(--c-card);
+            border-radius: 18px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 40px;
+            border-left: 6px solid var(--c-forest);
+            background-image: linear-gradient(90deg, var(--c-moss) 0%, var(--c-card) 20%);
+        }
+
+        .tele-hero-strip {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            font-size: 0.85rem;
             font-weight: 700;
-            color: #1a4d2e;
+            color: var(--c-forest);
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--c-line);
+        }
+
+        .pulsing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--c-forest);
+            border-radius: 50%;
+            animation: pulse-dot 1.5s infinite;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .pulsing-dot {
+                animation: none;
+            }
+        }
+
+        @keyframes pulse-dot {
+            0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(27, 77, 51, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(27, 77, 51, 0); }
+            100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(27, 77, 51, 0); }
+        }
+
+        .tele-hero-content {
+            padding: 30px 24px;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 8px;
         }
 
-        body.dark-mode .pet-name {
-            color: #86efac;
+        .tele-hero-time {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-weight: 700;
+            font-size: 4rem;
+            line-height: 1;
+            margin-bottom: 8px;
+            font-variant-numeric: tabular-nums;
+            color: var(--c-ink);
         }
 
-        .pet-name i {
-            font-size: 1.3rem;
-            color: #2d6a4f;
-        }
-
-        .appointment-badge {
-            background: #dcfce7;
-            color: #1a4d2e;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.7rem;
+        .tele-hero-relative {
+            color: var(--c-amber);
             font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 20px;
         }
 
-        /* Card Body - Grid Layout */
-        .card-body {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-bottom: 15px;
-        }
-
-        .info-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.85rem;
-            color: #475569;
-            padding: 6px 0;
-        }
-
-        body.dark-mode .info-row {
-            color: #cbd5e1;
-        }
-
-        .info-row i {
-            width: 20px;
-            color: #2d6a4f;
-            font-size: 0.85rem;
-        }
-
-        .info-row .label {
-            font-weight: 500;
-            min-width: 55px;
-        }
-
-        .info-row .value {
-            color: #1e293b;
-        }
-
-        body.dark-mode .info-row .value {
-            color: #e2e8f0;
-        }
-
-        /* Reason section */
-        .reason-section {
-            background: #f1f5f9;
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 18px;
-        }
-
-        body.dark-mode .reason-section {
-            background: #0f172a;
-        }
-
-        .reason-section .reason-label {
-            font-size: 0.7rem;
-            text-transform: uppercase;
+        .tele-hero-client {
+            font-size: 1.25rem;
             font-weight: 600;
-            color: #2d6a4f;
-            margin-bottom: 5px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+            margin-bottom: 20px;
         }
-
-        .reason-section .reason-text {
-            font-size: 0.85rem;
-            color: #475569;
-            line-height: 1.4;
-        }
-
-        body.dark-mode .reason-section .reason-text {
-            color: #94a3b8;
-        }
-
         
-
-        .empty-consultations {
-            text-align: center;
-            padding: 60px 20px;
-            color: #94a3b8;
+        .tele-hero-pet {
+            color: var(--c-forest);
         }
 
-        .empty-consultations i {
-            font-size: 3.5rem;
+        .tele-hero-fields {
+            display: flex;
+            gap: 15px;
+        }
+
+        .tele-field {
+            background: var(--c-moss);
+            padding: 10px 16px;
+            border-radius: 10px;
+        }
+
+        .tele-field-label {
+            font-size: 0.75rem;
+            color: var(--c-muted);
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .tele-field-val {
+            font-size: 1rem;
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+            color: var(--c-ink);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tele-hero-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            min-width: 140px;
+        }
+
+        .tele-btn {
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--c-line);
+            background: var(--c-card);
+            color: var(--c-ink);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tele-btn.primary {
+            background: var(--c-forest);
+            color: white;
+            border: none;
+        }
+
+        /* Filter Row */
+        .tele-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 20px;
+        }
+
+        .tele-list-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .tele-filters {
+            display: flex;
+            background: var(--c-card);
+            border-radius: 10px;
+            padding: 4px;
+            border: 1px solid var(--c-line);
+        }
+
+        .tele-filter-btn {
+            background: transparent;
+            border: none;
+            padding: 6px 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--c-muted);
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .tele-filter-btn.active {
+            background: var(--c-moss);
+            color: var(--c-forest-deep);
+        }
+
+        /* List Groups */
+        .tele-group-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 30px;
             margin-bottom: 15px;
-            opacity: 0.5;
+            color: var(--c-muted);
+            font-size: 0.95rem;
+            font-weight: 600;
         }
 
-        @media (max-width: 1024px) {
-            .telemedicine-layout {
-                grid-template-columns: 1fr;
+        .tele-group-header.is-today {
+            color: var(--c-amber);
+        }
+
+        .tele-rule {
+            flex: 1;
+            height: 1px;
+            background: var(--c-line);
+        }
+
+        /* List Rows */
+        .tele-row {
+            display: flex;
+            background: var(--c-card);
+            border-radius: 14px;
+            margin-bottom: 12px;
+            border: 1px solid var(--c-line);
+            padding: 16px;
+            align-items: center;
+        }
+
+        .tele-row.is-today {
+            border-left: 4px solid var(--c-amber);
+        }
+
+        .tele-gutter {
+            width: 100px;
+            flex-shrink: 0;
+            border-right: 1px solid var(--c-line);
+            padding-right: 15px;
+            margin-right: 15px;
+        }
+
+        .tele-time {
+            font-size: 1.1rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .tele-date {
+            font-size: 0.75rem;
+            color: var(--c-muted);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .tele-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: var(--c-moss);
+            color: var(--c-forest-deep);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-right: 15px;
+        }
+
+        .tele-details {
+            flex: 1;
+        }
+
+        .tele-client {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+        }
+
+        .tele-meta {
+            font-size: 0.85rem;
+            color: var(--c-muted);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .tele-chip {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-right: 20px;
+        }
+
+        .tele-chip.completed {
+            background: var(--c-line);
+            color: var(--c-muted);
+        }
+
+        .tele-chip.upcoming {
+            background: var(--c-moss);
+            color: var(--c-forest);
+        }
+
+        .tele-chip.next {
+            background: var(--c-amber-bg);
+            color: var(--c-amber);
+        }
+
+        .tele-row-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tele-empty-state {
+            border: 2px dashed var(--c-line);
+            border-radius: 14px;
+            padding: 30px;
+            text-align: center;
+            color: var(--c-muted);
+            font-weight: 600;
+        }
+
+        @media (max-width: 900px) {
+            .tele-header-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
             }
-            .consultations-sidebar {
-                position: static;
-                height: auto;
-                max-height: 600px;
+            .tele-hero-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+            }
+            .tele-hero-actions {
+                flex-direction: row;
+                width: 100%;
+            }
+            .tele-hero-actions .tele-btn {
+                flex: 1;
+            }
+            .tele-hero-fields {
+                flex-direction: column;
+                width: 100%;
+            }
+            .tele-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            .tele-gutter {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--c-line);
+                padding-right: 0;
+                padding-bottom: 10px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .tele-row-actions {
+                width: 100%;
+                justify-content: stretch;
+            }
+            .tele-row-actions .tele-btn {
+                flex: 1;
+            }
+            .tele-list-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            .tele-filters {
+                width: 100%;
+                overflow-x: auto;
             }
         }
 
-        /* History Sidebar */
-/* History Sidebar */
-.history-sidebar {
-    background: white;
-    border-radius: 24px;
-    padding: 25px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-body.dark-mode .history-sidebar {
-    background: #1e293b;
-}
-
-.history-sidebar h3 {
-    font-size: 1.2rem;
-    font-weight: 600;
-    color: #1a4d2e;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 2px solid #e2e8f0;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-body.dark-mode .history-sidebar h3 {
-    color: #86efac;
-    border-bottom-color: #334155;
-}
-
-.history-list {
-    max-height: 350px;
-    overflow-y: auto;
-}
-
-.history-card {
-    background: #f8fafc;
-    border-radius: 16px;
-    padding: 15px;
-    margin-bottom: 12px;
-    border-left: 3px solid #2E5E3E;
-    transition: all 0.2s ease;
-}
-
-body.dark-mode .history-card {
-    background: #0f172a;
-}
-
-.history-card:hover {
-    transform: translateX(3px);
-}
-
-.history-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 8px;
-}
-
-.history-pet {
-    font-weight: 700;
-    color: #1a4d2e;
-}
-
-body.dark-mode .history-pet {
-    color: #86efac;
-}
-
-.history-date {
-    font-size: 0.75rem;
-    color: #718096;
-}
-
-.history-details {
-    font-size: 0.8rem;
-    color: #475569;
-    margin-top: 5px;
-}
-
-body.dark-mode .history-details {
-    color: #94a3b8;
-}
-
-.empty-history {
-    text-align: center;
-    padding: 30px 20px;
-    color: #94a3b8;
-}
-
-
+        .tele-row.clickable { cursor: pointer; transition: all 0.2s; }
+        .tele-row.clickable:hover { border-color: var(--c-forest); box-shadow: 0 4px 12px rgba(0,0,0,0.05); transform: translateY(-1px); }
     

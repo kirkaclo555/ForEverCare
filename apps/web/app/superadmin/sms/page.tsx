@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import './sms.css';
 
@@ -12,6 +12,9 @@ export default function SmsPage() {
   const [message, setMessage] = useState('');
   const [formError, setFormError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [messages, setMessages] = useState<any[]>([]);
+  const [contacts, setContacts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   
   const templates = [
     { id: 1, title: 'Appointment Reminder', text: 'Hi [Name], this is a reminder for your pet\'s appointment tomorrow at FurEverCare.' },
@@ -20,25 +23,81 @@ export default function SmsPage() {
     { id: 4, title: 'Promotion', text: 'Special offer! Get 20% off all grooming services this weekend at FurEverCare.' },
   ];
 
-  const recentMessages = [
-    { id: 1, to: '+1 (555) 123-4567', status: 'Sent', time: '10:30 AM', preview: 'Hi John, this is a reminder for your pet\'s appointment.' },
-    { id: 2, to: '+1 (555) 987-6543', status: 'Failed', time: 'Yesterday', preview: 'Special offer! Get 20% off all grooming services.' },
-    { id: 3, to: '+1 (555) 555-5555', status: 'Sent', time: 'Yesterday', preview: 'Hello! It\'s time for your pet\'s annual vaccination.' },
-    { id: 4, to: '+1 (555) 111-2222', status: 'Sent', time: 'Mon, 09:00 AM', preview: 'Please confirm your appointment tomorrow at 10 AM.' },
-    { id: 5, to: '+1 (555) 333-4444', status: 'Sent', time: 'Sun, 02:30 PM', preview: 'Your pet\'s test results are ready for pickup.' },
-    { id: 6, to: '+1 (555) 666-7777', status: 'Pending', time: '10:45 AM', preview: 'Thank you for visiting FurEverCare! We\'d love your feedback.' }
-  ];
+  const fetchSmsData = async () => {
+    try {
+      const res = await fetch('/api/sms');
+      const data = await res.json();
+      if (data.success) {
+        setMessages(data.messages);
+        setContacts(data.contacts);
+      }
+    } catch (err) {
+      console.error('Failed to load SMS data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const recentContacts = [
-    { id: 1, name: 'John Doe', phone: '+1 (555) 123-4567', pet: 'Buddy' },
-    { id: 2, name: 'Jane Smith', phone: '+1 (555) 987-6543', pet: 'Luna' },
-    { id: 3, name: 'Alice Johnson', phone: '+1 (555) 555-5555', pet: 'Milo' },
-    { id: 4, name: 'Michael Brown', phone: '+1 (555) 111-2222', pet: 'Max' },
-    { id: 5, name: 'Sarah Davis', phone: '+1 (555) 333-4444', pet: 'Bella' },
-    { id: 6, name: 'David Lee', phone: '+1 (555) 666-7777', pet: 'Lucy' },
-    { id: 7, name: 'Emily Wilson', phone: '+1 (555) 888-9999', pet: 'Charlie' },
-    { id: 8, name: 'Robert Taylor', phone: '+1 (555) 000-1111', pet: 'Cooper' }
-  ];
+  useEffect(() => {
+    fetchSmsData();
+  }, []);
+
+  const handleSendSms = async () => {
+    if (!recipientPhone.trim() || !message.trim()) {
+      setFormError('Please enter a recipient phone number and a message.');
+      return;
+    }
+    setFormError('');
+
+    try {
+      const res = await fetch('/api/sms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: recipientPhone,
+          message: message
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSuccessMessage('Successfully sent a message!');
+        setMessage('');
+        setRecipientPhone('');
+        setIsComposeOpen(false);
+        fetchSmsData();
+      } else {
+        setFormError('Failed to send SMS: ' + data.error);
+      }
+    } catch (err: any) {
+      setFormError('Error sending SMS: ' + err.message);
+    }
+  };
+
+  const handleSendReply = async (toPhone: string, text: string) => {
+    if (!text.trim()) return;
+    try {
+      const res = await fetch('/api/sms', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: toPhone,
+          message: text
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSuccessMessage('Successfully sent reply!');
+        setReplyText('');
+        setSelectedMessage(null);
+        setSelectedContact(null);
+        fetchSmsData();
+      } else {
+        alert('Failed to send Reply: ' + data.error);
+      }
+    } catch (err: any) {
+      alert('Error sending reply: ' + err.message);
+    }
+  };
 
   const [isAllMessagesOpen, setIsAllMessagesOpen] = useState(false);
   const [isAllContactsOpen, setIsAllContactsOpen] = useState(false);
@@ -104,17 +163,7 @@ export default function SmsPage() {
                         <input type="checkbox" id="schedule" />
                         <span>Schedule for later</span>
                     </label>
-                    <button className="send-now-btn" onClick={() => {
-                        if (!recipientPhone.trim() || !message.trim()) {
-                            setFormError('Please enter a recipient phone number and a message.');
-                            return;
-                        }
-                        setFormError('');
-                        setSuccessMessage('Successfully sent a message!');
-                        setMessage('');
-                        setRecipientPhone('');
-                        setIsComposeOpen(false);
-                    }}>
+                    <button className="send-now-btn" onClick={handleSendSms}>
                         <i className="fas fa-paper-plane"></i>
                         Send Now
                     </button>
@@ -161,21 +210,25 @@ export default function SmsPage() {
                 </div>
 
                 <div className="messages-list">
-                    {recentMessages.slice(0, 3).map(msg => (
-                        <div className="message-item" key={msg.id} onClick={() => setSelectedMessage(msg)} style={{ cursor: 'pointer', transition: 'background-color 0.2s', borderRadius: '8px', padding: '10px' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f7fafc'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
-                            <div className="message-avatar"><i className="fas fa-user"></i></div>
-                            <div className="message-content">
-                                <div className="message-header">
-                                    <span className="message-sender">{msg.to}</span>
-                                    <span className="message-time">{msg.time}</span>
-                                </div>
-                                <div className="message-preview">{msg.preview}</div>
-                                <div className="message-status">
-                                    <span className={`status-badge status-${msg.status.toLowerCase()}`}>{msg.status}</span>
+                    {messages.length === 0 ? (
+                        <div style={{ padding: '20px', textAlign: 'center', color: '#718096' }}>No messages sent yet.</div>
+                    ) : (
+                        messages.slice(0, 3).map(msg => (
+                            <div className="message-item" key={msg.id} onClick={() => setSelectedMessage(msg)} style={{ cursor: 'pointer', transition: 'background-color 0.2s', borderRadius: '8px', padding: '10px' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f7fafc'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                                <div className="message-avatar"><i className="fas fa-user"></i></div>
+                                <div className="message-content">
+                                    <div className="message-header">
+                                        <span className="message-sender">{msg.to}</span>
+                                        <span className="message-time">{msg.time}</span>
+                                    </div>
+                                    <div className="message-preview">{msg.preview}</div>
+                                    <div className="message-status">
+                                        <span className={`status-badge status-${msg.status.toLowerCase()}`}>{msg.status}</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        ))
+                    )}
                 </div>
             </div>
 
@@ -189,16 +242,20 @@ export default function SmsPage() {
                 </div>
 
                 <div className="contacts-grid">
-                    {recentContacts.slice(0, 4).map(contact => (
-                        <div className="contact-item" key={contact.id} onClick={() => setSelectedContact(contact)} style={{ cursor: 'pointer', transition: 'box-shadow 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)'} onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}>
-                            <div className="contact-avatar"><i className="fas fa-user"></i></div>
-                            <div className="contact-info">
-                                <div className="contact-name">{contact.name}</div>
-                                <div className="contact-number">{contact.phone}</div>
-                                <div className="contact-role">Pet: {contact.pet}</div>
+                    {contacts.length === 0 ? (
+                        <div style={{ padding: '20px', textAlign: 'center', color: '#718096' }}>No contacts found.</div>
+                    ) : (
+                        contacts.slice(0, 4).map(contact => (
+                            <div className="contact-item" key={contact.id} onClick={() => setSelectedContact(contact)} style={{ cursor: 'pointer', transition: 'box-shadow 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)'} onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}>
+                                <div className="contact-avatar"><i className="fas fa-user"></i></div>
+                                <div className="contact-info">
+                                    <div className="contact-name">{contact.name}</div>
+                                    <div className="contact-number">{contact.phone}</div>
+                                    <div className="contact-role">Pet: {contact.pet}</div>
+                                </div>
                             </div>
-                        </div>
-                    ))}
+                        ))
+                    )}
                 </div>
             </div>
         </div>
@@ -214,8 +271,8 @@ export default function SmsPage() {
             </div>
             <div className="modal-body" style={{ padding: 0 }}>
                 <div className="messages-list" style={{ maxHeight: '60vh', overflowY: 'auto', padding: '25px' }}>
-                    {recentMessages.map(msg => (
-                        <div className="message-item" key={msg.id} onClick={() => setSelectedMessage(msg)} style={{ borderBottom: '1px solid #edf2f7', padding: '15px', cursor: 'pointer', transition: 'background-color 0.2s', borderRadius: '8px' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f7fafc'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
+                    {messages.map(msg => (
+                        <div className="message-item" key={msg.id} onClick={() => { setSelectedMessage(msg); setIsAllMessagesOpen(false); }} style={{ borderBottom: '1px solid #edf2f7', padding: '15px', cursor: 'pointer', transition: 'background-color 0.2s', borderRadius: '8px' }} onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f7fafc'} onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}>
                             <div className="message-avatar"><i className="fas fa-user"></i></div>
                             <div className="message-content">
                                 <div className="message-header">
@@ -249,8 +306,12 @@ export default function SmsPage() {
                     <input type="text" placeholder="Search contacts..." style={{ width: '100%', padding: '10px 10px 10px 40px', border: '2px solid #e2e8f0', borderRadius: '12px', fontSize: '0.95rem' }} />
                 </div>
                 <div className="contacts-grid" style={{ maxHeight: '50vh', overflowY: 'auto' }}>
-                    {recentContacts.map(contact => (
-                        <div className="contact-item" key={contact.id} onClick={() => setSelectedContact(contact)} style={{ cursor: 'pointer', transition: 'box-shadow 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)'} onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}>
+                    {contacts.map(contact => (
+                        <div className="contact-item" key={contact.id} onClick={() => { 
+                            setRecipientPhone(contact.phone); 
+                            setIsComposeOpen(true); 
+                            setIsAllContactsOpen(false); 
+                        }} style={{ cursor: 'pointer', transition: 'box-shadow 0.2s' }} onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)'} onMouseLeave={(e) => e.currentTarget.style.boxShadow = 'none'}>
                             <div className="contact-avatar"><i className="fas fa-user"></i></div>
                             <div className="contact-info">
                                 <div className="contact-name">{contact.name}</div>
@@ -296,11 +357,7 @@ export default function SmsPage() {
             </div>
             <div className="modal-actions">
                 <button className="btn btn-secondary" onClick={() => { setSelectedMessage(null); setReplyText(''); }}>Cancel</button>
-                <button className="btn btn-primary" onClick={() => {
-                    setSuccessMessage('Successfully sent a message!');
-                    setReplyText('');
-                    setSelectedMessage(null);
-                }} disabled={!replyText.trim()} style={{ opacity: !replyText.trim() ? 0.5 : 1 }}><i className="fas fa-paper-plane" style={{ marginRight: '8px' }}></i>Send Reply</button>
+                <button className="btn btn-primary" onClick={() => handleSendReply(selectedMessage.to, replyText)} disabled={!replyText.trim()} style={{ opacity: !replyText.trim() ? 0.5 : 1 }}><i className="fas fa-paper-plane" style={{ marginRight: '8px' }}></i>Send Reply</button>
             </div>
         </div>
     </div>
@@ -333,11 +390,7 @@ export default function SmsPage() {
             </div>
             <div className="modal-actions">
                 <button className="btn btn-secondary" onClick={() => { setSelectedContact(null); setReplyText(''); }}>Cancel</button>
-                <button className="btn btn-primary" onClick={() => {
-                    setSuccessMessage(`Successfully sent a message to ${selectedContact.name}!`);
-                    setReplyText('');
-                    setSelectedContact(null);
-                }} disabled={!replyText.trim()} style={{ opacity: !replyText.trim() ? 0.5 : 1 }}><i className="fas fa-paper-plane" style={{ marginRight: '8px' }}></i>Send Message</button>
+                <button className="btn btn-primary" onClick={() => handleSendReply(selectedContact.phone, replyText)} disabled={!replyText.trim()} style={{ opacity: !replyText.trim() ? 0.5 : 1 }}><i className="fas fa-paper-plane" style={{ marginRight: '8px' }}></i>Send Message</button>
             </div>
         </div>
     </div>

@@ -9,8 +9,12 @@ out/
 build/
 dist/
 .turbo/
+
+# Large user-uploaded files (served via Cloudinary/Supabase in production)
+apps/web/public/uploads/
 .expo/
 *.tsbuildinfo
+*.apk
 
 # Environment Variables & Secrets (CRITICAL SECURITY)
 .env
@@ -20,6 +24,7 @@ dist/
 *.key
 *.cert
 *.sqlite
+*passwords*.json
 
 # OS Generated Files
 .DS_Store

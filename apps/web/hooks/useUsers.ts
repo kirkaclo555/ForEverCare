@@ -10,16 +10,16 @@ export interface User {
     contact: string;
     role: 'admin' | 'petowner';
     status: 'Active' | 'Inactive';
+    profileImage?: string | null;
 }
 
 const formatId = (id: string) => {
     if (!id) return "000000";
-    let hash = 0;
-    for (let i = 0; i < id.length; i++) {
-        hash = (hash << 5) - hash + id.charCodeAt(i);
-        hash |= 0;
+    const clean = id.replace(/[^a-zA-Z0-9]/g, '');
+    if (clean.length >= 6) {
+        return clean.slice(0, 6).toUpperCase();
     }
-    return String(Math.abs(hash)).padStart(6, '0').substring(0, 6);
+    return clean.padStart(6, '0').toUpperCase();
 };
 
 export function useUsers() {
@@ -37,7 +37,8 @@ export function useUsers() {
                     email: u.email,
                     contact: u.phoneNumber || 'N/A',
                     role: (u.role === 'ADMIN' || u.role === 'SUPER_ADMIN') ? 'admin' : 'petowner',
-                    status: u.status === 'ACTIVE' ? 'Active' : 'Inactive'
+                    status: u.status === 'ACTIVE' ? 'Active' : 'Inactive',
+                    profileImage: u.profileImage || null
                 }));
                 setUsers(mappedUsers);
             }
@@ -48,6 +49,18 @@ export function useUsers() {
 
     useEffect(() => {
         fetchUsers();
+
+        // Auto-poll every 3 seconds for instant real-time updates without manual refresh
+        const intervalId = setInterval(fetchUsers, 3000);
+
+        // Re-fetch when user returns focus to window
+        const handleFocus = () => fetchUsers();
+        window.addEventListener('focus', handleFocus);
+
+        return () => {
+            clearInterval(intervalId);
+            window.removeEventListener('focus', handleFocus);
+        };
     }, [fetchUsers]);
 
     const addUser = async (user: { firstName: string, lastName: string, email: string, contact: string, password: string, role: string, status?: string }) => {

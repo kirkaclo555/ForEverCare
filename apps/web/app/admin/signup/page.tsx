@@ -46,7 +46,7 @@ export default function SignupPage() {
                 <div className="form-group">
                     <label>Phone Number</label>
                     <div className="input-group">
-                        <input type="tel" id="phone" placeholder="+1 (555) 123-4567" required />
+                        <input type="tel" id="phone" placeholder="09XX-XXX-XXXX" required />
                     </div>
                 </div>
 

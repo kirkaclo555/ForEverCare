@@ -1,0 +1,59 @@
+graph TD
+    %% Styling
+    classDef layer fill:#F5F5F5,stroke:#999999,stroke-width:2px,stroke-dasharray: 5 5,color:#333333;
+    classDef client fill:#EAF3DE,stroke:#2E5E3E,stroke-width:2px,color:#2E5E3E;
+    classDef server fill:#E8F0FE,stroke:#4285F4,stroke-width:2px,color:#1A73E8;
+    classDef database fill:#FFEAEA,stroke:#D93025,stroke-width:2px,color:#A50E0E;
+    classDef external fill:#FFF2CC,stroke:#D6B656,stroke-width:2px,color:#5A4A1C;
+
+    subgraph ClientLayer [Client Layer / User Interface]
+        direction LR
+        WebPortal["Web Admin Portal<br>(Clinic Staff & Super Admin)"]
+        MobileApp["Mobile Application<br>(Pet Owners)"]
+    end
+    class ClientLayer layer;
+    class WebPortal,MobileApp client;
+
+    subgraph AppLayer [Application Layer / Web Server]
+        direction TB
+        WebServer["Web Server<br>(Node.js & Express)"]
+        
+        subgraph AppLogic [Application Modules]
+            direction TB
+            AuthMod["User Accounts & Security"]
+            TelemedMod["Online Consultation Service"]
+            MonitoringMod["Pet Health Monitoring Service"]
+            ApptMod["Appointment Booking Service"]
+            BillingMod["Billing & Invoicing Service"]
+            InventoryMod["Inventory & Product Management"]
+            SMSMod["Notification Dispatcher"]
+            ReportMod["Report Generation"]
+        end
+        WebServer --> AppLogic
+    end
+    class AppLayer,AppLogic layer;
+    class WebServer,AuthMod,TelemedMod,MonitoringMod,ApptMod,BillingMod,InventoryMod,SMSMod,ReportMod server;
+
+    subgraph DataLayer [Data Layer / Storage]
+        Database["Database Server<br>(PostgreSQL)"]
+    end
+    class DataLayer layer;
+    class Database database;
+
+    subgraph ExternalServices [External Services]
+        direction LR
+        SmsService["SMS Service<br>(SMS Gateway)"]
+        PayService["Payment Service<br>(Payment Gateway)"]
+        EmailService["Email Service<br>(SMTP)"]
+    end
+    class ExternalServices layer;
+    class SmsService,PayService,EmailService external;
+
+    %% Connections
+    ClientLayer <-->|HTTP / HTTPS| WebServer
+    AppLogic <-->|Database Queries / ORM| Database
+
+    %% External Connections
+    SMSMod <-->|API Calls| SmsService
+    BillingMod <-->|Secure API| PayService
+    SMSMod <-->|SMTP Calls| EmailService

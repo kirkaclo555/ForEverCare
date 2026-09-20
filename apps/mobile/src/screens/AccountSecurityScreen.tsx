@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Modal, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal, TextInput, Alert, ActivityIndicator, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import * as LocalAuthentication from 'expo-local-authentication';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useUser } from '../context/UserContext';
+import { API_URL } from '../config/api';
+import { useTheme } from '../context/ThemeContext';
 
 type RootStackParamList = {
   Home: undefined;
@@ -19,9 +19,8 @@ type Props = {
 };
 
 export default function AccountSecurityScreen({ navigation }: Props) {
+  const { theme, isDarkMode } = useTheme();
   const { user } = useUser();
-  const [biometricEnabled, setBiometricEnabled] = useState(false);
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [recoveryPhone, setRecoveryPhone] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -41,78 +40,20 @@ export default function AccountSecurityScreen({ navigation }: Props) {
 
   useEffect(() => {
     fetchSettings();
-    checkBiometricStatus();
   }, []);
 
   const fetchSettings = async () => {
     if (!user?.id) return;
     try {
-      const res = await fetch(`http://192.168.100.16:3000/api/auth/mobile/security-settings?userId=${user.id}`);
+      const res = await fetch(`${API_URL}/api/auth/mobile/security-settings?userId=${user.id}`);
       const data = await res.json();
       if (!data.error) {
-        setTwoFactorEnabled(data.twoFactorEnabled);
         setRecoveryPhone(data.recoveryPhone || '');
       }
     } catch (error) {
       console.error('Failed to fetch security settings', error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const checkBiometricStatus = async () => {
-    try {
-      const value = await AsyncStorage.getItem(`biometric_enabled_${user?.id}`);
-      setBiometricEnabled(value === 'true');
-    } catch (e) {
-      console.error('Failed to get biometric status', e);
-    }
-  };
-
-  const handleToggle2FA = async (value: boolean) => {
-    setTwoFactorEnabled(value); // Optimistic UI
-    if (!user?.id) return;
-    try {
-      await fetch('http://192.168.100.16:3000/api/auth/mobile/security-settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, twoFactorEnabled: value })
-      });
-    } catch (error) {
-      setTwoFactorEnabled(!value); // Revert on error
-      Alert.alert('Error', 'Failed to update 2FA settings.');
-    }
-  };
-
-  const handleToggleBiometric = async (value: boolean) => {
-    try {
-      if (value) {
-        const hasHardware = await LocalAuthentication.hasHardwareAsync();
-        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-        if (!hasHardware || !isEnrolled) {
-          Alert.alert('Not Supported', 'Biometric authentication is not set up on this device.');
-          return;
-        }
-
-        const result = await LocalAuthentication.authenticateAsync({
-          promptMessage: 'Authenticate to enable Biometric Login',
-        });
-
-        if (result.success) {
-          await AsyncStorage.setItem(`biometric_enabled_${user?.id}`, 'true');
-          setBiometricEnabled(true);
-        } else {
-          setBiometricEnabled(false);
-        }
-      } else {
-        await AsyncStorage.removeItem(`biometric_enabled_${user?.id}`);
-        // Optionally remove stored credentials
-        await AsyncStorage.removeItem(`biometric_credentials_${user?.id}`);
-        setBiometricEnabled(false);
-      }
-    } catch (error) {
-      console.error('Biometric error:', error);
-      Alert.alert('Error', 'An error occurred while configuring biometrics.');
     }
   };
 
@@ -128,7 +69,7 @@ export default function AccountSecurityScreen({ navigation }: Props) {
 
     setIsSubmittingPassword(true);
     try {
-      const res = await fetch('http://192.168.100.16:3000/api/auth/mobile/change-password', {
+      const res = await fetch(`${API_URL}/api/auth/mobile/change-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user?.id, oldPassword, newPassword })
@@ -158,7 +99,7 @@ export default function AccountSecurityScreen({ navigation }: Props) {
 
     setIsSubmittingPhone(true);
     try {
-      const res = await fetch('http://192.168.100.16:3000/api/auth/mobile/security-settings', {
+      const res = await fetch(`${API_URL}/api/auth/mobile/security-settings`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user?.id, recoveryPhone: newPhone })
@@ -180,15 +121,15 @@ export default function AccountSecurityScreen({ navigation }: Props) {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color="#2D5016" />
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={[styles.header, { backgroundColor: theme.headerBackground }]}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <FontAwesome5 name="arrow-left" size={20} color="white" />
         </TouchableOpacity>
@@ -197,134 +138,180 @@ export default function AccountSecurityScreen({ navigation }: Props) {
       </View>
 
       <ScrollView style={styles.content}>
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Login & Recovery</Text>
+        <View style={[styles.section, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Login & Recovery</Text>
           
-          <TouchableOpacity style={styles.optionRow} onPress={() => setIsPasswordModalVisible(true)}>
+          <TouchableOpacity style={[styles.optionRow, { borderColor: theme.border }]} onPress={() => setIsPasswordModalVisible(true)}>
             <View style={styles.optionLeft}>
-              <View style={styles.iconContainer}>
+              <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? '#1a2744' : '#EBF5FF' }]}>
                 <FontAwesome5 name="key" size={16} color="#1E3A8A" />
               </View>
               <View>
-                <Text style={styles.optionTitle}>Change Password</Text>
-                <Text style={styles.optionSubtitle}>Update your password regularly</Text>
+                <Text style={[styles.optionTitle, { color: theme.text }]}>Change Password</Text>
+                <Text style={[styles.optionSubtitle, { color: theme.subtext }]}>Update your password regularly</Text>
               </View>
             </View>
-            <FontAwesome5 name="chevron-right" size={14} color="#a0aec0" />
+            <FontAwesome5 name="chevron-right" size={14} color={theme.subtext} />
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.optionRow} onPress={() => setIsPhoneModalVisible(true)}>
+          <TouchableOpacity style={[styles.optionRow, { borderColor: theme.border }]} onPress={() => setIsPhoneModalVisible(true)}>
             <View style={styles.optionLeft}>
-              <View style={styles.iconContainer}>
+              <View style={[styles.iconContainer, { backgroundColor: isDarkMode ? '#1a2744' : '#EBF5FF' }]}>
                 <FontAwesome5 name="mobile-alt" size={16} color="#1E3A8A" />
               </View>
               <View>
-                <Text style={styles.optionTitle}>Recovery Phone</Text>
-                <Text style={styles.optionSubtitle}>{recoveryPhone || 'Add a recovery phone'}</Text>
+                <Text style={[styles.optionTitle, { color: theme.text }]}>Recovery Phone</Text>
+                <Text style={[styles.optionSubtitle, { color: theme.subtext }]}>{recoveryPhone || 'Add a recovery phone'}</Text>
               </View>
             </View>
-            <FontAwesome5 name="chevron-right" size={14} color="#a0aec0" />
+            <FontAwesome5 name="chevron-right" size={14} color={theme.subtext} />
           </TouchableOpacity>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Advanced Security</Text>
-          
-          <View style={styles.optionRow}>
-            <View style={styles.optionLeft}>
-              <View style={styles.iconContainer}>
-                <FontAwesome5 name="shield-alt" size={16} color="#1E3A8A" />
-              </View>
-              <View>
-                <Text style={styles.optionTitle}>Two-Factor Authentication</Text>
-                <Text style={styles.optionSubtitle}>Extra layer of security</Text>
-              </View>
-            </View>
-            <Switch
-              value={twoFactorEnabled}
-              onValueChange={handleToggle2FA}
-              trackColor={{ false: "#cbd5e0", true: "#2D5016" }}
-              thumbColor={"#fff"}
-            />
-          </View>
 
-          <View style={styles.optionRow}>
-            <View style={styles.optionLeft}>
-              <View style={styles.iconContainer}>
-                <FontAwesome5 name="fingerprint" size={16} color="#1E3A8A" />
-              </View>
-              <View>
-                <Text style={styles.optionTitle}>Biometric Login</Text>
-                <Text style={styles.optionSubtitle}>Sign in with fingerprint or face</Text>
-              </View>
-            </View>
-            <Switch
-              value={biometricEnabled}
-              onValueChange={handleToggleBiometric}
-              trackColor={{ false: "#cbd5e0", true: "#2D5016" }}
-              thumbColor={"#fff"}
-            />
-          </View>
-        </View>
       </ScrollView>
 
       {/* Change Password Modal */}
       <Modal visible={isPasswordModalVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Change Password</Text>
+        <TouchableOpacity 
+          style={styles.modalOverlay} 
+          activeOpacity={1} 
+          onPressOut={() => setIsPasswordModalVisible(false)}
+        >
+          <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
+            <View style={styles.modalHandleIndicator} />
+            <View style={{ alignItems: 'center', marginBottom: 15 }}>
+              <View style={[styles.modalIconCircle, { backgroundColor: isDarkMode ? '#1a2744' : '#EBF5FF' }]}>
+                <FontAwesome5 name="key" size={22} color="#1E3A8A" />
+              </View>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Change Password</Text>
+              <Text style={[styles.modalSubtitle, { color: theme.subtext }]}>Update your account password for better security</Text>
+            </View>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f7fafc', borderColor: theme.border, color: theme.text }]}
               placeholder="Current Password"
+              placeholderTextColor={theme.subtext}
               secureTextEntry
               value={oldPassword}
               onChangeText={setOldPassword}
             />
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f7fafc', borderColor: theme.border, color: theme.text }]}
               placeholder="New Password"
+              placeholderTextColor={theme.subtext}
               secureTextEntry
               value={newPassword}
               onChangeText={setNewPassword}
             />
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f7fafc', borderColor: theme.border, color: theme.text }]}
               placeholder="Confirm New Password"
+              placeholderTextColor={theme.subtext}
               secureTextEntry
               value={confirmPassword}
               onChangeText={setConfirmPassword}
             />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setIsPasswordModalVisible(false)}>
-                <Text style={styles.cancelBtnText}>Cancel</Text>
+
+            {/* Password Requirements */}
+            <View style={[styles.passwordRequirements, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f7fafc', borderColor: theme.border }]}>
+              <Text style={[styles.reqHeader, { color: isDarkMode ? theme.text : '#2D5016' }]}>
+                <FontAwesome5 name="shield-alt" size={12} color={isDarkMode ? theme.text : '#2D5016'} />  Password Requirements
+              </Text>
+              <View style={styles.reqRow}>
+                <FontAwesome5 
+                  name={newPassword.length >= 8 ? "check-circle" : "circle"} 
+                  size={newPassword.length >= 8 ? 14 : 6} 
+                  color={newPassword.length >= 8 ? '#38a169' : '#a0aec0'} 
+                  solid={newPassword.length >= 8}
+                />
+                <Text style={[styles.reqText, newPassword.length >= 8 && styles.reqMet]}>At least 8 characters</Text>
+              </View>
+              <View style={styles.reqRow}>
+                <FontAwesome5 
+                  name={/[A-Z]/.test(newPassword) ? "check-circle" : "circle"} 
+                  size={/[A-Z]/.test(newPassword) ? 14 : 6} 
+                  color={/[A-Z]/.test(newPassword) ? '#38a169' : '#a0aec0'} 
+                  solid={/[A-Z]/.test(newPassword)}
+                />
+                <Text style={[styles.reqText, /[A-Z]/.test(newPassword) && styles.reqMet]}>One uppercase letter</Text>
+              </View>
+              <View style={styles.reqRow}>
+                <FontAwesome5 
+                  name={/[0-9]/.test(newPassword) ? "check-circle" : "circle"} 
+                  size={/[0-9]/.test(newPassword) ? 14 : 6} 
+                  color={/[0-9]/.test(newPassword) ? '#38a169' : '#a0aec0'} 
+                  solid={/[0-9]/.test(newPassword)}
+                />
+                <Text style={[styles.reqText, /[0-9]/.test(newPassword) && styles.reqMet]}>One number</Text>
+              </View>
+              <View style={styles.reqRow}>
+                <FontAwesome5 
+                  name={(newPassword && newPassword === confirmPassword) ? "check-circle" : "circle"} 
+                  size={(newPassword && newPassword === confirmPassword) ? 14 : 6} 
+                  color={(newPassword && newPassword === confirmPassword) ? '#38a169' : '#a0aec0'} 
+                  solid={!!(newPassword && newPassword === confirmPassword)}
+                />
+                <Text style={[styles.reqText, (newPassword && newPassword === confirmPassword) && styles.reqMet]}>Passwords match</Text>
+              </View>
+            </View>
+
+            <View style={{ gap: 10, marginTop: 10 }}>
+              <TouchableOpacity 
+                style={{ backgroundColor: '#2D5016', paddingVertical: 14, borderRadius: 12, alignItems: 'center' }} 
+                onPress={handleChangePassword} 
+                disabled={isSubmittingPassword}
+              >
+                <Text style={{ color: 'white', fontSize: 15, fontFamily: 'Montserrat-Bold' }}>
+                  {isSubmittingPassword ? 'Saving...' : 'Update Password'}
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveBtn} onPress={handleChangePassword} disabled={isSubmittingPassword}>
-                <Text style={styles.saveBtnText}>{isSubmittingPassword ? 'Saving...' : 'Save'}</Text>
+              <TouchableOpacity 
+                style={{ backgroundColor: isDarkMode ? '#2d2d2d' : '#f7fafc', paddingVertical: 14, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: theme.border }} 
+                onPress={() => setIsPasswordModalVisible(false)}
+              >
+                <Text style={{ color: theme.text, fontSize: 15, fontFamily: 'Montserrat-SemiBold' }}>Cancel</Text>
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </TouchableOpacity>
       </Modal>
 
       {/* Recovery Phone Modal */}
       <Modal visible={isPhoneModalVisible} animationType="fade" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Recovery Phone</Text>
-            <Text style={{marginBottom: 15, color: '#718096', fontSize: 13}}>Add a phone number to help recover your account if you lose access.</Text>
+        <View style={[styles.modalOverlay, { justifyContent: 'center', paddingHorizontal: 24 }]}>
+          <View style={[styles.modalContentCenter, { backgroundColor: theme.card }]}>
+            <View style={{ alignItems: 'center', marginBottom: 15 }}>
+              <View style={[styles.modalIconCircle, { backgroundColor: isDarkMode ? '#1a2744' : '#EBF5FF' }]}>
+                <FontAwesome5 name="mobile-alt" size={22} color="#1E3A8A" />
+              </View>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Recovery Phone</Text>
+              <Text style={[styles.modalSubtitle, { color: theme.subtext }]}>
+                Add a phone number to help recover your account if you lose access.
+              </Text>
+            </View>
             <TextInput
-              style={styles.input}
+              style={[styles.input, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f7fafc', borderColor: theme.border, color: theme.text }]}
               placeholder="+63 9XX XXX XXXX"
+              placeholderTextColor={theme.subtext}
               keyboardType="phone-pad"
               value={newPhone}
               onChangeText={setNewPhone}
             />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setIsPhoneModalVisible(false)}>
-                <Text style={styles.cancelBtnText}>Cancel</Text>
+            <View style={{ gap: 10, marginTop: 5 }}>
+              <TouchableOpacity 
+                style={{ backgroundColor: '#2D5016', paddingVertical: 14, borderRadius: 12, alignItems: 'center' }} 
+                onPress={handleUpdateRecoveryPhone} 
+                disabled={isSubmittingPhone}
+              >
+                <Text style={{ color: 'white', fontSize: 15, fontFamily: 'Montserrat-Bold' }}>
+                  {isSubmittingPhone ? 'Saving...' : 'Save Phone Number'}
+                </Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.saveBtn} onPress={handleUpdateRecoveryPhone} disabled={isSubmittingPhone}>
-                <Text style={styles.saveBtnText}>{isSubmittingPhone ? 'Saving...' : 'Save'}</Text>
+              <TouchableOpacity 
+                style={{ backgroundColor: isDarkMode ? '#2d2d2d' : '#f7fafc', paddingVertical: 14, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: theme.border }} 
+                onPress={() => setIsPhoneModalVisible(false)}
+              >
+                <Text style={{ color: theme.text, fontSize: 15, fontFamily: 'Montserrat-SemiBold' }}>Cancel</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -410,21 +397,60 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
+    justifyContent: 'flex-end',
   },
   modalContent: {
     backgroundColor: 'white',
-    width: '100%',
-    borderRadius: 16,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     padding: 25,
+    paddingBottom: 40,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 10,
+  },
+  modalContentCenter: {
+    backgroundColor: 'white',
+    width: '100%',
+    borderRadius: 20,
+    padding: 25,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalHandleIndicator: {
+    width: 40,
+    height: 5,
+    backgroundColor: '#cbd5e0',
+    borderRadius: 3,
+    alignSelf: 'center' as any,
+    marginBottom: 20,
+  },
+  modalIconCircle: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center' as any,
+    justifyContent: 'center' as any,
+    marginBottom: 15,
   },
   modalTitle: {
     fontSize: 20,
-    fontFamily: 'Catcut',
+    fontFamily: 'Montserrat-Bold',
     color: '#2D5016',
-    marginBottom: 20,
+    marginBottom: 5,
+    textAlign: 'center' as any,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    fontFamily: 'Montserrat-Regular',
+    textAlign: 'center' as any,
+    lineHeight: 20,
+    marginBottom: 10,
   },
   input: {
     backgroundColor: '#f7fafc',
@@ -461,5 +487,34 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 15,
     fontFamily: 'Montserrat-Bold',
-  }
+  },
+  passwordRequirements: {
+    backgroundColor: '#f7fafc',
+    borderRadius: 12,
+    padding: 14,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+  },
+  reqHeader: {
+    fontFamily: 'Montserrat-SemiBold',
+    fontSize: 12,
+    color: '#2D5016',
+    marginBottom: 10,
+  },
+  reqRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 6,
+  },
+  reqText: {
+    fontFamily: 'Montserrat-Regular',
+    fontSize: 12,
+    color: '#a0aec0',
+  },
+  reqMet: {
+    color: '#38a169',
+    fontFamily: 'Montserrat-Medium',
+  },
 });

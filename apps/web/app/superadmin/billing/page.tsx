@@ -7,17 +7,30 @@ import './billing.css';
 
 export default function BillingPage() {
   const router = useRouter();
-  const { invoices, addInvoice, updateInvoiceStatus } = useBilling();
+  const { invoices, addInvoice, updateInvoiceStatus, archiveInvoice } = useBilling();
 
   const [filterStatus, setFilterStatus] = useState('all');
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
   const [viewInvoice, setViewInvoice] = useState<any>(null);
+  const [invoiceToArchive, setInvoiceToArchive] = useState<any>(null);
+  const [invoiceToMarkPaid, setInvoiceToMarkPaid] = useState<any>(null);
 
   // New Invoice State
   const [newInvoiceClient, setNewInvoiceClient] = useState('');
   const [newInvoiceDate, setNewInvoiceDate] = useState(new Date().toISOString().split('T')[0] || '');
   const [newInvoiceItems, setNewInvoiceItems] = useState([{ id: Date.now().toString(), name: '', quantity: 1, price: 0 }]);
   const [validationErrors, setValidationErrors] = useState<{ [key: string]: string }>({});
+  const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (!(event.target as HTMLElement).closest('.action-dropdown-container')) {
+        setOpenActionMenuId(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleAddItem = () => {
     setNewInvoiceItems([...newInvoiceItems, { id: Date.now().toString(), name: '', quantity: 1, price: 0 }]);
@@ -93,6 +106,10 @@ export default function BillingPage() {
     link.href = URL.createObjectURL(blob);
     link.download = `billing_report_${new Date().toISOString().split('T')[0] || ''}.csv`;
     link.click();
+  };
+
+  const handleArchiveInvoice = (id: string, clientName: string) => {
+    setInvoiceToArchive({ id, clientName });
   };
 
   const printInvoice = () => {
@@ -180,6 +197,7 @@ export default function BillingPage() {
   const totalPending = invoices.filter(i => i.status === 'pending').reduce((sum, i) => sum + i.totalAmount, 0);
   const totalRefunded = invoices.filter(i => i.status === 'refunded').reduce((sum, i) => sum + i.totalAmount, 0);
 
+
   return (
     <>
     <div className="module-content" style={{ width: "100%", padding: 0, margin: 0 }} >
@@ -196,6 +214,7 @@ export default function BillingPage() {
                 <div className="stat-header"><i className="fas fa-clock" style={{color: '#ecc94b'}}></i><h3>Pending</h3></div>
                 <div className="stat-value">₱{totalPending.toFixed(2)}</div>
             </div>
+
             <div className={`stat-card ${filterStatus === 'refunded' ? 'active' : ''}`} onClick={() => setFilterStatus('refunded')} style={{cursor:'pointer'}}>
                 <div className="stat-header"><i className="fas fa-undo-alt" style={{color: '#e53e3e'}}></i><h3>Refunded</h3></div>
                 <div className="stat-value">₱{totalRefunded.toFixed(2)}</div>
@@ -209,18 +228,19 @@ export default function BillingPage() {
                     <option value="all">All Status</option>
                     <option value="paid">Paid</option>
                     <option value="pending">Pending</option>
+
                     <option value="refunded">Refunded</option>
                 </select>
                 <button className="btn-secondary" onClick={exportCSV}><i className="fas fa-download"></i> Export Report</button>
             </div>
         </div>
 
-        <div className="billing-table-container">
+        <div className="billing-table-container" style={{ minHeight: '350px', paddingBottom: '120px' }}>
             <table className="data-table">
-                <thead><tr><th>Invoice #</th><th>Client</th><th>Date</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
+                <thead><tr><th>Invoice #</th><th>Client</th><th>Date</th><th>Amount</th><th>Status</th><th style={{ textAlign: 'center' }}>Actions</th></tr></thead>
                 <tbody>
                     {filteredInvoices.map(inv => (
-                        <tr key={inv.id}>
+                        <tr key={inv.id} onClick={() => setViewInvoice(inv)} className="clickable-row">
                             <td><strong>{inv.id}</strong></td>
                             <td>{inv.clientName}</td>
                             <td>{inv.date}</td>
@@ -234,8 +254,29 @@ export default function BillingPage() {
                                     {inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}
                                 </span>
                             </td>
-                            <td style={{display: 'flex', gap: '5px', flexWrap: 'wrap'}}>
-                                <button className="btn-secondary" style={{padding: '4px 10px', display: 'flex', alignItems: 'center', justifyContent: 'center'}} onClick={() => setViewInvoice(inv)} title="View Details"><i className="fas fa-ellipsis-v"></i></button>
+                            <td style={{ textAlign: 'center', position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+                                <div className="action-dropdown-container" style={{ position: 'relative', display: 'inline-block' }}>
+                                    <button className="btn-secondary" style={{ padding: '6px 12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer', color: '#4a5568', margin: '0 auto' }} onClick={(e) => { e.stopPropagation(); setOpenActionMenuId(openActionMenuId === inv.id ? null : inv.id); }} title="Actions">
+                                        <i className="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    {openActionMenuId === inv.id && (
+                                        <div style={{ position: 'absolute', right: '50%', transform: 'translateX(50%)', top: '100%', background: 'white', border: '1px solid #e2e8f0', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.08)', zIndex: 100, display: 'flex', flexDirection: 'column', minWidth: '160px', overflow: 'hidden', marginTop: '5px' }}>
+                                            {inv.status === 'pending' && (
+                                                <button style={{ padding: '10px 15px', textAlign: 'left', border: 'none', background: 'white', cursor: 'pointer', color: '#2E5E3E', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', transition: 'background 0.2s', fontWeight: 600 }} onMouseEnter={e => e.currentTarget.style.background = '#e6fffa'} onMouseLeave={e => e.currentTarget.style.background = 'white'} onClick={(e) => { e.stopPropagation(); setInvoiceToMarkPaid(inv); setOpenActionMenuId(null); }}>
+                                                    <i className="fas fa-check" style={{color: '#2E5E3E', width: '16px'}}></i> Mark as Paid
+                                                </button>
+                                            )}
+                                            {inv.status === 'paid' && (
+                                                <button style={{ padding: '10px 15px', textAlign: 'left', border: 'none', background: 'white', cursor: 'pointer', color: '#2E5E3E', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', transition: 'background 0.2s', fontWeight: 600 }} onMouseEnter={e => e.currentTarget.style.background = '#e6fffa'} onMouseLeave={e => e.currentTarget.style.background = 'white'} onClick={(e) => { e.stopPropagation(); updateInvoiceStatus(inv.id, 'completed'); setOpenActionMenuId(null); }}>
+                                                    <i className="fas fa-check-double" style={{color: '#2E5E3E', width: '16px'}}></i> Completed
+                                                </button>
+                                            )}
+                                            <button style={{ padding: '10px 15px', textAlign: 'left', border: 'none', background: 'white', cursor: 'pointer', color: '#2E5E3E', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.9rem', transition: 'background 0.2s', fontWeight: 600 }} onMouseEnter={e => e.currentTarget.style.background = '#e6fffa'} onMouseLeave={e => e.currentTarget.style.background = 'white'} onClick={(e) => { e.stopPropagation(); handleArchiveInvoice(inv.id, inv.clientName); setOpenActionMenuId(null); }}>
+                                                <i className="fas fa-archive" style={{color: '#2E5E3E', width: '16px'}}></i> Archive
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </td>
                         </tr>
                     ))}
@@ -360,15 +401,70 @@ export default function BillingPage() {
                 <div className="modal-actions" style={{ flexWrap: 'wrap', gap: '10px', overflowX: 'auto', scrollbarWidth: 'none' }}>
                     <button className="btn-secondary" style={{marginRight: 'auto'}} onClick={printInvoice}><i className="fas fa-print"></i> Print</button>
                     {viewInvoice.status === 'pending' && (
-                        <button className="btn-primary" onClick={() => { updateInvoiceStatus(viewInvoice.id, 'paid'); setViewInvoice({...viewInvoice, status: 'paid'}); }}><i className="fas fa-check"></i> Mark as Paid</button>
+                        <button className="btn-primary" onClick={() => { setInvoiceToMarkPaid(viewInvoice); }}><i className="fas fa-check"></i> Mark as Paid</button>
                     )}
                     {viewInvoice.status === 'paid' && (
-                        <>
-                            <button className="btn-secondary" style={{backgroundColor: '#ecc94b', color: '#744210', border: 'none'}} onClick={() => { updateInvoiceStatus(viewInvoice.id, 'pending'); setViewInvoice({...viewInvoice, status: 'pending'}); }}><i className="fas fa-clock"></i> Set Pending</button>
-                            <button className="btn-secondary" style={{backgroundColor: '#e53e3e', color: 'white', border: 'none'}} onClick={() => { updateInvoiceStatus(viewInvoice.id, 'refunded'); setViewInvoice({...viewInvoice, status: 'refunded'}); }}><i className="fas fa-undo"></i> Refund</button>
-                        </>
+                        <button className="btn-primary" style={{backgroundColor: '#2E5E3E', borderColor: '#2E5E3E'}} onClick={() => { updateInvoiceStatus(viewInvoice.id, 'completed'); setViewInvoice({...viewInvoice, status: 'completed'}); }}><i className="fas fa-check-double"></i> Completed</button>
                     )}
+                    <button className="btn-secondary" style={{backgroundColor: '#2E5E3E', color: 'white', border: 'none'}} onClick={() => { handleArchiveInvoice(viewInvoice.id, viewInvoice.clientName); setViewInvoice(null); }}><i className="fas fa-archive"></i> Archive</button>
                     <button className="btn-secondary" onClick={() => setViewInvoice(null)}>Close</button>
+                </div>
+            </div>
+        </div>
+    )}
+
+    {invoiceToArchive && (
+        <div className="modal" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
+            <div className="modal-content" style={{ maxWidth: '400px', textAlign: 'center', borderRadius: '16px', padding: '30px' }}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#C6F6D5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto' }}>
+                    <i className="fas fa-archive" style={{ fontSize: '24px', color: '#2E5E3E' }}></i>
+                </div>
+                <h3 style={{ fontSize: '1.25rem', color: '#1a202c', marginBottom: '10px', fontWeight: 600 }}>Archive Invoice</h3>
+                <p style={{ color: '#4a5568', fontSize: '0.9rem', lineHeight: '1.5', marginBottom: '25px' }}>
+                    Archive invoice <strong style={{ color: '#1a202c' }}>{invoiceToArchive.id}</strong> for <strong>{invoiceToArchive.clientName}</strong>? It will be moved to the Archive section and can be restored anytime.
+                </p>
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                    <button className="btn-secondary" style={{ flex: 1, padding: '10px 16px', borderRadius: '8px', fontWeight: 600 }} onClick={() => setInvoiceToArchive(null)}>Cancel</button>
+                    <button className="btn-primary" style={{ flex: 1, padding: '10px 16px', borderRadius: '8px', fontWeight: 600, backgroundColor: '#2E5E3E', borderColor: '#2E5E3E', color: 'white' }} onClick={() => {
+                        archiveInvoice(invoiceToArchive.id);
+                        setInvoiceToArchive(null);
+                        const toast = document.getElementById('toast');
+                        if (toast) {
+                            toast.innerText = 'Invoice archived successfully.';
+                            toast.className = 'show';
+                            setTimeout(() => { toast.className = ''; }, 3000);
+                        }
+                    }}>Archive</button>
+                </div>
+            </div>
+        </div>
+    )}
+
+    {invoiceToMarkPaid && (
+        <div className="modal" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100 }}>
+            <div className="modal-content" style={{ maxWidth: '400px', textAlign: 'center', borderRadius: '16px', padding: '30px' }}>
+                <div style={{ width: '60px', height: '60px', borderRadius: '50%', backgroundColor: '#C6F6D5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto' }}>
+                    <i className="fas fa-check-circle" style={{ fontSize: '24px', color: '#2E5E3E' }}></i>
+                </div>
+                <h3 style={{ fontSize: '1.25rem', color: '#1a202c', marginBottom: '10px', fontWeight: 600 }}>Confirm Payment</h3>
+                <p style={{ color: '#4a5568', fontSize: '0.9rem', lineHeight: '1.5', marginBottom: '25px' }}>
+                    Are you sure you want to mark invoice <strong style={{ color: '#1a202c' }}>{invoiceToMarkPaid.id}</strong> for <strong>{invoiceToMarkPaid.clientName}</strong> as <strong style={{ color: '#2E5E3E' }}>PAID</strong>?
+                </p>
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                    <button className="btn-secondary" style={{ flex: 1, padding: '10px 16px', borderRadius: '8px', fontWeight: 600 }} onClick={() => setInvoiceToMarkPaid(null)}>Cancel</button>
+                    <button className="btn-primary" style={{ flex: 1, padding: '10px 16px', borderRadius: '8px', fontWeight: 600, backgroundColor: '#2E5E3E', borderColor: '#2E5E3E', color: 'white' }} onClick={() => {
+                        updateInvoiceStatus(invoiceToMarkPaid.id, 'paid');
+                        if (viewInvoice && viewInvoice.id === invoiceToMarkPaid.id) {
+                            setViewInvoice({ ...viewInvoice, status: 'paid' });
+                        }
+                        setInvoiceToMarkPaid(null);
+                        const toast = document.getElementById('toast');
+                        if (toast) {
+                            toast.innerText = 'Invoice marked as paid successfully.';
+                            toast.className = 'show';
+                            setTimeout(() => { toast.className = ''; }, 3000);
+                        }
+                    }}>Confirm</button>
                 </div>
             </div>
         </div>

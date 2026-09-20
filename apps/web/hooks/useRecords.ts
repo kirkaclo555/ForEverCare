@@ -10,6 +10,8 @@ export interface PetRecord {
     age: string;
     color: string;
     weight: string;
+    environment?: string;
+    activity?: string;
     ownerName: string;
     contact: string;
     address: string;
@@ -18,6 +20,13 @@ export interface PetRecord {
     previousSurgeries: string;
     vaccine: string;
     veterinarian: string;
+    avatar?: string;
+    monitoring?: any[];
+    isArchived?: boolean;
+    verificationStatus?: string;
+    verifiedAt?: string;
+    verifiedBy?: string;
+    hasPaidAppointment?: boolean;
 }
 
 const formatId = (id: string) => {

@@ -1,0 +1,83 @@
+graph LR
+    %% Styles
+    classDef startEnd fill:#2E5E3E,stroke:#2E5E3E,color:#FFFFFF,stroke-width:2px;
+    classDef decision fill:#FFF2CC,stroke:#D6B656,color:#5A4A1C,stroke-width:2px;
+    classDef process fill:#F5F5F5,stroke:#CCCCCC,color:#333333,stroke-width:1.5px;
+    classDef action fill:#E8F0FE,stroke:#4285F4,color:#1A73E8,stroke-width:1px;
+
+    Start([START]) --> Welcome[Welcome Screen]
+    Welcome --> HasAccount{Account Valid?}
+    HasAccount -- No --> Register[Sign Up / Login] --> Welcome
+    HasAccount -- Yes --> Dashboard[User Dashboard]
+
+    Dashboard --> SelectService{Select Feature}
+
+    %% 1. Appointments
+    SelectService --> Appt[Appointments]
+    Appt --> SelectConsult[Select Consultation Type]
+    SelectConsult --> SelectDateTime[Select Date & Time]
+    SelectDateTime --> InputReason[Input Reason & Pet]
+    InputReason --> MakePayment[Make Payment]
+    MakePayment --> PaySuccess{Payment Success?}
+    PaySuccess -- No --> MakePayment
+    PaySuccess -- Yes --> ReceiveConfirm[Receive SMS Confirmation]
+    ReceiveConfirm --> LoopBack1[Return to Dashboard] --> Dashboard
+
+    %% 2. Shop
+    SelectService --> Shop[Shop / Products]
+    Shop --> BrowseProducts[Browse Catalog]
+    BrowseProducts --> SelectProducts[Select Product & Quantity]
+    SelectProducts --> AddToCart[Add to Cart]
+    AddToCart --> CheckoutOrder[Checkout Order]
+    CheckoutOrder --> ShopPayment[Process Payment]
+    ShopPayment --> PickupReceived[Pickup/Received Order]
+    PickupReceived --> LoopBack2[Return to Dashboard] --> Dashboard
+
+    %% 3. Telemedicine
+    SelectService --> Telemed[Telemedicine]
+    Telemed --> JoinTelemed[Join Telemedicine Room]
+    JoinTelemed --> InputCode[Input Code Details]
+    InputCode --> WaitVet[Wait for Vet to Join]
+    WaitVet --> GetPrescription[Receive Prescriptions]
+    GetPrescription --> LoopBack3[Return to Dashboard] --> Dashboard
+
+    %% 4. Pet Monitor
+    SelectService --> PetMon[Pet Monitor]
+    PetMon --> InputVitals[Input Symptoms & Vitals]
+    InputVitals --> SystemRec[Get Recommendations]
+    SystemRec --> NormalCheck{Condition Good?}
+    NormalCheck -- Yes --> LogHealthy[Save Log] --> LoopBack4[Return to Dashboard] --> Dashboard
+    NormalCheck -- No --> AlertOwner[Generate Alert & SMS] --> LoopBack4
+
+    %% 5. Pet Records
+    SelectService --> Records[Pet Records]
+    Records --> AddPet[Create/Add Pet Profile]
+    AddPet --> InputInfo[Input Pet Details]
+    InputInfo --> UpdateProfile[Update Pet Profile]
+    UpdateProfile --> SelectProfile[Select & View Profile]
+    SelectProfile --> LoopBack5[Return to Dashboard] --> Dashboard
+
+    %% 6. Tutorials
+    SelectService --> Tutorials[Tutorials]
+    Tutorials --> BrowseVideos[Browse Categories]
+    BrowseVideos --> PlayVideo[View Video Tutorials]
+    PlayVideo --> CloseVideo[Close Video]
+    CloseVideo --> LoopBack6[Return to Dashboard] --> Dashboard
+
+    %% 7. Feedback
+    SelectService --> Feedback[Feedback]
+    Feedback --> RateService[Rate & Comment]
+    RateService --> SubmitFeedback[Submit Feedback]
+    SubmitFeedback --> LoopBack7[Return to Dashboard] --> Dashboard
+
+    %% 8. Settings & Profile
+    Dashboard --> Profile[Profile Screen] --> EditProfile[Edit Personal Details] --> SaveProfile[Save Changes] --> LoopBack8[Return to Dashboard] --> Dashboard
+    Dashboard --> Settings[Settings Screen] --> SetPreferences[Change Lang / Dark Mode] --> LoopBack9[Return to Dashboard] --> Dashboard
+
+    %% Logout
+    Dashboard --> Logout[Logout] --> End([END])
+
+    class Start,End startEnd;
+    class HasAccount,PaySuccess,NormalCheck,SelectService decision;
+    class Welcome,Register,Dashboard,Appt,Shop,Telemed,PetMon,Records,Tutorials,Feedback,Profile,Settings,Logout process;
+    class SelectConsult,SelectDateTime,InputReason,MakePayment,ReceiveConfirm,BrowseProducts,SelectProducts,AddToCart,CheckoutOrder,ShopPayment,PickupReceived,JoinTelemed,InputCode,WaitVet,GetPrescription,InputVitals,SystemRec,LogHealthy,AlertOwner,AddPet,InputInfo,UpdateProfile,SelectProfile,BrowseVideos,PlayVideo,CloseVideo,RateService,SubmitFeedback,EditProfile,SaveProfile,SetPreferences,LoopBack1,LoopBack2,LoopBack3,LoopBack4,LoopBack5,LoopBack6,LoopBack7,LoopBack8,LoopBack9 action;

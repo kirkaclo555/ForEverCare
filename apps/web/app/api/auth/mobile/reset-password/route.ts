@@ -1,22 +1,40 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../../../../../lib/prisma';
 import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { userId, code, newPassword } = body;
+    const { userId, identifier, code, newPassword } = body;
 
-    if (!userId || !code || !newPassword) {
+    if ((!userId && !identifier) || !code || !newPassword) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     // Retrieve the user from database
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    });
+    let user = null;
+    if (userId) {
+      user = await prisma.user.findUnique({
+        where: { id: userId }
+      });
+    }
+
+    // Fallback: look up by email or phone
+    if (!user && identifier) {
+      const digits = String(identifier).replace(/\D/g, '');
+      user = await prisma.user.findFirst({
+        where: {
+          OR: [
+            { email: String(identifier).trim().toLowerCase() },
+            { phoneNumber: identifier.trim() },
+            { phoneNumber: digits },
+          ]
+        }
+      });
+    }
+
+    const trimmedCode = code ? String(code).trim() : '';
 
     if (!user || !user.resetCode) {
       return NextResponse.json({ error: 'Verification code not found or expired. Please request a new one.' }, { status: 400 });
@@ -25,13 +43,13 @@ export async function POST(req: Request) {
     if (!user.resetCodeExpiry || new Date() > user.resetCodeExpiry) {
       // Clear expired code
       await prisma.user.update({
-        where: { id: userId },
+        where: { id: user.id },
         data: { resetCode: null, resetCodeExpiry: null }
       });
       return NextResponse.json({ error: 'Verification code has expired. Please request a new one.' }, { status: 400 });
     }
 
-    if (user.resetCode !== code) {
+    if (user.resetCode.trim() !== trimmedCode) {
       return NextResponse.json({ error: 'Invalid verification code' }, { status: 400 });
     }
 
@@ -39,8 +57,8 @@ export async function POST(req: Request) {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     // Update the user's password and clear the reset code in the database
-    await prisma.user.update({
-      where: { id: userId },
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
       data: { 
         password: hashedPassword,
         resetCode: null,
@@ -48,7 +66,19 @@ export async function POST(req: Request) {
       }
     });
 
-    return NextResponse.json({ success: true, message: 'Password updated successfully' });
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Password updated successfully',
+      user: {
+        id: updatedUser.id,
+        fullName: updatedUser.fullName,
+        email: updatedUser.email,
+        phoneNumber: updatedUser.phoneNumber,
+        address: updatedUser.address,
+        profileImage: updatedUser.profileImage || null,
+        language: updatedUser.language || 'en',
+      }
+    });
 
   } catch (error) {
     console.error("Reset password error:", error);

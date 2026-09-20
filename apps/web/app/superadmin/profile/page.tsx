@@ -10,8 +10,8 @@ export default function ProfilePage() {
   const [profilePic, setProfilePic] = useState<string | null>(null);
   
   const [personalInfo, setPersonalInfo] = useState({
-    fullName: "Admin User",
-    email: "admin@furevercare.com",
+    fullName: "Superadmin",
+    email: "fureverpawcaresuperadmin@gmail.com",
     contact: "+1 (555) 123-4567",
     address: "123 Main Street, Springfield, IL 62701"
   });
@@ -21,12 +21,33 @@ export default function ProfilePage() {
 
   const handleSave = () => {
     setPersonalInfo(editedInfo);
-    // Add logic to save to backend or local storage here
+    localStorage.setItem('superadminPersonalInfo', JSON.stringify(editedInfo));
+    window.dispatchEvent(new Event('profileInfoUpdated'));
+    
+    const toast = document.getElementById('toast');
+    if (toast) {
+      toast.textContent = "Profile updated successfully!";
+      toast.classList.add('toastShow');
+      setTimeout(() => {
+        toast.classList.remove('toastShow');
+      }, 3000);
+    }
   };
 
   React.useEffect(() => {
     const pic = localStorage.getItem('superadminProfilePic');
     if (pic) setProfilePic(pic);
+
+    const stored = localStorage.getItem('superadminPersonalInfo');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        setPersonalInfo(parsed);
+        setEditedInfo(parsed);
+      } catch (e) {
+        console.error(e);
+      }
+    }
   }, []);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -108,9 +129,6 @@ export default function ProfilePage() {
                                         onFocus={(e) => e.target.style.borderBottom = '2px solid #2E5E3E'}
                                         onBlur={(e) => e.target.style.borderBottom = '1px solid #e2e8f0'}
                                     />
-                                    {personalInfo.fullName !== editedInfo.fullName && (
-                                        <button onClick={() => setPersonalInfo({...personalInfo, fullName: editedInfo.fullName})} style={{ background: '#2E5E3E', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '0.85rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>Save</button>
-                                    )}
                                 </div>
                             </div>
                             <div className="info-item">
@@ -127,9 +145,6 @@ export default function ProfilePage() {
                                         onFocus={(e) => e.target.style.borderBottom = '2px solid #2E5E3E'}
                                         onBlur={(e) => e.target.style.borderBottom = '1px solid #e2e8f0'}
                                     />
-                                    {personalInfo.email !== editedInfo.email && (
-                                        <button onClick={() => setPersonalInfo({...personalInfo, email: editedInfo.email})} style={{ background: '#2E5E3E', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '0.85rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>Save</button>
-                                    )}
                                 </div>
                             </div>
                             <div className="info-item">
@@ -146,9 +161,6 @@ export default function ProfilePage() {
                                         onFocus={(e) => e.target.style.borderBottom = '2px solid #2E5E3E'}
                                         onBlur={(e) => e.target.style.borderBottom = '1px solid #e2e8f0'}
                                     />
-                                    {personalInfo.contact !== editedInfo.contact && (
-                                        <button onClick={() => setPersonalInfo({...personalInfo, contact: editedInfo.contact})} style={{ background: '#2E5E3E', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '0.85rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>Save</button>
-                                    )}
                                 </div>
                             </div>
                             <div className="info-item">
@@ -165,12 +177,50 @@ export default function ProfilePage() {
                                         onFocus={(e) => e.target.style.borderBottom = '2px solid #2E5E3E'}
                                         onBlur={(e) => e.target.style.borderBottom = '1px solid #e2e8f0'}
                                     />
-                                    {personalInfo.address !== editedInfo.address && (
-                                        <button onClick={() => setPersonalInfo({...personalInfo, address: editedInfo.address})} style={{ background: '#2E5E3E', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '6px', fontSize: '0.85rem', cursor: 'pointer', whiteSpace: 'nowrap' }}>Save</button>
-                                    )}
                                 </div>
                             </div>
                         </div>
+                        {isDirty && (
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '30px', borderTop: '1px solid #edf2f7', paddingTop: '20px' }}>
+                                <button 
+                                    onClick={() => setEditedInfo(personalInfo)} 
+                                    style={{ 
+                                        background: '#e2e8f0', 
+                                        color: '#4a5568', 
+                                        border: 'none', 
+                                        padding: '10px 24px', 
+                                        borderRadius: '8px', 
+                                        fontSize: '0.95rem', 
+                                        fontWeight: 600, 
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = '#cbd5e0'}
+                                    onMouseLeave={(e) => e.currentTarget.style.background = '#e2e8f0'}
+                                >
+                                    Cancel
+                                </button>
+                                <button 
+                                    onClick={handleSave} 
+                                    style={{ 
+                                        background: '#2E5E3E', 
+                                        color: 'white', 
+                                        border: 'none', 
+                                        padding: '10px 24px', 
+                                        borderRadius: '8px', 
+                                        fontSize: '0.95rem', 
+                                        fontWeight: 600, 
+                                        cursor: 'pointer',
+                                        boxShadow: '0 4px 12px rgba(46, 94, 62, 0.2)',
+                                        transition: 'all 0.2s'
+                                    }}
+                                    onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                                >
+                                    <i className="fas fa-save" style={{ marginRight: '8px' }}></i> Save Changes
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

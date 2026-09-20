@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Diagram - Super Admin - FurEver PawCare</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --primary: #2e5e3e;
+            --primary-hover: #3f7d54;
+            --accent: #eaf3de;
+            --border-color: #334155;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .header-container {
+            text-align: center;
+            margin-bottom: 24px;
+            max-width: 800px;
+        }
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            background: linear-gradient(135deg, #eaf3de 0%, #10b981 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            transition: all 0.3s ease;
+        }
+        p {
+            color: #94a3b8;
+            margin: 0;
+            font-size: 1rem;
+            transition: color 0.3s ease;
+        }
+        .actions-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        button {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background-color: var(--primary);
+            color: #ffffff;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background-color: #334155;
+            color: #f8fafc;
+            border: 1px solid var(--border-color);
+        }
+        .btn-secondary:hover {
+            background-color: #475569;
+            transform: translateY(-1px);
+        }
+        .flowchart-container {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px;
+            width: 90%;
+            max-width: 1200px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+        .mermaid {
+            width: 100%;
+            background: transparent;
+        }
+        ::-webkit-scrollbar { height: 8px; width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        @media print {
+            body { background-color: #ffffff !important; color: #000000 !important; padding: 0; }
+            .actions-bar { display: none; }
+            .flowchart-container { border: none; box-shadow: none; padding: 0; width: 100%; background-color: #ffffff !important; }
+            h1 { -webkit-text-fill-color: initial !important; color: #000000 !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header-container">
+        <h1 id="title-text">Activity Diagram - Super Admin</h1>
+        <p id="desc-text">Shows all platform-wide Super Admin activities including Pet Monitor, Role Assignment, Global Archive, and all shared clinic management modules.</p>
+    </div>
+    <div class="actions-bar">
+        <button class="btn-secondary" id="theme-toggle" onclick="toggleTheme()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+            Switch to Light Theme (White BG)
+        </button>
+        <button class="btn-primary" onclick="downloadPNG()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Download PNG Image
+        </button>
+        <button class="btn-secondary" onclick="downloadSVG()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Download SVG Image
+        </button>
+        <button class="btn-secondary" onclick="window.print()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Print / Save PDF
+        </button>
+    </div>
+    <div class="flowchart-container" id="flowchart-card">
+        <div class="mermaid" id="mermaid-container"></div>
+    </div>
+    <script>
+        const rawMermaidCode = `graph LR
+    %% Styles
+    classDef startEnd fill:#2E5E3E,stroke:#2E5E3E,color:#FFFFFF,stroke-width:2px;
+    classDef decision fill:#FFF2CC,stroke:#D6B656,color:#5A4A1C,stroke-width:2px;
+    classDef action fill:#F5F5F5,stroke:#CCCCCC,color:#333333,stroke-width:1.5px;
+    classDef process fill:#E8F0FE,stroke:#4285F4,color:#1A73E8,stroke-width:1px;
+
+    Start(( )) --> OpenPortal[Open Super Admin Portal]
+    OpenPortal --> Login[Enter Super Admin Credentials]
+    Login --> ValidLogin{Valid?}
+    ValidLogin -- No --> Login
+    ValidLogin -- Yes --> Dashboard[Access Super Admin Dashboard]
+
+    Dashboard --> SelectModule{Select Module}
+
+    %% Dashboard Module
+    SelectModule --> ViewDash[View Dashboard]
+    ViewDash --> ReviewGrowth[Review Platform Growth & Stats]
+    ReviewGrowth --> Dashboard
+
+    %% Appointment Management
+    SelectModule --> Appt[Open Appointments]
+    Appt --> ApptAction{Choose Action}
+    ApptAction --> ApproveReq[Approve Booking Request]
+    ApptAction --> DeclineReq[Decline / Cancel Request]
+    ApptAction --> ReschedReq[Reschedule Appointment]
+    ApproveReq & DeclineReq & ReschedReq --> SendNotif[Send SMS Notification to Owner]
+    SendNotif --> Dashboard
+
+    %% Inventory Management
+    SelectModule --> Inventory[Open Inventory]
+    Inventory --> InvAction{Choose Action}
+    InvAction --> AuditStock[Audit Stock Levels]
+    InvAction --> UpdateStock[Update Stock Quantity]
+    InvAction --> ViewAlerts[View Low Stock Alerts]
+    AuditStock & UpdateStock & ViewAlerts --> Dashboard
+
+    %% Product Management
+    SelectModule --> Products[Open Products]
+    Products --> ProdAction{Choose Action}
+    ProdAction --> AddProduct[Add New Product]
+    ProdAction --> EditProduct[Edit Product Details & Price]
+    ProdAction --> ManageOrders[Process Customer Orders]
+    AddProduct & EditProduct & ManageOrders --> Dashboard
+
+    %% Billing Module
+    SelectModule --> Billing[Open Billing]
+    Billing --> BillAction{Choose Action}
+    BillAction --> CreateInvoice[Create Invoice]
+    BillAction --> TrackEarnings[Track Earnings & Revenue]
+    BillAction --> ViewHistory[View Full Billing History]
+    CreateInvoice & TrackEarnings & ViewHistory --> Dashboard
+
+    %% Telemedicine
+    SelectModule --> Telemed[Open Telemedicine]
+    Telemed --> LaunchCall[Launch Video Consultation]
+    LaunchCall --> WritePrescription[Write Prescription Notes]
+    WritePrescription --> EndCall[End Session]
+    EndCall --> Dashboard
+
+    %% Pet Monitor (Super Admin Exclusive)
+    SelectModule --> PetMon[Open Pet Monitor]
+    PetMon --> MonAction{Choose Action}
+    MonAction --> ViewLiveData[View Real-time Vitals & Activity]
+    MonAction --> ReviewAlerts[Review Health Alert History]
+    MonAction --> PrintReport[Print Detailed Monitor Report]
+    ViewLiveData & ReviewAlerts & PrintReport --> Dashboard
+
+    %% SMS Center
+    SelectModule --> SMS[Open SMS Center]
+    SMS --> ComposeBulk[Compose Bulk Message]
+    ComposeBulk --> SelectTargets[Select Target Recipients]
+    SelectTargets --> DispatchSMS[Dispatch SMS Alerts]
+    DispatchSMS --> Dashboard
+
+    %% Pet Records
+    SelectModule --> PetRec[Open Pet Records]
+    PetRec --> RecAction{Choose Action}
+    RecAction --> UpdateMedical[Update Medical History]
+    RecAction --> AddVaccine[Log Vaccination Record]
+    RecAction --> ViewRecords[View Pet Health Timeline]
+    UpdateMedical & AddVaccine & ViewRecords --> Dashboard
+
+    %% Users Management
+    SelectModule --> Users[Open Users]
+    Users --> UserAction{Choose Action}
+    UserAction --> SearchUser[Search & View Profiles]
+    UserAction --> EditUser[Edit User Information]
+    UserAction --> AssignRole[Assign / Change User Role]
+    SearchUser & EditUser & AssignRole --> Dashboard
+
+    %% Reports & Analytics
+    SelectModule --> Reports[Open Reports]
+    Reports --> GenReport[Generate Diagnostic Report]
+    GenReport --> ExportReport[Print / Export Report]
+    ExportReport --> Dashboard
+
+    SelectModule --> Analytics[Open Analytics]
+    Analytics --> ViewAnalytics[Analyze Disease & Dietary Trends]
+    ViewAnalytics --> Dashboard
+
+    %% Tutorials & Announcements & Feedback
+    SelectModule --> Tutorials[Open Tutorials]
+    Tutorials --> UploadGuide[Upload Care Video Guide]
+    UploadGuide --> Dashboard
+
+    SelectModule --> Announcements[Open Announcements]
+    Announcements --> PublishNews[Publish News & Promotions]
+    PublishNews --> Dashboard
+
+    SelectModule --> FeedbackMod[Open Feedback]
+    FeedbackMod --> ReviewRatings[Review Ratings & Bug Reports]
+    ReviewRatings --> Dashboard
+
+    %% Profile & Settings
+    SelectModule --> SAProfile[Open Profile]
+    SAProfile --> UpdateInfo[Edit Personal Details]
+    UpdateInfo --> SaveChanges[Save Changes]
+    SaveChanges --> Dashboard
+
+    SelectModule --> SASettings[Open Settings]
+    SASettings --> SettingsAction{Choose Action}
+    SettingsAction --> ChangePass[Change Password]
+    SettingsAction --> ToggleLang[Toggle Language]
+    SettingsAction --> ToggleTheme[Toggle Dark Mode]
+    SettingsAction --> GlobalArchive[Access Global Archive & Restore]
+    ChangePass & ToggleLang & ToggleTheme & GlobalArchive --> Dashboard
+
+    %% Logout
+    Dashboard --> LogoutBtn[Logout]
+    LogoutBtn --> End(( ))
+
+    class Start,End startEnd;
+    class ValidLogin,SelectModule,ApptAction,InvAction,ProdAction,BillAction,RecAction,UserAction,MonAction,SettingsAction decision;
+    class OpenPortal,Login,Dashboard,LogoutBtn action;
+    class ViewDash,ReviewGrowth,ApproveReq,DeclineReq,ReschedReq,SendNotif,AuditStock,UpdateStock,ViewAlerts,AddProduct,EditProduct,ManageOrders,CreateInvoice,TrackEarnings,ViewHistory,LaunchCall,WritePrescription,EndCall,ViewLiveData,ReviewAlerts,PrintReport,ComposeBulk,SelectTargets,DispatchSMS,UpdateMedical,AddVaccine,ViewRecords,SearchUser,EditUser,AssignRole,GenReport,ExportReport,ViewAnalytics,UploadGuide,PublishNews,ReviewRatings,UpdateInfo,SaveChanges,ChangePass,ToggleLang,ToggleTheme,GlobalArchive,Appt,Inventory,Products,Billing,Telemed,PetMon,SMS,PetRec,Users,Reports,Analytics,Tutorials,Announcements,FeedbackMod,SAProfile,SASettings process;`;
+        let currentTheme = 'dark';
+        mermaid.initialize({ theme: 'dark', startOnLoad: false, flowchart: { useMaxWidth: true, htmlLabels: true } });
+        renderDiagram();
+
+        async function renderDiagram() {
+            const container = document.getElementById('mermaid-container');
+            container.removeAttribute('data-processed');
+            container.innerHTML = rawMermaidCode;
+            mermaid.initialize({ theme: currentTheme, startOnLoad: false, flowchart: { useMaxWidth: true, htmlLabels: true } });
+            await mermaid.run({ nodes: [container] });
+        }
+
+        function toggleTheme() {
+            currentTheme = currentTheme === 'dark' ? 'default' : 'dark';
+            const btn = document.getElementById('theme-toggle');
+            const card = document.getElementById('flowchart-card');
+            const title = document.getElementById('title-text');
+            const desc = document.getElementById('desc-text');
+            if (currentTheme === 'default') {
+                document.body.style.backgroundColor = '#ffffff';
+                document.body.style.color = '#0f172a';
+                card.style.backgroundColor = '#ffffff';
+                card.style.borderColor = '#cbd5e1';
+                desc.style.color = '#475569';
+                title.style.background = 'initial';
+                title.style.color = '#2e5e3e';
+                title.style.webkitTextFillColor = 'initial';
+                btn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg> Switch to Dark Theme';
+                btn.style.backgroundColor = '#e2e8f0';
+                btn.style.color = '#0f172a';
+            } else {
+                document.body.style.backgroundColor = '#0f172a';
+                document.body.style.color = '#f8fafc';
+                card.style.backgroundColor = '#1e293b';
+                card.style.borderColor = '#334155';
+                desc.style.color = '#94a3b8';
+                title.style.background = 'linear-gradient(135deg, #eaf3de 0%, #10b981 100%)';
+                title.style.webkitBackgroundClip = 'text';
+                title.style.webkitTextFillColor = 'transparent';
+                btn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg> Switch to Light Theme (White BG)';
+                btn.style.backgroundColor = '#334155';
+                btn.style.color = '#f8fafc';
+            }
+            renderDiagram();
+        }
+
+        function downloadSVG() {
+            const svgElement = document.querySelector('.mermaid svg');
+            if (!svgElement) { alert('Diagram is still rendering.'); return; }
+            const clonedSvg = svgElement.cloneNode(true);
+            const bg = currentTheme === 'default' ? '#ffffff' : '#0f172a';
+            clonedSvg.setAttribute('style', 'background-color: ' + bg + '; padding: 20px; font-family: "Plus Jakarta Sans", sans-serif;');
+            const svgString = new XMLSerializer().serializeToString(clonedSvg);
+            const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'activity_diagram_superadmin_' + (currentTheme === 'default' ? 'white' : 'dark') + '.svg';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadPNG() {
+            const svgElement = document.querySelector('.mermaid svg');
+            if (!svgElement) { alert('Diagram is still rendering.'); return; }
+            const clonedSvg = svgElement.cloneNode(true);
+            const bgColor = currentTheme === 'default' ? '#ffffff' : '#0f172a';
+            clonedSvg.setAttribute('style', 'background-color: ' + bgColor + '; padding: 30px; font-family: "Plus Jakarta Sans", sans-serif;');
+            const svgString = new XMLSerializer().serializeToString(clonedSvg);
+            const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+            const blobURL = window.URL.createObjectURL(svgBlob);
+            const image = new Image();
+            image.onload = () => {
+                const canvas = document.createElement('canvas');
+                const scale = 2;
+                canvas.width = image.width * scale;
+                canvas.height = image.height * scale;
+                const context = canvas.getContext('2d');
+                context.scale(scale, scale);
+                context.fillStyle = bgColor;
+                context.fillRect(0, 0, image.width, image.height);
+                context.drawImage(image, 0, 0);
+                const pngURL = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = pngURL;
+                link.download = 'activity_diagram_superadmin_' + (currentTheme === 'default' ? 'white' : 'dark') + '.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(blobURL);
+            };
+            image.src = blobURL;
+        }
+    </script>
+</body>
+</html>

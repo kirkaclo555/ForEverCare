@@ -1,0 +1,47 @@
+graph LR
+    %% Styling
+    classDef system fill:#2E5E3E,stroke:#1E3E28,stroke-width:3px,color:#FFFFFF;
+    classDef actor fill:#FFF2CC,stroke:#D6B656,stroke-width:2px,color:#5A4A1C;
+    classDef external fill:#E8F0FE,stroke:#4285F4,stroke-width:2px,color:#1A73E8;
+
+    %% Left Side: User Roles / Actors
+    subgraph Users [System Users]
+        PetOwner["Pet Owner<br>(Mobile App)"]
+        ClinicStaff["Clinic Staff<br>(Web Admin Portal)"]
+        SuperAdmin["Super Admin<br>(Web Management Portal)"]
+    end
+
+    %% Center: The Proposed System
+    System["((Proposed System:<br>FurEver PawCare System))"]
+
+    %% Right Side: External Interfaces
+    subgraph External [External Services]
+        SmsService["SMS Service Gateway"]
+        PaymentService["Payment Gateway"]
+        PushNotifs["Push Notification Service"]
+    end
+
+    %% Flows: Users <--> System
+    PetOwner -->|Register/Login, Book Appt, Order Products| System
+    System -->|Pet Records, Order Status, Prescriptions| PetOwner
+
+    ClinicStaff -->|Approve Appt, Update Inventory, Issue Invoice| System
+    System -->|Schedules, Diagnostics Reports, SMS Logs| ClinicStaff
+
+    SuperAdmin -->|Manage Roles, Configure System Settings| System
+    System -->|Audit Logs, Platform Growth Analytics| SuperAdmin
+
+    %% Flows: System <--> External Services
+    System -->|Dispatch Message Details| SmsService
+    SmsService -->|Sms Delivery Status Reports| System
+
+    System -->|Initialize Payment Requests| PaymentService
+    PaymentService -->|Transaction Approvals & Logs| System
+
+    System -->|Push Alerts & Notification Payloads| PushNotifs
+    PushNotifs -.->|Push Notifications| PetOwner
+
+    %% Applying styles
+    class System system;
+    class PetOwner,ClinicStaff,SuperAdmin actor;
+    class SmsService,PaymentService,PushNotifs external;

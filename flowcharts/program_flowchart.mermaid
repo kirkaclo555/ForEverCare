@@ -1,0 +1,65 @@
+graph TD
+    %% Global Link Styling for Cyan Arrows
+    linkStyle default stroke:#00D2D2,stroke-width:3px;
+
+    %% Class Definitions for Green Theme
+    classDef greenShape fill:#2E5E3E,stroke:#1E3E28,color:#FFFFFF,stroke-width:2px;
+    classDef startStop fill:#3B7A51,stroke:#2E5E3E,color:#FFFFFF,stroke-width:2px;
+
+    Start([Start]) --> GetAuth[/Read Username & Password/]
+    GetAuth --> CheckDB{Are Credentials Valid?}
+    
+    CheckDB -- False --> PrintErr[\Print "Access Denied" Alert\]
+    PrintErr --> GetAuth
+    
+    CheckDB -- True --> CheckRole{Determine User Role}
+
+    %% ==========================================
+    %% BRANCH 1: PET OWNER (MOBILE APP)
+    %% ==========================================
+    CheckRole -- Pet Owner --> LaunchMobile[Launch Mobile App Dashboard]
+    LaunchMobile --> GetAppt[/Read Selected Booking Slot/]
+    GetAppt --> CheckSlot{Is Slot Free?}
+    
+    CheckSlot -- False --> ShowFull[\Print "Slot Unavailable" Warning\]
+    ShowFull --> LaunchMobile
+    
+    CheckSlot -- True --> ProcPay[Process Booking Payment]
+    ProcPay --> WriteAppt[Write Appointment to DB]
+    WriteAppt --> AlertOwner[\Print "Booking Confirmed" SMS\]
+    AlertOwner --> TerminateMobile[Clear Mobile JWT Session]
+
+    %% ==========================================
+    %% BRANCH 2: CLINIC STAFF (WEB ADMIN PORTAL)
+    %% ==========================================
+    CheckRole -- Clinic Admin --> LaunchWebAdmin[Launch Web Admin Portal]
+    LaunchWebAdmin --> ReadApptId[/Read Appointment Update ID/]
+    ReadApptId --> UpdateAppt[Update Appointment Status in DB]
+    UpdateAppt --> AlertClient[\Print "Status Updated" SMS\]
+    AlertClient --> TerminateWebAdmin[Clear Web Admin JWT Session]
+
+    %% ==========================================
+    %% BRANCH 3: SUPER ADMIN (SYSTEM MANAGEMENT)
+    %% ==========================================
+    CheckRole -- Super Admin --> LaunchSuperAdmin[Launch Super Admin Portal]
+    LaunchSuperAdmin --> SelectSuperAction{Select Action}
+    
+    SelectSuperAction -- Restore Data --> SelectArchive[/Select Archived Record/]
+    SelectArchive --> RestoreRecord[Set IsDeleted = false in DB]
+    RestoreRecord --> ShowRestoreOk[\Print "Record Restored" Message\]
+    ShowRestoreOk --> TerminateSuperAdmin
+    
+    SelectSuperAction -- User Management --> GetUserRoles[/Read Role Modification Info/]
+    GetUserRoles --> UpdateUserRole[Update User Account Permissions in DB]
+    UpdateUserRole --> ShowRoleOk[\Print "Permissions Updated" Message\]
+    ShowRoleOk --> TerminateSuperAdmin
+
+    TerminateSuperAdmin[Clear Super Admin JWT Session]
+
+    %% Merging back at the bottom
+    TerminateMobile --> Stop([Stop])
+    TerminateWebAdmin --> Stop
+    TerminateSuperAdmin --> Stop
+    
+    class Start,Stop startStop;
+    class GetAuth,CheckDB,PrintErr,CheckRole,LaunchMobile,GetAppt,CheckSlot,ShowFull,ProcPay,WriteAppt,AlertOwner,TerminateMobile,LaunchWebAdmin,ReadApptId,UpdateAppt,AlertClient,TerminateWebAdmin,LaunchSuperAdmin,SelectSuperAction,SelectArchive,RestoreRecord,ShowRestoreOk,GetUserRoles,UpdateUserRole,ShowRoleOk,TerminateSuperAdmin greenShape;

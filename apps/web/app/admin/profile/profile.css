@@ -1572,4 +1572,245 @@
                 top: 50px;
             }
         }
-    
+
+        /* Enhanced Admin Profile Styles */
+        .profile-hero-card {
+            background: linear-gradient(135deg, #1B4D33 0%, #2E5E3E 60%, #3D7A52 100%);
+            border-radius: 20px;
+            padding: 30px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(27, 77, 51, 0.2);
+            margin-bottom: 24px;
+        }
+
+        .profile-hero-bg-logo {
+            position: absolute;
+            right: -20px;
+            bottom: -30px;
+            font-size: 15rem;
+            color: rgba(255, 255, 255, 0.06);
+            pointer-events: none;
+            user-select: none;
+        }
+
+        .profile-badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.18);
+            backdrop-filter: blur(4px);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #48bb78;
+            box-shadow: 0 0 0 rgba(72, 187, 120, 0.6);
+            animation: pulseGreen 2s infinite;
+        }
+
+        @keyframes pulseGreen {
+            0% { box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(72, 187, 120, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(72, 187, 120, 0); }
+        }
+
+        .profile-nav-tabs {
+            display: flex;
+            gap: 10px;
+            border-bottom: 2px solid #edf2f7;
+            margin-bottom: 24px;
+            padding-bottom: 2px;
+            overflow-x: auto;
+        }
+
+        .profile-tab-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border: none;
+            background: transparent;
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #718096;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            position: relative;
+            white-space: nowrap;
+        }
+
+        .profile-tab-btn:hover {
+            color: #2E5E3E;
+            background: #f0fff4;
+        }
+
+        .profile-tab-btn.active {
+            color: #2E5E3E;
+            background: #e6ffed;
+            font-weight: 700;
+        }
+
+        .profile-kpi-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .profile-kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 18px rgba(46, 94, 62, 0.08);
+        }
+
+        .profile-kpi-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            flex-shrink: 0;
+        }
+
+        .profile-section-card {
+            background: white;
+            border-radius: 18px;
+            padding: 24px;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+            margin-bottom: 24px;
+        }
+
+        .profile-section-card h3 {
+            margin: 0 0 18px 0;
+            font-size: 1.15rem;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+        }
+
+        .profile-field-group {
+            margin-bottom: 18px;
+        }
+
+        .profile-field-group label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 8px;
+        }
+
+        .profile-input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            color: #2d3748;
+            background: #fafafa;
+            outline: none;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .profile-input:focus {
+            border-color: #2E5E3E;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(46, 94, 62, 0.1);
+        }
+
+        .profile-toggle {
+            position: relative;
+            display: inline-block;
+            width: 46px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+
+        .profile-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .profile-toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #cbd5e0;
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .profile-toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        .profile-toggle input:checked + .profile-toggle-slider {
+            background-color: #2E5E3E;
+        }
+
+        .profile-toggle input:checked + .profile-toggle-slider:before {
+            transform: translateX(22px);
+        }
+
+        /* Toast notification */
+        #toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: #2E5E3E;
+            color: white;
+            padding: 14px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            z-index: 99999;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #toast.toastShow {
+            opacity: 1;
+            transform: translateY(0);
+        }
+

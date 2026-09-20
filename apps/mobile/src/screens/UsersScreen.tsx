@@ -11,6 +11,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 
 type RootStackParamList = {
   Login: undefined;
@@ -24,206 +26,218 @@ type Props = {
 };
 
 export default function UsersScreen({ navigation }: Props) {
+  const { theme, isDarkMode } = useTheme();
+  const { language, changeLanguage, t } = useLanguage();
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" />
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
       
       {/* Top Bar Navigation equivalent */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-           <TouchableOpacity 
-             style={{marginRight: 15, padding: 5}}
-             onPress={() => navigation.replace('Login')}
-           >
-             <FontAwesome5 name="arrow-left" size={20} color="white" />
-           </TouchableOpacity>
-           <View style={styles.pageTitleContainer}>
-             <Text style={styles.pageTitle}>User Management</Text>
-             <View style={styles.subtitleBadge}>
-               <Text style={styles.subtitleBadgeText}>Staff & Access</Text>
-             </View>
-           </View>
-        </View>
+      <View style={[styles.header, { backgroundColor: theme.headerBackground }]}>
+          <View style={styles.headerLeft}>
+            <TouchableOpacity 
+              style={{marginRight: 15, padding: 5}}
+              onPress={() => navigation.replace('Login')}
+            >
+              <FontAwesome5 name="arrow-left" size={20} color="white" />
+            </TouchableOpacity>
+            <View style={styles.pageTitleContainer}>
+              <Text style={styles.pageTitle}>{t('admin.userManagement')}</Text>
+              <View style={styles.subtitleBadge}>
+                <Text style={styles.subtitleBadgeText}>{t('admin.staffAccess')}</Text>
+              </View>
+            </View>
+          </View>
         
         <View style={styles.headerRight}>
-           <TouchableOpacity style={styles.iconButton}>
-             <FontAwesome5 name="bell" size={18} color="white" />
-             <View style={styles.notificationBadge}>
-               <Text style={styles.notificationText}>3</Text>
-             </View>
-           </TouchableOpacity>
+          <TouchableOpacity style={styles.iconButton}>
+            <FontAwesome5 name="bell" size={18} color="white" />
+            <View style={styles.notificationBadge}>
+              <Text style={styles.notificationText}>3</Text>
+            </View>
+          </TouchableOpacity>
+          {/* Language Toggle */}
+          <TouchableOpacity
+            style={styles.iconButton}
+            onPress={() => {
+              const newLang = language === 'en' ? 'tl' : 'en';
+              changeLanguage(newLang);
+            }}
+          >
+            <FontAwesome5 name="language" size={18} color="white" />
+          </TouchableOpacity>
         </View>
       </View>
 
-      <ScrollView style={styles.mainScroll} showsVerticalScrollIndicator={false}>
+      <ScrollView style={[styles.mainScroll, { backgroundColor: theme.background }]} showsVerticalScrollIndicator={false}>
         
         {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <FontAwesome5 name="search" size={14} color="#a0aec0" style={styles.searchIcon} />
+        <View style={[styles.searchContainer, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          <FontAwesome5 name="search" size={14} color={theme.subtext} style={styles.searchIcon} />
           <TextInput 
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: theme.text }]}
             placeholder="Search users..."
-            placeholderTextColor="#a0aec0"
+            placeholderTextColor={theme.subtext}
           />
         </View>
 
         {/* Stats Grid - Horizontal Scroll */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.statsScroll}>
-          <View style={styles.statCard}>
-             <View style={[styles.statIconContainer, { backgroundColor: '#2E5E3E' }]}>
+          <View style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+             <View style={[styles.statIconContainer, { backgroundColor: isDarkMode ? '#1a3d28' : '#2E5E3E' }]}>
                 <FontAwesome5 name="users" size={18} color="white" />
              </View>
              <View>
-               <Text style={styles.statTitle}>Total Users</Text>
-               <Text style={styles.statValue}>48</Text>
+               <Text style={[styles.statTitle, { color: theme.subtext }]}>Total Users</Text>
+               <Text style={[styles.statValue, { color: theme.text }]}>48</Text>
              </View>
           </View>
-          <View style={styles.statCard}>
-             <View style={[styles.statIconContainer, { backgroundColor: '#2E5E3E' }]}>
+          <View style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+             <View style={[styles.statIconContainer, { backgroundColor: isDarkMode ? '#1a3d28' : '#2E5E3E' }]}>
                 <FontAwesome5 name="user-check" size={18} color="white" />
              </View>
              <View>
-               <Text style={styles.statTitle}>Active</Text>
-               <Text style={styles.statValue}>42</Text>
+               <Text style={[styles.statTitle, { color: theme.subtext }]}>Active</Text>
+               <Text style={[styles.statValue, { color: theme.text }]}>42</Text>
              </View>
           </View>
-          <View style={styles.statCard}>
-             <View style={[styles.statIconContainer, { backgroundColor: '#2E5E3E' }]}>
+          <View style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
+             <View style={[styles.statIconContainer, { backgroundColor: isDarkMode ? '#1a3d28' : '#2E5E3E' }]}>
                 <FontAwesome5 name="user-clock" size={18} color="white" />
              </View>
              <View>
-               <Text style={styles.statTitle}>On Leave</Text>
-               <Text style={styles.statValue}>4</Text>
+               <Text style={[styles.statTitle, { color: theme.subtext }]}>On Leave</Text>
+               <Text style={[styles.statValue, { color: theme.text }]}>4</Text>
              </View>
           </View>
         </ScrollView>
 
         {/* Action Bar */}
         <View style={styles.actionRow}>
-           <Text style={styles.sectionTitle}>User Directory</Text>
-           <TouchableOpacity style={styles.addButton}>
-             <FontAwesome5 name="plus" size={12} color="white" />
-             <Text style={styles.addButtonText}>Add User</Text>
-           </TouchableOpacity>
+            <Text style={[styles.sectionTitle, { color: theme.text }]}>{t('admin.userDirectory')}</Text>
+            <TouchableOpacity style={[styles.addButton, { backgroundColor: isDarkMode ? '#1a3d28' : '#2D5016' }]}>
+              <FontAwesome5 name="plus" size={12} color="white" />
+              <Text style={styles.addButtonText}>{t('admin.addUser')}</Text>
+            </TouchableOpacity>
         </View>
 
         {/* User Card 1 */}
-        <View style={styles.userCard}>
+        <View style={[styles.userCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <View style={styles.userCardHeader}>
             <View style={styles.userInfo}>
-              <View style={styles.avatar}>
+              <View style={[styles.avatar, { backgroundColor: isDarkMode ? '#1a3d28' : '#2D5016' }]}>
                 <Text style={styles.avatarText}>JD</Text>
               </View>
               <View>
-                <Text style={styles.userName}>Dr. John Doe</Text>
-                <Text style={styles.userEmail}>john.doe@furcare.com</Text>
+                <Text style={[styles.userName, { color: theme.text }]}>Dr. John Doe</Text>
+                <Text style={[styles.userEmail, { color: theme.subtext }]}>john.doe@furcare.com</Text>
               </View>
             </View>
-            <View style={styles.idBadge}>
-               <Text style={styles.idBadgeText}>#U001</Text>
+            <View style={[styles.idBadge, { backgroundColor: isDarkMode ? '#2d2d2d' : '#e2e8f0' }]}>
+               <Text style={[styles.idBadgeText, { color: theme.text }]}>#U001</Text>
             </View>
           </View>
 
-          <View style={styles.userCardBody}>
+          <View style={[styles.userCardBody, { borderTopColor: theme.border }]}>
             <View style={styles.cardDetailRow}>
-              <FontAwesome5 name="phone" size={12} color="#a0aec0" style={styles.detailIcon} />
-              <Text style={styles.detailText}>(555) 123-4567</Text>
+              <FontAwesome5 name="phone" size={12} color={theme.subtext} style={styles.detailIcon} />
+              <Text style={[styles.detailText, { color: theme.text }]}>(555) 123-4567</Text>
             </View>
             
             <View style={styles.badgeRow}>
-              <View style={[styles.roleBadge, { backgroundColor: '#e9d8fd' }]}>
-                 <Text style={[styles.roleBadgeText, { color: '#553c9a' }]}>Administrator</Text>
+              <View style={[styles.roleBadge, { backgroundColor: isDarkMode ? '#4a154b' : '#e9d8fd' }]}>
+                 <Text style={[styles.roleBadgeText, { color: isDarkMode ? '#e9d8fd' : '#553c9a' }]}>Administrator</Text>
               </View>
-              <View style={[styles.statusBadge, { backgroundColor: '#c6f6d5' }]}>
-                 <Text style={[styles.statusBadgeText, { color: '#22543d' }]}>Active</Text>
+              <View style={[styles.statusBadge, { backgroundColor: isDarkMode ? '#1c452d' : '#c6f6d5' }]}>
+                 <Text style={[styles.statusBadgeText, { color: isDarkMode ? '#c6f6d5' : '#22543d' }]}>Active</Text>
               </View>
             </View>
           </View>
 
-          <View style={styles.cardActions}>
-            <TouchableOpacity style={styles.iconAction}><FontAwesome5 name="eye" size={14} color="#4a5568" /></TouchableOpacity>
-            <TouchableOpacity style={styles.iconAction}><FontAwesome5 name="edit" size={14} color="#3182ce" /></TouchableOpacity>
-            <TouchableOpacity style={styles.iconAction}><FontAwesome5 name="archive" size={14} color="#e53e3e" /></TouchableOpacity>
+          <View style={[styles.cardActions, { borderTopColor: theme.border }]}>
+            <TouchableOpacity style={[styles.iconAction, { backgroundColor: isDarkMode ? '#2d2d2d' : '#f7fafc' }]}><FontAwesome5 name="eye" size={14} color={theme.text} /></TouchableOpacity>
+            <TouchableOpacity style={[styles.iconAction, { backgroundColor: isDarkMode ? '#2d2d2d' : '#f7fafc' }]}><FontAwesome5 name="edit" size={14} color="#3182ce" /></TouchableOpacity>
+            <TouchableOpacity style={[styles.iconAction, { backgroundColor: isDarkMode ? '#2d2d2d' : '#f7fafc' }]}><FontAwesome5 name="archive" size={14} color="#e53e3e" /></TouchableOpacity>
           </View>
         </View>
 
         {/* User Card 2 */}
-        <View style={styles.userCard}>
+        <View style={[styles.userCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <View style={styles.userCardHeader}>
             <View style={styles.userInfo}>
-              <View style={styles.avatar}>
+              <View style={[styles.avatar, { backgroundColor: isDarkMode ? '#1a3d28' : '#2D5016' }]}>
                 <Text style={styles.avatarText}>JS</Text>
               </View>
               <View>
-                <Text style={styles.userName}>Dr. Jane Smith</Text>
-                <Text style={styles.userEmail}>jane.smith@furcare.com</Text>
+                <Text style={[styles.userName, { color: theme.text }]}>Dr. Jane Smith</Text>
+                <Text style={[styles.userEmail, { color: theme.subtext }]}>jane.smith@furcare.com</Text>
               </View>
             </View>
-            <View style={styles.idBadge}>
-               <Text style={styles.idBadgeText}>#U002</Text>
+            <View style={[styles.idBadge, { backgroundColor: isDarkMode ? '#2d2d2d' : '#e2e8f0' }]}>
+               <Text style={[styles.idBadgeText, { color: theme.text }]}>#U002</Text>
             </View>
           </View>
 
-          <View style={styles.userCardBody}>
+          <View style={[styles.userCardBody, { borderTopColor: theme.border }]}>
             <View style={styles.cardDetailRow}>
-              <FontAwesome5 name="phone" size={12} color="#a0aec0" style={styles.detailIcon} />
-              <Text style={styles.detailText}>(555) 234-5678</Text>
+              <FontAwesome5 name="phone" size={12} color={theme.subtext} style={styles.detailIcon} />
+              <Text style={[styles.detailText, { color: theme.text }]}>(555) 234-5678</Text>
             </View>
             
             <View style={styles.badgeRow}>
-              <View style={[styles.roleBadge, { backgroundColor: '#bee3f8' }]}>
-                 <Text style={[styles.roleBadgeText, { color: '#2a4365' }]}>Veterinarian</Text>
+              <View style={[styles.roleBadge, { backgroundColor: isDarkMode ? '#1a3b5c' : '#bee3f8' }]}>
+                 <Text style={[styles.roleBadgeText, { color: isDarkMode ? '#bee3f8' : '#2a4365' }]}>Veterinarian</Text>
               </View>
-              <View style={[styles.statusBadge, { backgroundColor: '#c6f6d5' }]}>
-                 <Text style={[styles.statusBadgeText, { color: '#22543d' }]}>Active</Text>
+              <View style={[styles.statusBadge, { backgroundColor: isDarkMode ? '#1c452d' : '#c6f6d5' }]}>
+                 <Text style={[styles.statusBadgeText, { color: isDarkMode ? '#c6f6d5' : '#22543d' }]}>Active</Text>
               </View>
             </View>
           </View>
 
-          <View style={styles.cardActions}>
-            <TouchableOpacity style={styles.iconAction}><FontAwesome5 name="eye" size={14} color="#4a5568" /></TouchableOpacity>
-            <TouchableOpacity style={styles.iconAction}><FontAwesome5 name="edit" size={14} color="#3182ce" /></TouchableOpacity>
-            <TouchableOpacity style={styles.iconAction}><FontAwesome5 name="archive" size={14} color="#e53e3e" /></TouchableOpacity>
+          <View style={[styles.cardActions, { borderTopColor: theme.border }]}>
+            <TouchableOpacity style={[styles.iconAction, { backgroundColor: isDarkMode ? '#2d2d2d' : '#f7fafc' }]}><FontAwesome5 name="eye" size={14} color={theme.text} /></TouchableOpacity>
+            <TouchableOpacity style={[styles.iconAction, { backgroundColor: isDarkMode ? '#2d2d2d' : '#f7fafc' }]}><FontAwesome5 name="edit" size={14} color="#3182ce" /></TouchableOpacity>
+            <TouchableOpacity style={[styles.iconAction, { backgroundColor: isDarkMode ? '#2d2d2d' : '#f7fafc' }]}><FontAwesome5 name="archive" size={14} color="#e53e3e" /></TouchableOpacity>
           </View>
         </View>
 
         {/* User Card 3 */}
-        <View style={styles.userCard}>
+        <View style={[styles.userCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
           <View style={styles.userCardHeader}>
             <View style={styles.userInfo}>
-              <View style={styles.avatar}>
+              <View style={[styles.avatar, { backgroundColor: isDarkMode ? '#1a3d28' : '#2D5016' }]}>
                 <Text style={styles.avatarText}>RB</Text>
               </View>
               <View>
-                <Text style={styles.userName}>Dr. Robert Brown</Text>
-                <Text style={styles.userEmail}>robert.brown@furcare.com</Text>
+                <Text style={[styles.userName, { color: theme.text }]}>Dr. Robert Brown</Text>
+                <Text style={[styles.userEmail, { color: theme.subtext }]}>robert.brown@furcare.com</Text>
               </View>
             </View>
-            <View style={styles.idBadge}>
-               <Text style={styles.idBadgeText}>#U005</Text>
+            <View style={[styles.idBadge, { backgroundColor: isDarkMode ? '#2d2d2d' : '#e2e8f0' }]}>
+               <Text style={[styles.idBadgeText, { color: theme.text }]}>#U005</Text>
             </View>
           </View>
 
-          <View style={styles.userCardBody}>
+          <View style={[styles.userCardBody, { borderTopColor: theme.border }]}>
             <View style={styles.cardDetailRow}>
-              <FontAwesome5 name="phone" size={12} color="#a0aec0" style={styles.detailIcon} />
-              <Text style={styles.detailText}>(555) 567-8901</Text>
+              <FontAwesome5 name="phone" size={12} color={theme.subtext} style={styles.detailIcon} />
+              <Text style={[styles.detailText, { color: theme.text }]}>(555) 567-8901</Text>
             </View>
             
             <View style={styles.badgeRow}>
-              <View style={[styles.roleBadge, { backgroundColor: '#bee3f8' }]}>
-                 <Text style={[styles.roleBadgeText, { color: '#2a4365' }]}>Veterinarian</Text>
+              <View style={[styles.roleBadge, { backgroundColor: isDarkMode ? '#1a3b5c' : '#bee3f8' }]}>
+                 <Text style={[styles.roleBadgeText, { color: isDarkMode ? '#bee3f8' : '#2a4365' }]}>Veterinarian</Text>
               </View>
-              <View style={[styles.statusBadge, { backgroundColor: '#feebc8' }]}>
-                 <Text style={[styles.statusBadgeText, { color: '#7b341e' }]}>On Leave</Text>
+              <View style={[styles.statusBadge, { backgroundColor: isDarkMode ? '#5c3a1a' : '#feebc8' }]}>
+                 <Text style={[styles.statusBadgeText, { color: isDarkMode ? '#feebc8' : '#7b341e' }]}>On Leave</Text>
               </View>
             </View>
           </View>
 
-          <View style={styles.cardActions}>
-            <TouchableOpacity style={styles.iconAction}><FontAwesome5 name="eye" size={14} color="#4a5568" /></TouchableOpacity>
-            <TouchableOpacity style={styles.iconAction}><FontAwesome5 name="edit" size={14} color="#3182ce" /></TouchableOpacity>
-            <TouchableOpacity style={styles.iconAction}><FontAwesome5 name="archive" size={14} color="#e53e3e" /></TouchableOpacity>
+          <View style={[styles.cardActions, { borderTopColor: theme.border }]}>
+            <TouchableOpacity style={[styles.iconAction, { backgroundColor: isDarkMode ? '#2d2d2d' : '#f7fafc' }]}><FontAwesome5 name="eye" size={14} color={theme.text} /></TouchableOpacity>
+            <TouchableOpacity style={[styles.iconAction, { backgroundColor: isDarkMode ? '#2d2d2d' : '#f7fafc' }]}><FontAwesome5 name="edit" size={14} color="#3182ce" /></TouchableOpacity>
+            <TouchableOpacity style={[styles.iconAction, { backgroundColor: isDarkMode ? '#2d2d2d' : '#f7fafc' }]}><FontAwesome5 name="archive" size={14} color="#e53e3e" /></TouchableOpacity>
           </View>
         </View>
 
@@ -243,7 +257,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#2D5016',
+    // backgroundColor will be set dynamically via theme.headerBackground
     borderBottomWidth: 0,
   },
   headerLeft: {

@@ -1,14 +1,30 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import styles from "./page.module.css";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("admin@furevercare.com");
-  const [password, setPassword] = useState("123123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("remembered_email");
+    const savedPassword = localStorage.getItem("remembered_password");
+    const savedRemember = localStorage.getItem("remember_me") === "true";
+    if (savedRemember) {
+      setEmail(savedEmail || "");
+      setPassword(savedPassword || "");
+      setRememberMe(true);
+    } else {
+      // prefill defaults if not remembered
+      setEmail("fureverpawcaresuperadmin@gmail.com");
+      setPassword("superadmin123");
+    }
+  }, []);
 
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
@@ -34,18 +50,72 @@ export default function LoginPage() {
     setShowForgotModal(false);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const [customPasswords, setCustomPasswords] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    // Fetch any custom passwords set by admin
+    fetch('/api/auth/change-password')
+      .then(res => res.json())
+      .then(data => {
+        // Store the flags; actual validation happens server-side
+        setCustomPasswords(data);
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (
-      (email === "admin@furcare.com" || email === "admin@gmail.com" || email === "admin@furevercare.com" || email === "fureverpawcareadmin@gmail.com") && 
-      (password === "123123" || password === "admin123")
-    ) {
-      router.push("/admin/dashboard");
-    } else if (
-      (email === "superadmin@furcare.com" || email === "superadmin@gmail.com" || email === "superadmin@furevercare.com" || email === "fureverpawcare@gmail.com") && 
-      (password === "123123" || password === "superadmin123")
-    ) {
-      router.push("/superadmin/dashboard");
+
+    // Check if custom password might be set - validate via API
+    const adminEmails = ["admin@furcare.com", "admin@gmail.com", "admin@furevercare.com", "fureverpawcareadmin@gmail.com"];
+    const superadminEmails = ["superadmin@furcare.com", "superadmin@gmail.com", "superadmin@furevercare.com", "fureverpawcare@gmail.com", "fureverpawcaresuperadmin@gmail.com"];
+    
+    const isAdminEmail = adminEmails.includes(email);
+    const isSuperAdminEmail = superadminEmails.includes(email);
+
+    if (!isAdminEmail && !isSuperAdminEmail) {
+      triggerToast("Invalid credentials! Please use valid admin or superadmin accounts.");
+      return;
+    }
+
+    const role = isSuperAdminEmail ? 'superadmin' : 'admin';
+
+    // Always validate via the server API - it knows if a custom password was set
+    // and will reject old defaults when a new password exists
+    let isValid = false;
+    try {
+      const res = await fetch('/api/auth/validate-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role, password }),
+      });
+      if (res.ok) {
+        isValid = true;
+      }
+    } catch (err) {
+      // API unreachable - fall back to default passwords only
+      const defaultAdminPasswords = ['123123', 'admin123'];
+      const defaultSuperadminPasswords = ['123123', 'superadmin123'];
+      const defaultPasswords = role === 'admin' ? defaultAdminPasswords : defaultSuperadminPasswords;
+      isValid = defaultPasswords.includes(password);
+    }
+
+    if (isValid) {
+      if (rememberMe) {
+        localStorage.setItem("remembered_email", email);
+        localStorage.setItem("remembered_password", password);
+        localStorage.setItem("remember_me", "true");
+      } else {
+        localStorage.removeItem("remembered_email");
+        localStorage.removeItem("remembered_password");
+        localStorage.setItem("remember_me", "false");
+      }
+      
+      if (role === 'admin') {
+        router.push("/admin/dashboard");
+      } else {
+        router.push("/superadmin/dashboard");
+      }
     } else {
       triggerToast("Invalid credentials! Please use valid admin or superadmin accounts.");
     }
@@ -282,7 +352,12 @@ export default function LoginPage() {
 
                 <div className={styles.formOptions}>
                   <label className={styles.rememberMe}>
-                    <input type="checkbox" style={{ accentColor: '#7ed44a' }} />
+                    <input 
+                      type="checkbox" 
+                      style={{ accentColor: '#7ed44a' }} 
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                    />
                     Remember me
                   </label>
                   <a href="#" className={styles.forgotLink} onClick={(e) => { e.preventDefault(); openForgotModal(); }}>Forgot password?</a>
@@ -299,9 +374,15 @@ export default function LoginPage() {
 
               <button
                 className={styles.ssoBtn}
-                onClick={() => triggerToast("SSO login not implemented yet.")}
+                onClick={() => triggerToast("Google login not implemented yet.")}
               >
-                <i className="fab fa-windows"></i> Sign in with SSO
+                <svg width="18" height="18" viewBox="0 0 24 24" style={{marginRight:"10px"}}>
+                    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Sign in with Google
               </button>
 
               <div className={styles.formFooter}>

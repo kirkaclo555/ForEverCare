@@ -13,8 +13,11 @@ export interface Invoice {
   date: string;
   items: InvoiceItem[];
   totalAmount: number;
-  status: 'paid' | 'pending' | 'refunded';
+  status: 'paid' | 'pending' | 'refunded' | 'completed';
   source: 'manual' | 'product' | 'appointment' | 'telemedicine';
+  isArchived?: boolean;
+  userEmail?: string;       // Email of the user for receipt notification
+  appointmentId?: string;  // Linked appointment ID for DB lookup fallback
 }
 
 const DEFAULT_INVOICES: Invoice[] = [
@@ -39,17 +42,17 @@ const DEFAULT_INVOICES: Invoice[] = [
 ];
 
 export function useBilling() {
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [allInvoices, setAllInvoices] = useState<Invoice[]>([]);
 
   useEffect(() => {
     fetch('/api/billing')
       .then(res => res.json())
-      .then(data => setInvoices(data))
-      .catch(err => setInvoices(DEFAULT_INVOICES));
+      .then(data => setAllInvoices(Array.isArray(data) ? data : DEFAULT_INVOICES))
+      .catch(() => setAllInvoices(DEFAULT_INVOICES));
   }, []);
 
   const saveInvoices = (newInvoices: Invoice[]) => {
-    setInvoices(newInvoices);
+    setAllInvoices(newInvoices);
     fetch('/api/billing', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -59,18 +62,34 @@ export function useBilling() {
 
   const addInvoice = (invoiceData: Omit<Invoice, 'id'>) => {
     const newId = `INV-${1000 + Math.floor(Math.random() * 9000)}`;
-    const newInvoice = { ...invoiceData, id: newId };
-    saveInvoices([newInvoice, ...invoices]);
+    const newInvoice = { ...invoiceData, id: newId, isArchived: false };
+    saveInvoices([newInvoice, ...allInvoices]);
     return newInvoice;
   };
 
   const updateInvoiceStatus = (id: string, status: Invoice['status']) => {
-    saveInvoices(invoices.map(inv => inv.id === id ? { ...inv, status } : inv));
+    saveInvoices(allInvoices.map(inv => inv.id === id ? { ...inv, status } : inv));
   };
+
+  const archiveInvoice = (id: string) => {
+    saveInvoices(allInvoices.map(inv => inv.id === id ? { ...inv, isArchived: true } : inv));
+  };
+
+  const unarchiveInvoice = (id: string) => {
+    saveInvoices(allInvoices.map(inv => inv.id === id ? { ...inv, isArchived: false } : inv));
+  };
+
+  // Active invoices = not archived
+  const invoices = allInvoices.filter(inv => !inv.isArchived);
+  // Archived invoices
+  const archivedInvoices = allInvoices.filter(inv => inv.isArchived);
 
   return {
     invoices,
+    archivedInvoices,
     addInvoice,
-    updateInvoiceStatus
+    updateInvoiceStatus,
+    archiveInvoice,
+    unarchiveInvoice,
   };
 }

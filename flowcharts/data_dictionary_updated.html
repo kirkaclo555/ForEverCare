@@ -1,0 +1,2527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Dictionary - FurEver PawCare</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --accent: #2e5e3e;
+            --border-color: #334155;
+            --th-bg: #0f172a;
+            --tr-hover: rgba(255, 255, 255, 0.02);
+            --badge-pk: #ef4444;
+            --badge-fk: #3b82f6;
+            --badge-uk: #f59e0b;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 32px 24px;
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .header-container {
+            text-align: center;
+            max-width: 1000px;
+            margin: 0 auto 32px auto;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0 0 12px 0;
+            background: linear-gradient(135deg, #eaf3de 0%, #10b981 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .controls-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto 24px auto;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .search-container {
+            position: relative;
+            flex-grow: 1;
+            max-width: 500px;
+        }
+
+        .search-input {
+            width: 100%;
+            font-family: inherit;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 12px 16px 12px 40px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 14px;
+            color: var(--text-muted);
+        }
+
+        .actions-bar {
+            display: flex;
+            gap: 12px;
+        }
+
+        button {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background-color: #3b754e;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: #334155;
+            color: #f8fafc;
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #475569;
+            transform: translateY(-1px);
+        }
+
+        .domain-tabs {
+            display: flex;
+            gap: 8px;
+            max-width: 1200px;
+            margin: 0 auto 32px auto;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active, .tab-btn:hover {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+        }
+
+        .dictionary-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .table-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+
+        .table-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 0;
+            font-family: monospace;
+        }
+
+        .table-description {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin: 0 0 16px 0;
+            line-height: 1.5;
+        }
+
+        .specs-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .specs-table th {
+            background-color: var(--th-bg);
+            color: var(--text-color);
+            padding: 12px 16px;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .specs-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: #e2e8f0;
+            line-height: 1.4;
+        }
+
+        .specs-table tr:hover td {
+            background-color: var(--tr-hover);
+        }
+
+        .specs-table code {
+            font-family: monospace;
+            font-size: 0.9rem;
+            background-color: rgba(0,0,0,0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #34d399;
+        }
+
+        .key-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #ffffff;
+            display: inline-block;
+        }
+
+        .key-pk { background-color: var(--badge-pk); }
+        .key-fk { background-color: var(--badge-fk); }
+        .key-uk { background-color: var(--badge-uk); }
+
+        .enums-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .enum-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .enum-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 0 0 8px 0;
+            font-family: monospace;
+        }
+
+        .enum-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin: 0 0 12px 0;
+            line-height: 1.4;
+        }
+
+        .enum-values-list {
+            padding-left: 20px;
+            margin: 0;
+            line-height: 1.6;
+            font-size: 0.9rem;
+            color: #e2e8f0;
+        }
+
+        .enum-values-list code {
+            font-family: monospace;
+            color: #34d399;
+            background-color: rgba(0,0,0,0.15);
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .section-divider {
+            max-width: 1200px;
+            margin: 40px auto 20px auto;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .section-divider h2 {
+            margin: 0;
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        @media print {
+            body {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+                padding: 0;
+            }
+
+            .controls-bar, .domain-tabs, button {
+                display: none !important;
+            }
+
+            .table-card, .enum-card {
+                background-color: #ffffff !important;
+                border: 1px solid #cbd5e1 !important;
+                box-shadow: none !important;
+                page-break-inside: avoid;
+                margin-bottom: 24px;
+                padding: 16px;
+            }
+
+            .table-title, .enum-title {
+                color: #047857 !important;
+            }
+
+            .specs-table th {
+                background-color: #f1f5f9 !important;
+                color: #000000 !important;
+                border-bottom: 2px solid #94a3b8 !important;
+            }
+
+            .specs-table td {
+                color: #000000 !important;
+                border-bottom: 1px solid #e2e8f0 !important;
+            }
+
+            .specs-table code, .enum-values-list code {
+                background-color: #f1f5f9 !important;
+                color: #0f172a !important;
+                border: 1px solid #cbd5e1 !important;
+            }
+
+            h1 {
+                -webkit-text-fill-color: initial !important;
+                color: #000000 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <h1 id="title-text">Database Data Dictionary</h1>
+        <p class="subtitle" id="desc-text">Interactive physical schema documentation for the FurEver PawCare PostgreSQL database.</p>
+    </div>
+
+    <div class="controls-bar">
+        <div class="search-container">
+            <svg class="search-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" id="search-box" class="search-input" placeholder="Search tables, fields, types, or descriptions..." onkeyup="filterDictionary()">
+        </div>
+        <div class="actions-bar">
+            <button class="btn-secondary" id="theme-toggle" onclick="toggleTheme()">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+                Light Theme
+            </button>
+            <button class="btn-primary" onclick="window.print()">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                Print / Save PDF
+            </button>
+        </div>
+    </div>
+
+    <div class="domain-tabs">
+        <button class="tab-btn active" onclick="filterDomain('all')">All Domains</button>
+        <button class="tab-btn" onclick="filterDomain('identity')">Identity & Profile</button>
+        <button class="tab-btn" onclick="filterDomain('clinical')">Clinical & Telehealth</button>
+        <button class="tab-btn" onclick="filterDomain('ecommerce')">E-Commerce</button>
+        <button class="tab-btn" onclick="filterDomain('billing')">Financial & Billing</button>
+        <button class="tab-btn" onclick="filterDomain('engagement')">Engagement & Comm</button>
+    </div>
+
+    <div class="dictionary-container" id="dict-container">
+
+        <div class="section-divider" data-domain="identity">
+            <h2>Identity & Profile Domain</h2>
+        </div>
+  
+        <!-- users Table -->
+        <div class="table-card" data-domain="identity" id="table-users">
+            <div class="table-header">
+                <h3 class="table-title">users</h3>
+            </div>
+            <p class="table-description">Stores user credentials, contact details, roles, and security/preferences state.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Field Name</th>
+                        <th style="width: 25%;">SQL Data Type</th>
+                        <th style="width: 12%;">Key Type</th>
+                        <th style="width: 10%;">Nullable</th>
+                        <th style="width: 13%;">Default Value</th>
+                        <th style="width: 20%;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>user_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-pk">PK</span></td>
+                        <td>No</td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique identifier for the user account.</td>
+                    </tr>
+                    <tr>
+                        <td><code>full_name</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Full legal name of the user.</td>
+                    </tr>
+                    <tr>
+                        <td><code>email</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key-uk">UK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Unique login email address.</td>
+                    </tr>
+                    <tr>
+                        <td><code>password</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Salted and hashed password.</td>
+                    </tr>
+                    <tr>
+                        <td><code>phone_number</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Primary phone contact number (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>address</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Billing/delivery street address (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>role</code></td>
+                        <td><code>ENUM</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>'USER'</code></td>
+                        <td>User system privileges level. Values: `USER`, `ADMIN`, `SUPER_ADMIN`.</td>
+                    </tr>
+                    <tr>
+                        <td><code>profile_image</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>URL/Path to user avatar image (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>created_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>NOW()</code></td>
+                        <td>Timestamp when user registered.</td>
+                    </tr>
+                    <tr>
+                        <td><code>updated_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Auto-updated timestamp of last profile change.</td>
+                    </tr>
+                    <tr>
+                        <td><code>status</code></td>
+                        <td><code>ENUM</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>'ACTIVE'</code></td>
+                        <td>Account activation state. Values: `ACTIVE`, `INACTIVE`.</td>
+                    </tr>
+                    <tr>
+                        <td><code>recovery_phone</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Secondary phone used for recovery (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>language</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>'en'</code></td>
+                        <td>User language preference locale (e.g., `'en'`, `'es'`).</td>
+                    </tr>
+                    <tr>
+                        <td><code>reset_code</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Temporary password reset code (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>reset_code_expiry</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Expiration timestamp of the password reset code.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- admin_staff Table -->
+        <div class="table-card" data-domain="identity" id="table-admin-staff">
+            <div class="table-header">
+                <h3 class="table-title">admin_staff</h3>
+            </div>
+            <p class="table-description">Holds extended administrative/employment details linked one-to-one with a primary user account.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Field Name</th>
+                        <th style="width: 25%;">SQL Data Type</th>
+                        <th style="width: 12%;">Key Type</th>
+                        <th style="width: 10%;">Nullable</th>
+                        <th style="width: 13%;">Default Value</th>
+                        <th style="width: 20%;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>user_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-pk">PK</span> <span class="key-badge key-fk">FK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>References `users.user_id`. One-to-One mapping.</td>
+                    </tr>
+                    <tr>
+                        <td><code>employee_code</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key-uk">UK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Unique corporate staff registration identifier.</td>
+                    </tr>
+                    <tr>
+                        <td><code>position</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Work role position (e.g., `'Lead Veterinarian'`, `'Clerk'`).</td>
+                    </tr>
+                    <tr>
+                        <td><code>created_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>NOW()</code></td>
+                        <td>Timestamp when staff profile was initialized.</td>
+                    </tr>
+                    <tr>
+                        <td><code>updated_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Timestamp of last staff info edit.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    
+        <div class="section-divider" data-domain="clinical">
+            <h2>Clinical & Telehealth Domain</h2>
+        </div>
+  
+        <!-- pets Table -->
+        <div class="table-card" data-domain="clinical" id="table-pets">
+            <div class="table-header">
+                <h3 class="table-title">pets</h3>
+            </div>
+            <p class="table-description">Stores details of registered pets linked to their owner's user account.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Field Name</th>
+                        <th style="width: 25%;">SQL Data Type</th>
+                        <th style="width: 12%;">Key Type</th>
+                        <th style="width: 10%;">Nullable</th>
+                        <th style="width: 13%;">Default Value</th>
+                        <th style="width: 20%;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>pet_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-pk">PK</span></td>
+                        <td>No</td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique pet record ID.</td>
+                    </tr>
+                    <tr>
+                        <td><code>user_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>References `users.user_id` (pet owner).</td>
+                    </tr>
+                    <tr>
+                        <td><code>pet_name</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Given name of the pet.</td>
+                    </tr>
+                    <tr>
+                        <td><code>breed</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Breed of the pet (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>age</code></td>
+                        <td><code>INTEGER</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Age in years (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>gender</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Gender of the pet (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>weight</code></td>
+                        <td><code>DOUBLE PRECISION</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Weight of the pet in kg (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>medical_history</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Summary of clinical treatments (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>vaccination_record</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Log of administered vaccines (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>avatar</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>URL/Path to pet photo avatar (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>species</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Pet species (e.g., `'Dog'`, `'Cat'`) (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>color</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Primary coat/hair color (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>past_illness</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Historical medical ailments (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>previous_surgeries</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Past operational procedures (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>veterinarian</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Default clinic doctor assigned to the pet.</td>
+                    </tr>
+                    <tr>
+                        <td><code>is_archived</code></td>
+                        <td><code>BOOLEAN</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>FALSE</code></td>
+                        <td>Toggle state representing if this pet has been soft-archived.</td>
+                    </tr>
+                    <tr>
+                        <td><code>created_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>NOW()</code></td>
+                        <td>Timestamp when pet was registered.</td>
+                    </tr>
+                    <tr>
+                        <td><code>updated_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Auto-updated timestamp of last data edit.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- pet_monitoring Table -->
+        <div class="table-card" data-domain="clinical" id="table-pet-monitoring">
+            <div class="table-header">
+                <h3 class="table-title">pet_monitoring</h3>
+            </div>
+            <p class="table-description">Stores continuous medical monitoring details for a pet, including symptoms and diagnostic reports.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Field Name</th>
+                        <th style="width: 25%;">SQL Data Type</th>
+                        <th style="width: 12%;">Key Type</th>
+                        <th style="width: 10%;">Nullable</th>
+                        <th style="width: 13%;">Default Value</th>
+                        <th style="width: 20%;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>monitor_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-pk">PK</span></td>
+                        <td>No</td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique tracking monitor record ID.</td>
+                    </tr>
+                    <tr>
+                        <td><code>pet_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>References `pets.pet_id`.</td>
+                    </tr>
+                    <tr>
+                        <td><code>symptoms</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Logged health symptoms (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>behavior_changes</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Observations of mood/mindset changes (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>activity_changes</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Energy level changes (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>recommendations</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Clinical suggestions generated (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>monitoring_status</code></td>
+                        <td><code>ENUM</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>'ACTIVE'</code></td>
+                        <td>Health status tracker. Values: `ACTIVE`, `RESOLVED`, `CRITICAL`.</td>
+                    </tr>
+                    <tr>
+                        <td><code>report_summary</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Summary of clinical monitoring assessment (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>admin_findings</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Diagnostics logged by Admin (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>super_admin_findings</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Diagnostics logged by Super Admin (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>is_forwarded</code></td>
+                        <td><code>BOOLEAN</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>FALSE</code></td>
+                        <td>Flag representing if cases were escalated to vets.</td>
+                    </tr>
+                    <tr>
+                        <td><code>forwarded_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Escalation timestamp (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>admit_recommended</code></td>
+                        <td><code>BOOLEAN</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>FALSE</code></td>
+                        <td>Clinic admittance advice flag.</td>
+                    </tr>
+                    <tr>
+                        <td><code>admit_accepted</code></td>
+                        <td><code>BOOLEAN</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>FALSE</code></td>
+                        <td>Owner approval flag for pet clinic admission.</td>
+                    </tr>
+                    <tr>
+                        <td><code>chat_messages</code></td>
+                        <td><code>JSONB</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Captured triage chatbot communication data (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>chat_category</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Categorized issue tier (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>chat_step</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Active dialog step inside triage chat flow (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>countdown_duration</code></td>
+                        <td><code>INTEGER</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Triage checkout time limit indicator (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>details_answer</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>User elaborations on health issues (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>q1_answer</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Answer to query step 1 (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>q2_answer</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Answer to query step 2 (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>takeover_mode</code></td>
+                        <td><code>BOOLEAN</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>FALSE</code></td>
+                        <td>Flag indicating if a human vet took over chat control from bot.</td>
+                    </tr>
+                    <tr>
+                        <td><code>waiting_for_vet</code></td>
+                        <td><code>BOOLEAN</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>FALSE</code></td>
+                        <td>Triage queue state waiting for vet pickup.</td>
+                    </tr>
+                    <tr>
+                        <td><code>vet_requested_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Time when vet pickup was requested.</td>
+                    </tr>
+                    <tr>
+                        <td><code>timer_started_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Time when diagnostic timer was kicked off.</td>
+                    </tr>
+                    <tr>
+                        <td><code>created_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>NOW()</code></td>
+                        <td>Monitoring cycle registration time.</td>
+                    </tr>
+                    <tr>
+                        <td><code>updated_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Auto-updated timestamp of last data edit.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- telemedicine Table -->
+        <div class="table-card" data-domain="clinical" id="table-telemedicine">
+            <div class="table-header">
+                <h3 class="table-title">telemedicine</h3>
+            </div>
+            <p class="table-description">Manages telemedicine consultations booked by users with a specialized veterinarian.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Field Name</th>
+                        <th style="width: 25%;">SQL Data Type</th>
+                        <th style="width: 12%;">Key Type</th>
+                        <th style="width: 10%;">Nullable</th>
+                        <th style="width: 13%;">Default Value</th>
+                        <th style="width: 20%;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>telemed_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-pk">PK</span></td>
+                        <td>No</td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique record ID for virtual session.</td>
+                    </tr>
+                    <tr>
+                        <td><code>user_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>References `users.user_id` (pet owner).</td>
+                    </tr>
+                    <tr>
+                        <td><code>pet_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>References `pets.pet_id`.</td>
+                    </tr>
+                    <tr>
+                        <td><code>veterinarian_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>References `users.user_id` (assigned doctor).</td>
+                    </tr>
+                    <tr>
+                        <td><code>consultation_date</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Date and time of scheduled session.</td>
+                    </tr>
+                    <tr>
+                        <td><code>meeting_link</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Online conference hyperlink (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>concern</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Summary of issues described by owner.</td>
+                    </tr>
+                    <tr>
+                        <td><code>diagnosis</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Formal diagnosis entered by vet (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>prescription</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Prescribed medications (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>status</code></td>
+                        <td><code>ENUM</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>'SCHEDULED'</code></td>
+                        <td>Telemedicine status. Values: `SCHEDULED`, `ONGOING`, `COMPLETED`, `CANCELLED`.</td>
+                    </tr>
+                    <tr>
+                        <td><code>created_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>NOW()</code></td>
+                        <td>Timestamp when telehealth slot was requested.</td>
+                    </tr>
+                    <tr>
+                        <td><code>updated_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Auto-updated timestamp.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- appointments Table -->
+        <div class="table-card" data-domain="clinical" id="table-appointments">
+            <div class="table-header">
+                <h3 class="table-title">appointments</h3>
+            </div>
+            <p class="table-description">Stores in-person and general clinical appointment details.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Field Name</th>
+                        <th style="width: 25%;">SQL Data Type</th>
+                        <th style="width: 12%;">Key Type</th>
+                        <th style="width: 10%;">Nullable</th>
+                        <th style="width: 13%;">Default Value</th>
+                        <th style="width: 20%;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>appointment_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-pk">PK</span></td>
+                        <td>No</td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique primary key for appointment.</td>
+                    </tr>
+                    <tr>
+                        <td><code>user_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>References `users.user_id` (client).</td>
+                    </tr>
+                    <tr>
+                        <td><code>pet_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>References `pets.pet_id` (subject animal).</td>
+                    </tr>
+                    <tr>
+                        <td><code>assigned_admin_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>References `users.user_id` (clerk/vet staff assigned).</td>
+                    </tr>
+                    <tr>
+                        <td><code>appointment_date</code></td>
+                        <td><code>DATE</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Scheduled day of visit.</td>
+                    </tr>
+                    <tr>
+                        <td><code>appointment_time</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Allocated slot duration string (e.g., `'10:00 AM'`).</td>
+                    </tr>
+                    <tr>
+                        <td><code>purpose</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Stated goal of medical visit (e.g., `'Annual Vaccination'`).</td>
+                    </tr>
+                    <tr>
+                        <td><code>status</code></td>
+                        <td><code>ENUM</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>'PENDING'</code></td>
+                        <td>Lifecycle state. Values: `PENDING`, `CONFIRMED`, `COMPLETED`, `CANCELLED`, `PAID`, `DECLINED`.</td>
+                    </tr>
+                    <tr>
+                        <td><code>type</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>'inperson'</code></td>
+                        <td>Visit channel type (e.g. `'inperson'`, `'telemed'`).</td>
+                    </tr>
+                    <tr>
+                        <td><code>session_code</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Optional verification session passkey.</td>
+                    </tr>
+                    <tr>
+                        <td><code>is_archived</code></td>
+                        <td><code>BOOLEAN</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>FALSE</code></td>
+                        <td>Toggle state representing if this appointment has been soft-archived.</td>
+                    </tr>
+                    <tr>
+                        <td><code>created_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>NOW()</code></td>
+                        <td>Timestamp when requested.</td>
+                    </tr>
+                    <tr>
+                        <td><code>updated_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Auto-updated timestamp.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    
+        <div class="section-divider" data-domain="ecommerce">
+            <h2>E-Commerce Domain</h2>
+        </div>
+  
+        <!-- products Table -->
+        <div class="table-card" data-domain="ecommerce" id="table-products">
+            <div class="table-header">
+                <h3 class="table-title">products</h3>
+            </div>
+            <p class="table-description">Lists items available for sale in the online veterinary e-commerce store.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Field Name</th>
+                        <th style="width: 25%;">SQL Data Type</th>
+                        <th style="width: 12%;">Key Type</th>
+                        <th style="width: 10%;">Nullable</th>
+                        <th style="width: 13%;">Default Value</th>
+                        <th style="width: 20%;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>product_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-pk">PK</span></td>
+                        <td>No</td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique product inventory SKU ID.</td>
+                    </tr>
+                    <tr>
+                        <td><code>product_name</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Retail catalog item name.</td>
+                    </tr>
+                    <tr>
+                        <td><code>category</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Group category (e.g., `'Food'`, `'Medical Equipment'`).</td>
+                    </tr>
+                    <tr>
+                        <td><code>description</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Product features summary (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>price</code></td>
+                        <td><code>DOUBLE PRECISION</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Unit retail price.</td>
+                    </tr>
+                    <tr>
+                        <td><code>stock_quantity</code></td>
+                        <td><code>INTEGER</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Current items available in stock.</td>
+                    </tr>
+                    <tr>
+                        <td><code>expiration_date</code></td>
+                        <td><code>DATE</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Batch shelf life expiry date (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>product_image</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>URL/Path to product catalog photo (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>status</code></td>
+                        <td><code>ENUM</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>'AVAILABLE'</code></td>
+                        <td>Availability state. Values: `AVAILABLE`, `OUT_OF_STOCK`, `DISCONTINUED`.</td>
+                    </tr>
+                    <tr>
+                        <td><code>created_by_admin</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>References `users.user_id` (admin creator).</td>
+                    </tr>
+                    <tr>
+                        <td><code>is_archived</code></td>
+                        <td><code>BOOLEAN</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>FALSE</code></td>
+                        <td>Toggle state representing if this product has been soft-archived.</td>
+                    </tr>
+                    <tr>
+                        <td><code>created_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>NOW()</code></td>
+                        <td>Catalog creation timestamp.</td>
+                    </tr>
+                    <tr>
+                        <td><code>updated_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Catalog detail update timestamp.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- cart Table -->
+        <div class="table-card" data-domain="ecommerce" id="table-cart">
+            <div class="table-header">
+                <h3 class="table-title">cart</h3>
+            </div>
+            <p class="table-description">Establishes a shopping cart shell unique to each registered client account.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Field Name</th>
+                        <th style="width: 25%;">SQL Data Type</th>
+                        <th style="width: 12%;">Key Type</th>
+                        <th style="width: 10%;">Nullable</th>
+                        <th style="width: 13%;">Default Value</th>
+                        <th style="width: 20%;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>cart_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-pk">PK</span></td>
+                        <td>No</td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique cart container ID.</td>
+                    </tr>
+                    <tr>
+                        <td><code>user_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span> <span class="key-badge key-uk">UK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>References `users.user_id` (cart owner). One-to-One.</td>
+                    </tr>
+                    <tr>
+                        <td><code>created_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>NOW()</code></td>
+                        <td>Shopping cart creation timestamp.</td>
+                    </tr>
+                    <tr>
+                        <td><code>updated_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Auto-updated timestamp.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- cart_items Table -->
+        <div class="table-card" data-domain="ecommerce" id="table-cart-items">
+            <div class="table-header">
+                <h3 class="table-title">cart_items</h3>
+            </div>
+            <p class="table-description">Pairs specific products with their quantities inside a shopping cart shell.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Field Name</th>
+                        <th style="width: 25%;">SQL Data Type</th>
+                        <th style="width: 12%;">Key Type</th>
+                        <th style="width: 10%;">Nullable</th>
+                        <th style="width: 13%;">Default Value</th>
+                        <th style="width: 20%;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>cart_item_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-pk">PK</span></td>
+                        <td>No</td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique cart item entry identifier.</td>
+                    </tr>
+                    <tr>
+                        <td><code>cart_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>References `cart.cart_id`.</td>
+                    </tr>
+                    <tr>
+                        <td><code>product_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>References `products.product_id`.</td>
+                    </tr>
+                    <tr>
+                        <td><code>quantity</code></td>
+                        <td><code>INTEGER</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Items count selected.</td>
+                    </tr>
+                    <tr>
+                        <td><code>subtotal</code></td>
+                        <td><code>DOUBLE PRECISION</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Computed cost (`price * quantity`).</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- orders Table -->
+        <div class="table-card" data-domain="ecommerce" id="table-orders">
+            <div class="table-header">
+                <h3 class="table-title">orders</h3>
+            </div>
+            <p class="table-description">Captures billing and delivery details for checkouts of e-commerce carts.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Field Name</th>
+                        <th style="width: 25%;">SQL Data Type</th>
+                        <th style="width: 12%;">Key Type</th>
+                        <th style="width: 10%;">Nullable</th>
+                        <th style="width: 13%;">Default Value</th>
+                        <th style="width: 20%;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>order_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-pk">PK</span></td>
+                        <td>No</td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique order history sheet ID.</td>
+                    </tr>
+                    <tr>
+                        <td><code>user_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>References `users.user_id` (purchasing user).</td>
+                    </tr>
+                    <tr>
+                        <td><code>order_date</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>NOW()</code></td>
+                        <td>Checkout completion timestamp.</td>
+                    </tr>
+                    <tr>
+                        <td><code>total_amount</code></td>
+                        <td><code>DOUBLE PRECISION</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Aggregate final payment price sum.</td>
+                    </tr>
+                    <tr>
+                        <td><code>payment_method</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Chosen channel (e.g. `'GCash'`, `'Credit Card'`, `'Cash'`).</td>
+                    </tr>
+                    <tr>
+                        <td><code>order_status</code></td>
+                        <td><code>ENUM</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>'PENDING'</code></td>
+                        <td>Processing state. Values: `PENDING`, `PROCESSING`, `SHIPPED`, `DELIVERED`, `CANCELLED`, `COMPLETED`.</td>
+                    </tr>
+                    <tr>
+                        <td><code>delivery_address</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Destination address to ship/deliver.</td>
+                    </tr>
+                    <tr>
+                        <td><code>created_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>NOW()</code></td>
+                        <td>Order placement entry timestamp.</td>
+                    </tr>
+                    <tr>
+                        <td><code>updated_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Auto-updated timestamp of last order update.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- order_items Table -->
+        <div class="table-card" data-domain="ecommerce" id="table-order-items">
+            <div class="table-header">
+                <h3 class="table-title">order_items</h3>
+            </div>
+            <p class="table-description">Preserves history records of individual items bought inside an order.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Field Name</th>
+                        <th style="width: 25%;">SQL Data Type</th>
+                        <th style="width: 12%;">Key Type</th>
+                        <th style="width: 10%;">Nullable</th>
+                        <th style="width: 13%;">Default Value</th>
+                        <th style="width: 20%;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>order_item_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-pk">PK</span></td>
+                        <td>No</td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique order line entry record.</td>
+                    </tr>
+                    <tr>
+                        <td><code>order_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>References `orders.order_id`.</td>
+                    </tr>
+                    <tr>
+                        <td><code>product_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>References `products.product_id`.</td>
+                    </tr>
+                    <tr>
+                        <td><code>quantity</code></td>
+                        <td><code>INTEGER</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Purchased count.</td>
+                    </tr>
+                    <tr>
+                        <td><code>subtotal</code></td>
+                        <td><code>DOUBLE PRECISION</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Total for item line at time of checkout.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- categories Table -->
+        <div class="table-card" data-domain="ecommerce" id="table-categories">
+            <div class="table-header">
+                <h3 class="table-title">categories</h3>
+            </div>
+            <p class="table-description">Catalog groupings utilized for online store organization.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Field Name</th>
+                        <th style="width: 25%;">SQL Data Type</th>
+                        <th style="width: 12%;">Key Type</th>
+                        <th style="width: 10%;">Nullable</th>
+                        <th style="width: 13%;">Default Value</th>
+                        <th style="width: 20%;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-pk">PK</span></td>
+                        <td>No</td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique category database key.</td>
+                    </tr>
+                    <tr>
+                        <td><code>name</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Display title of category.</td>
+                    </tr>
+                    <tr>
+                        <td><code>slug</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key-uk">UK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>URL-friendly slug text.</td>
+                    </tr>
+                    <tr>
+                        <td><code>icon</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Optional asset URL or CSS class string representing icon.</td>
+                    </tr>
+                    <tr>
+                        <td><code>created_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>NOW()</code></td>
+                        <td>Timestamp when created.</td>
+                    </tr>
+                    <tr>
+                        <td><code>updated_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Auto-updated timestamp of last details change.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    
+        <div class="section-divider" data-domain="billing">
+            <h2>Financial & Billing Domain</h2>
+        </div>
+  
+        <!-- payments Table -->
+        <div class="table-card" data-domain="billing" id="table-payments">
+            <div class="table-header">
+                <h3 class="table-title">payments</h3>
+            </div>
+            <p class="table-description">Main financial log linking general order checkouts, clinics visits, or online triage payments.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Field Name</th>
+                        <th style="width: 25%;">SQL Data Type</th>
+                        <th style="width: 12%;">Key Type</th>
+                        <th style="width: 10%;">Nullable</th>
+                        <th style="width: 13%;">Default Value</th>
+                        <th style="width: 20%;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>payment_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-pk">PK</span></td>
+                        <td>No</td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique financial receipt audit ID.</td>
+                    </tr>
+                    <tr>
+                        <td><code>order_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>References `orders.order_id` (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>appointment_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>References `appointments.appointment_id` (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>telemed_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>References `telemedicine.telemed_id` (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>payment_amount</code></td>
+                        <td><code>DOUBLE PRECISION</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Paid amount cash value.</td>
+                    </tr>
+                    <tr>
+                        <td><code>payment_status</code></td>
+                        <td><code>ENUM</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>'PENDING'</code></td>
+                        <td>State of transaction clearing. Values: `PENDING`, `COMPLETED`, `FAILED`, `REFUNDED`.</td>
+                    </tr>
+                    <tr>
+                        <td><code>payment_date</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>NOW()</code></td>
+                        <td>Timestamp when transaction was cleared.</td>
+                    </tr>
+                    <tr>
+                        <td><code>reference_number</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Provider reference (optional GCash/Bank Txn ID).</td>
+                    </tr>
+                    <tr>
+                        <td><code>receipt_image</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Uploaded receipt proof image file path (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>created_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>NOW()</code></td>
+                        <td>Invoice generation timestamp.</td>
+                    </tr>
+                    <tr>
+                        <td><code>updated_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Auto-updated timestamp.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    
+        <div class="section-divider" data-domain="engagement">
+            <h2>Engagement & Communication Domain</h2>
+        </div>
+  
+        <!-- announcements Table -->
+        <div class="table-card" data-domain="engagement" id="table-announcements">
+            <div class="table-header">
+                <h3 class="table-title">announcements</h3>
+            </div>
+            <p class="table-description">Stores portal bulletins and banners broadcasted by system admins.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Field Name</th>
+                        <th style="width: 25%;">SQL Data Type</th>
+                        <th style="width: 12%;">Key Type</th>
+                        <th style="width: 10%;">Nullable</th>
+                        <th style="width: 13%;">Default Value</th>
+                        <th style="width: 20%;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>announcement_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-pk">PK</span></td>
+                        <td>No</td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique record ID for announcements.</td>
+                    </tr>
+                    <tr>
+                        <td><code>admin_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>References `users.user_id` (origin admin).</td>
+                    </tr>
+                    <tr>
+                        <td><code>title</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Headline of announcement.</td>
+                    </tr>
+                    <tr>
+                        <td><code>content</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Rich message details.</td>
+                    </tr>
+                    <tr>
+                        <td><code>status</code></td>
+                        <td><code>ENUM</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>'PUBLISHED'</code></td>
+                        <td>Values: `PUBLISHED`, `DRAFT`.</td>
+                    </tr>
+                    <tr>
+                        <td><code>created_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>NOW()</code></td>
+                        <td>Time when created.</td>
+                    </tr>
+                    <tr>
+                        <td><code>updated_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Time when last updated.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- announcement_reactions Table -->
+        <div class="table-card" data-domain="engagement" id="table-announcement-reactions">
+            <div class="table-header">
+                <h3 class="table-title">announcement_reactions</h3>
+            </div>
+            <p class="table-description">Tracks user interaction likes/reactions on published portal announcements.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Field Name</th>
+                        <th style="width: 25%;">SQL Data Type</th>
+                        <th style="width: 12%;">Key Type</th>
+                        <th style="width: 10%;">Nullable</th>
+                        <th style="width: 13%;">Default Value</th>
+                        <th style="width: 20%;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>reaction_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-pk">PK</span></td>
+                        <td>No</td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique reaction record ID.</td>
+                    </tr>
+                    <tr>
+                        <td><code>user_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span> <span class="key-badge key-uk">UK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>References `users.user_id`. Composite unique constraint with `announcement_id`.</td>
+                    </tr>
+                    <tr>
+                        <td><code>announcement_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span> <span class="key-badge key-uk">UK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>References `announcements.announcement_id`. Composite unique constraint with `user_id`.</td>
+                    </tr>
+                    <tr>
+                        <td><code>type</code></td>
+                        <td><code>ENUM</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Type of reaction. Values: `HEART`, `LIKE`.</td>
+                    </tr>
+                    <tr>
+                        <td><code>created_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>NOW()</code></td>
+                        <td>Reaction entry timestamp.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- pet_tutorials Table -->
+        <div class="table-card" data-domain="engagement" id="table-pet-tutorials">
+            <div class="table-header">
+                <h3 class="table-title">pet_tutorials</h3>
+            </div>
+            <p class="table-description">Links educational resources and clips managed by administrative staff for users.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Field Name</th>
+                        <th style="width: 25%;">SQL Data Type</th>
+                        <th style="width: 12%;">Key Type</th>
+                        <th style="width: 10%;">Nullable</th>
+                        <th style="width: 13%;">Default Value</th>
+                        <th style="width: 20%;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>tutorial_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-pk">PK</span></td>
+                        <td>No</td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique record identifier for tutorials.</td>
+                    </tr>
+                    <tr>
+                        <td><code>admin_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>References `users.user_id`.</td>
+                    </tr>
+                    <tr>
+                        <td><code>title</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Topic title header.</td>
+                    </tr>
+                    <tr>
+                        <td><code>description</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Overview summary (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>video_link</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>URL hyperlink redirect (e.g. YouTube).</td>
+                    </tr>
+                    <tr>
+                        <td><code>category</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Tag groupings (e.g. `'Training'`) (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>created_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>NOW()</code></td>
+                        <td>Publication timestamp.</td>
+                    </tr>
+                    <tr>
+                        <td><code>updated_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Edit record timestamp.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- sms_notifications Table -->
+        <div class="table-card" data-domain="engagement" id="table-sms-notifications">
+            <div class="table-header">
+                <h3 class="table-title">sms_notifications</h3>
+            </div>
+            <p class="table-description">Audit logs of custom cell text SMS alerts dispatched to clients.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Field Name</th>
+                        <th style="width: 25%;">SQL Data Type</th>
+                        <th style="width: 12%;">Key Type</th>
+                        <th style="width: 10%;">Nullable</th>
+                        <th style="width: 13%;">Default Value</th>
+                        <th style="width: 20%;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>sms_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-pk">PK</span></td>
+                        <td>No</td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique primary audit tracker key.</td>
+                    </tr>
+                    <tr>
+                        <td><code>user_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>References `users.user_id` (recipient).</td>
+                    </tr>
+                    <tr>
+                        <td><code>message</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Body copy of sent message.</td>
+                    </tr>
+                    <tr>
+                        <td><code>notification_type</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Message categories (e.g. `'Triage Alert'`, `'Appointment Reminder'`).</td>
+                    </tr>
+                    <tr>
+                        <td><code>sent_status</code></td>
+                        <td><code>ENUM</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>'PENDING'</code></td>
+                        <td>Dispatch state. Values: `PENDING`, `SENT`, `FAILED`.</td>
+                    </tr>
+                    <tr>
+                        <td><code>sent_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Time when cleared by carrier (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>created_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>NOW()</code></td>
+                        <td>Initial generation timestamp.</td>
+                    </tr>
+                    <tr>
+                        <td><code>updated_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Auto-updated timestamp.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- feedback Table -->
+        <div class="table-card" data-domain="engagement" id="table-feedback">
+            <div class="table-header">
+                <h3 class="table-title">feedback</h3>
+            </div>
+            <p class="table-description">Customer rating score cards and text reviews logged for user experiences.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Field Name</th>
+                        <th style="width: 25%;">SQL Data Type</th>
+                        <th style="width: 12%;">Key Type</th>
+                        <th style="width: 10%;">Nullable</th>
+                        <th style="width: 13%;">Default Value</th>
+                        <th style="width: 20%;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>feedback_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-pk">PK</span></td>
+                        <td>No</td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique feedback key.</td>
+                    </tr>
+                    <tr>
+                        <td><code>user_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>References `users.user_id`.</td>
+                    </tr>
+                    <tr>
+                        <td><code>rating</code></td>
+                        <td><code>INTEGER</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Rating metric scalar (e.g., scale of 1-5).</td>
+                    </tr>
+                    <tr>
+                        <td><code>comments</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>Yes</td>
+                        <td><code>NULL</code></td>
+                        <td>Detailed customer feedback review (optional).</td>
+                    </tr>
+                    <tr>
+                        <td><code>submitted_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>NOW()</code></td>
+                        <td>Timestamp when submitted.</td>
+                    </tr>
+                    <tr>
+                        <td><code>updated_at</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Last modification timestamp.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    
+        <!-- notifications Table -->
+        <div class="table-card" data-domain="engagement" id="table-notifications">
+            <div class="table-header">
+                <h3 class="table-title">notifications</h3>
+            </div>
+            <p class="table-description">Stores generic web/in-app notification messages directed to clients.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Field Name</th>
+                        <th style="width: 25%;">SQL Data Type</th>
+                        <th style="width: 12%;">Key Type</th>
+                        <th style="width: 10%;">Nullable</th>
+                        <th style="width: 13%;">Default Value</th>
+                        <th style="width: 20%;">Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-pk">PK</span></td>
+                        <td>No</td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique notification ID.</td>
+                    </tr>
+                    <tr>
+                        <td><code>user_id</code></td>
+                        <td><code>UUID</code></td>
+                        <td><span class="key-badge key-fk">FK</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>References `users.user_id` (recipient).</td>
+                    </tr>
+                    <tr>
+                        <td><code>title</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Short headline title of notification.</td>
+                    </tr>
+                    <tr>
+                        <td><code>message</code></td>
+                        <td><code>TEXT</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td>-</td>
+                        <td>Body text content of the notification.</td>
+                    </tr>
+                    <tr>
+                        <td><code>isRead</code></td>
+                        <td><code>BOOLEAN</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>FALSE</code></td>
+                        <td>Flag indicating whether the notification has been read by the user.</td>
+                    </tr>
+                    <tr>
+                        <td><code>createdAt</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td><span class="key-badge key--">-</span></td>
+                        <td>No</td>
+                        <td><code>NOW()</code></td>
+                        <td>Timestamp when the notification was created.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    
+        <div class="section-divider">
+            <h2>Custom Database Enums</h2>
+        </div>
+
+        <div class="enums-grid" id="enums-container">
+            <div class="enum-card">
+                <h4 class="enum-title">Role</h4>
+                <p class="enum-desc">Defines global authorization role groups.</p>
+                <ul class="enum-values-list">
+                    <li><code>SUPER_ADMIN</code> — Oversees clinic setups, escalations, global financials, and administrative staff management.</li>
+                    <li><code>ADMIN</code> — Clinic reception, veterinarian consultants, stock/product managers.</li>
+                    <li><code>USER</code> — Animal owners, e-commerce shoppers, clinical bookers.</li>
+                </ul>
+            </div>
+            <div class="enum-card">
+                <h4 class="enum-title">UserStatus</h4>
+                <p class="enum-desc">Tracks current activation account states.</p>
+                <ul class="enum-values-list">
+                    <li><code>ACTIVE</code> — Fully verified, operational, allowed portal login access.</li>
+                    <li><code>INACTIVE</code> — Blocked or suspended account login state.</li>
+                </ul>
+            </div>
+            <div class="enum-card">
+                <h4 class="enum-title">AppointmentStatus</h4>
+                <p class="enum-desc">Specifies clinical check-in stages.</p>
+                <ul class="enum-values-list">
+                    <li><code>PENDING</code> — Requested, waiting for frontdesk clerk validation.</li>
+                    <li><code>CONFIRMED</code> — Approved clinic reservation slot.</li>
+                    <li><code>COMPLETED</code> — Treatment/visit finalized.</li>
+                    <li><code>CANCELLED</code> — Denied or revoked reservation.</li>
+                    <li><code>PAID</code> — Fees settle.</li>
+                    <li><code>DECLINED</code> — Rejected by system admins.</li>
+                </ul>
+            </div>
+            <div class="enum-card">
+                <h4 class="enum-title">TelemedStatus</h4>
+                <p class="enum-desc">Virtual consult tracking.</p>
+                <ul class="enum-values-list">
+                    <li><code>SCHEDULED</code> — Prebooked online slot.</li>
+                    <li><code>ONGOING</code> — Consultation actively in progress.</li>
+                    <li><code>COMPLETED</code> — Final diagnosis/records submitted.</li>
+                    <li><code>CANCELLED</code> — Revoked telehealth appointment.</li>
+                </ul>
+            </div>
+            <div class="enum-card">
+                <h4 class="enum-title">MonitoringStatus</h4>
+                <p class="enum-desc">Pet health assessment conditions.</p>
+                <ul class="enum-values-list">
+                    <li><code>ACTIVE</code> — Continuous diagnosis cycles ongoing.</li>
+                    <li><code>RESOLVED</code> — Symptoms abated; pet declared healthy.</li>
+                    <li><code>CRITICAL</code> — High-risk state requiring immediate medical attention.</li>
+                </ul>
+            </div>
+            <div class="enum-card">
+                <h4 class="enum-title">ProductStatus</h4>
+                <p class="enum-desc">Item inventory shelf states.</p>
+                <ul class="enum-values-list">
+                    <li><code>AVAILABLE</code> — Active in stock.</li>
+                    <li><code>OUT_OF_STOCK</code> — Temporarily exhausted inventory.</li>
+                    <li><code>DISCONTINUED</code> — Permantly removed from store catalog.</li>
+                </ul>
+            </div>
+            <div class="enum-card">
+                <h4 class="enum-title">OrderStatus</h4>
+                <p class="enum-desc">Store purchase fulfillment tracker.</p>
+                <ul class="enum-values-list">
+                    <li><code>PENDING</code> — Paid, awaiting clerk validation.</li>
+                    <li><code>PROCESSING</code> — Package compilation in warehouse.</li>
+                    <li><code>SHIPPED</code> — In transit with logistics courier.</li>
+                    <li><code>DELIVERED</code> — Package handed over at destination.</li>
+                    <li><code>CANCELLED</code> — Revoked/returned order.</li>
+                    <li><code>COMPLETED</code> — Verified receipt by buyer.</li>
+                </ul>
+            </div>
+            <div class="enum-card">
+                <h4 class="enum-title">PaymentStatus</h4>
+                <p class="enum-desc">Transaction lifecycle state.</p>
+                <ul class="enum-values-list">
+                    <li><code>PENDING</code> — Awaiting bank/e-wallet confirmation clearing.</li>
+                    <li><code>COMPLETED</code> — Transaction validated and settled.</li>
+                    <li><code>FAILED</code> — Bank clearing issue/declined.</li>
+                    <li><code>REFUNDED</code> — Cleared money returned to sender.</li>
+                </ul>
+            </div>
+            <div class="enum-card">
+                <h4 class="enum-title">SmsStatus</h4>
+                <p class="enum-desc">Dispatched communication state.</p>
+                <ul class="enum-values-list">
+                    <li><code>PENDING</code> — Staged in broker queue.</li>
+                    <li><code>SENT</code> — Message cleared and dispatched to carrier.</li>
+                    <li><code>FAILED</code> — Carrier transmission error.</li>
+                </ul>
+            </div>
+            <div class="enum-card">
+                <h4 class="enum-title">AnnouncementStatus</h4>
+                <p class="enum-desc">Portal broadcast draft controls.</p>
+                <ul class="enum-values-list">
+                    <li><code>PUBLISHED</code> — Live for dashboard clients.</li>
+                    <li><code>DRAFT</code> — Restricted to admin editing view.</li>
+                </ul>
+            </div>
+            <div class="enum-card">
+                <h4 class="enum-title">ReactionType</h4>
+                <p class="enum-desc">Interaction icons allowed.</p>
+                <ul class="enum-values-list">
+                    <li><code>HEART</code> — Love reaction.</li>
+                    <li><code>LIKE</code> — Thumbs-up reaction.</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let currentTheme = 'dark';
+
+        function toggleTheme() {
+            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            const btn = document.getElementById('theme-toggle');
+            const title = document.getElementById('title-text');
+            
+            if (currentTheme === 'light') {
+                document.documentElement.style.setProperty('--bg-color', '#ffffff');
+                document.documentElement.style.setProperty('--card-bg', '#f8fafc');
+                document.documentElement.style.setProperty('--text-color', '#0f172a');
+                document.documentElement.style.setProperty('--text-muted', '#475569');
+                document.documentElement.style.setProperty('--border-color', '#cbd5e1');
+                document.documentElement.style.setProperty('--th-bg', '#e2e8f0');
+                document.documentElement.style.setProperty('--tr-hover', 'rgba(0, 0, 0, 0.02)');
+                
+                title.style.background = 'initial';
+                title.style.color = '#2e5e3e';
+                title.style.webkitTextFillColor = 'initial';
+                
+                btn.innerHTML = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg> Dark Theme`;
+                btn.style.backgroundColor = '#e2e8f0';
+                btn.style.color = '#0f172a';
+            } else {
+                document.documentElement.style.setProperty('--bg-color', '#0f172a');
+                document.documentElement.style.setProperty('--card-bg', '#1e293b');
+                document.documentElement.style.setProperty('--text-color', '#f8fafc');
+                document.documentElement.style.setProperty('--text-muted', '#94a3b8');
+                document.documentElement.style.setProperty('--border-color', '#334155');
+                document.documentElement.style.setProperty('--th-bg', '#0f172a');
+                document.documentElement.style.setProperty('--tr-hover', 'rgba(255, 255, 255, 0.02)');
+                
+                title.style.background = 'linear-gradient(135deg, #eaf3de 0%, #10b981 100%)';
+                title.style.webkitBackgroundClip = 'text';
+                title.style.webkitTextFillColor = 'transparent';
+                
+                btn.innerHTML = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg> Light Theme`;
+                btn.style.backgroundColor = '#334155';
+                btn.style.color = '#f8fafc';
+            }
+        }
+
+        function filterDomain(domain) {
+            const cards = document.querySelectorAll('.table-card');
+            const dividers = document.querySelectorAll('.section-divider');
+            const tabs = document.querySelectorAll('.tab-btn');
+            
+            // Update active tab style
+            tabs.forEach(tab => {
+                const text = tab.innerText.toLowerCase();
+                if ((domain === 'all' && text.includes('all')) || 
+                    (domain === 'identity' && text.includes('identity')) ||
+                    (domain === 'clinical' && text.includes('clinical')) ||
+                    (domain === 'ecommerce' && text.includes('e-commerce')) ||
+                    (domain === 'billing' && text.includes('financial')) ||
+                    (domain === 'engagement' && text.includes('engagement'))) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+
+            cards.forEach(card => {
+                if (domain === 'all' || card.getAttribute('data-domain') === domain) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            dividers.forEach(div => {
+                if (domain === 'all' || div.getAttribute('data-domain') === domain) {
+                    div.style.display = 'block';
+                } else {
+                    div.style.display = 'none';
+                }
+            });
+        }
+
+        function filterDictionary() {
+            const query = document.getElementById('search-box').value.toLowerCase();
+            const cards = document.querySelectorAll('.table-card');
+            const dividers = document.querySelectorAll('.section-divider');
+            
+            if (!query) {
+                const activeTab = document.querySelector('.tab-btn.active');
+                const activeDomainText = activeTab.innerText.toLowerCase();
+                let activeDomain = 'all';
+                if (activeDomainText.includes('identity')) activeDomain = 'identity';
+                else if (activeDomainText.includes('clinical')) activeDomain = 'clinical';
+                else if (activeDomainText.includes('e-commerce')) activeDomain = 'ecommerce';
+                else if (activeDomainText.includes('financial')) activeDomain = 'billing';
+                else if (activeDomainText.includes('engagement')) activeDomain = 'engagement';
+                
+                filterDomain(activeDomain);
+                return;
+            }
+
+            dividers.forEach(div => div.style.display = 'none');
+
+            cards.forEach(card => {
+                const textContent = card.innerText.toLowerCase();
+                if (textContent.includes(query)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

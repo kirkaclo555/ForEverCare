@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ERD Export</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        body { margin: 0; padding: 20px; background: #ffffff; }
+        .mermaid { background: #ffffff; }
+    </style>
+</head>
+<body>
+    <div class="mermaid" id="diagram">
+erDiagram
+    %% ====================================================
+    %% USER AND STAFF TABLES
+    %% ====================================================
+    users {
+        string user_id PK
+        string full_name
+        string email UK
+        string password
+        string phone_number
+        string address
+        string role
+        string status
+    }
+
+    admin_staff {
+        string user_id PK, FK
+        string employee_code UK
+        string position
+    }
+
+    %% ====================================================
+    %% PET AND HEALTH TABLES
+    %% ====================================================
+    pets {
+        string pet_id PK
+        string user_id FK
+        string pet_name
+        string breed
+        int age
+        string gender
+        double weight
+        string species
+    }
+
+    pet_monitoring {
+        string monitor_id PK
+        string pet_id FK
+        string symptoms
+        string behavior_changes
+        string activity_changes
+        string monitoring_status
+        string report_summary
+    }
+
+    telemedicine {
+        string telemed_id PK
+        string user_id FK
+        string pet_id FK
+        string veterinarian_id FK
+        datetime consultation_date
+        string concern
+        string status
+    }
+
+    appointments {
+        string appointment_id PK
+        string user_id FK
+        string pet_id FK
+        string assigned_admin_id FK
+        date appointment_date
+        string appointment_time
+        string purpose
+        string status
+        string type
+    }
+
+    %% ====================================================
+    %% SHOPPING AND ORDER TABLES
+    %% ====================================================
+    products {
+        string product_id PK
+        string product_name
+        string category
+        double price
+        int stock_quantity
+        string status
+        string created_by_admin FK
+    }
+
+    cart {
+        string cart_id PK
+        string user_id FK, UK
+    }
+
+    cart_items {
+        string cart_item_id PK
+        string cart_id FK
+        string product_id FK
+        int quantity
+        double subtotal
+    }
+
+    orders {
+        string order_id PK
+        string user_id FK
+        datetime order_date
+        double total_amount
+        string payment_method
+        string order_status
+    }
+
+    order_items {
+        string order_item_id PK
+        string order_id FK
+        string product_id FK
+        int quantity
+        double subtotal
+    }
+
+    payments {
+        string payment_id PK
+        string order_id FK
+        string appointment_id FK
+        string telemed_id FK
+        double payment_amount
+        string payment_status
+        string reference_number
+    }
+
+    %% ====================================================
+    %% RELATIONSHIPS
+    %% ====================================================
+    users ||--o| admin_staff : "has staff profile"
+    users ||--o{ pets : "owns"
+    users ||--o{ appointments : "books"
+    users ||--o{ telemedicine : "requests consultation"
+    users ||--o{ orders : "places order"
+    users ||--o| cart : "has shopping cart"
+
+    pets ||--o{ appointments : "is booked for"
+    pets ||--o{ telemedicine : "is consulted for"
+    pets ||--o{ pet_monitoring : "has monitoring record"
+
+    users ||--o{ appointments : "assigned as veterinarian"
+    users ||--o{ telemedicine : "assigned as veterinarian"
+    users ||--o{ products : "creates product"
+
+    cart ||--o{ cart_items : "contains"
+    products ||--o{ cart_items : "added to cart"
+    orders ||--o{ order_items : "contains"
+    products ||--o{ order_items : "included in order"
+
+    orders ||--o| payments : "has payment for"
+    appointments ||--o| payments : "has payment for"
+    telemedicine ||--o| payments : "has payment for"
+    </div>
+    <script>
+        mermaid.initialize({ theme: 'default', startOnLoad: true, er: { useMaxWidth: false } });
+    </script>
+</body>
+</html>

@@ -1,0 +1,70 @@
+graph TD
+    %% Global Link Styling for Cyan Arrows
+    linkStyle default stroke:#00D2D2,stroke-width:3px;
+
+    %% Class Definitions for Green Theme
+    classDef greenShape fill:#2E5E3E,stroke:#1E3E28,color:#FFFFFF,stroke-width:2px;
+
+    subgraph Inputs [System Inputs / User Interfaces]
+        MobileInput["[Mobile Screen Input]<br>Pet Owner Booking/Order"]
+        WebInput["[Web Portal Input]<br>Admin Staff Action/Invoice"]
+    end
+    class MobileInput,WebInput greenShape;
+
+    subgraph Processing [Processing Units / Web Server APIs]
+        AuthProcess["Auth & Session Filter<br>(Verify JWT & Role)"]
+        ApptProcessor["Appointment Engine<br>(Check availability, schedule)"]
+        OrderProcessor["Sales & Checkout System<br>(Verify stock, process payment)"]
+        VitalsMonitor["Vitals Analytics Engine<br>(Check thresholds, flag alarms)"]
+        BillingProcessor["Invoicing Engine<br>(Calculate dues, tax, generate invoice)"]
+    end
+    class AuthProcess,ApptProcessor,OrderProcessor,VitalsMonitor,BillingProcessor greenShape;
+
+    subgraph Storage [Data Storage / Database Server]
+        UserDB[("[(PostgreSQL)]<br>Users & Pets DB Table")]
+        ApptDB[("[(PostgreSQL)]<br>Appointments DB Table")]
+        ProductDB[("[(PostgreSQL)]<br>Products & Inventory DB Table")]
+        InvoiceDB[("[(PostgreSQL)]<br>Invoices & Billings DB Table")]
+        VitalsDB[("[(PostgreSQL)]<br>Health Vitals Log DB Table")]
+    end
+    class UserDB,ApptDB,ProductDB,InvoiceDB,VitalsDB greenShape;
+
+    subgraph Outputs [System Outputs & External APIs]
+        SMSGateway["[SMS Service Gateway]<br>Client Text Notifications"]
+        PaymentGateway["[Payment Processing Gateway]<br>Secure Transaction Gateway"]
+        PDFReport["[Document Output]<br>Printable Diagnostic & Billing Reports"]
+        DashboardUI["[Web Monitor Screen]<br>Dynamic Live Analytics & Logs"]
+    end
+    class SMSGateway,PaymentGateway,PDFReport,DashboardUI greenShape;
+
+    %% Data flow mapping
+    MobileInput -->|Credentials| AuthProcess
+    WebInput -->|Credentials| AuthProcess
+    AuthProcess -->|Query Accounts| UserDB
+    
+    MobileInput -->|Appt Booking Details| ApptProcessor
+    ApptProcessor -->|Verify Slots| ApptDB
+    ApptProcessor -->|Initiate Payment| PaymentGateway
+    PaymentGateway -->|Payment Token| ApptProcessor
+    ApptProcessor -->|Write Scheduled Appt| ApptDB
+    ApptProcessor -->|Trigger Notification| SMSGateway
+
+    MobileInput -->|Shop Checkout Details| OrderProcessor
+    OrderProcessor -->|Verify Stock levels| ProductDB
+    OrderProcessor -->|Initiate Payment| PaymentGateway
+    PaymentGateway -->|Transaction Response| OrderProcessor
+    OrderProcessor -->|Update Inventory Counts| ProductDB
+    OrderProcessor -->|Write Order Record| InvoiceDB
+
+    MobileInput -->|Vitals Logs| VitalsMonitor
+    VitalsMonitor -->|Write Readings| VitalsDB
+    VitalsMonitor -->|If Abnormal: Flag Alert| SMSGateway
+
+    WebInput -->|Billing/Pricing Update| BillingProcessor
+    WebInput -->|Approve/Update Appt| ApptProcessor
+    BillingProcessor -->|Calculate Billing Info| InvoiceDB
+    InvoiceDB -->|Retrieve Invoice Data| PDFReport
+    
+    VitalsDB -->|Fetch Log Analytics| DashboardUI
+    InvoiceDB -->|Fetch Revenue Analytics| DashboardUI
+    ApptDB -->|Fetch Live Appointments| DashboardUI

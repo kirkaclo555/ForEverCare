@@ -1,17 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import {
   StyleSheet,
   Text,
   View,
   TouchableOpacity,
-  Dimensions,
   Image,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { scale, verticalScale, moderateScale, fontSize, wp, hp, device } from '../utils/responsive';
 
 type RootStackParamList = {
   Welcome: undefined;
@@ -29,9 +31,24 @@ type Props = {
   navigation: WelcomeScreenNavigationProp;
 };
 
-const { width, height } = Dimensions.get('window');
-
 export default function WelcomeScreen({ navigation }: Props) {
+  useEffect(() => {
+    const checkLoginPersistence = async () => {
+      try {
+        const storedUser = await AsyncStorage.getItem('@user_profile');
+        if (storedUser) {
+          const parsed = JSON.parse(storedUser);
+          if (parsed && parsed.id && parsed.id.trim() !== '') {
+            // User is already logged in, navigate straight to the dashboard!
+            navigation.replace('PetOwnerTabs');
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load persistent user', e);
+      }
+    };
+    checkLoginPersistence();
+  }, []);
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
@@ -45,51 +62,60 @@ export default function WelcomeScreen({ navigation }: Props) {
         <SafeAreaView style={styles.safeArea}>
           {/* Subtle Decorative Paw Prints */}
           <View style={styles.decorativePaw1}>
-            <FontAwesome5 name="paw" size={140} color="rgba(126,212,74,0.08)" />
+            <FontAwesome5 name="paw" size={scale(140)} color="rgba(126,212,74,0.08)" />
           </View>
           <View style={styles.decorativePaw2}>
-            <FontAwesome5 name="paw" size={80} color="rgba(126,212,74,0.05)" />
+            <FontAwesome5 name="paw" size={scale(80)} color="rgba(126,212,74,0.05)" />
           </View>
 
-          <View style={styles.content}>
-            <View style={styles.logoContainer}>
-              <Image source={require('../../assets/logo.png')} style={{ width: 120, height: 120, resizeMode: 'contain' }} />
-            </View>
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            bounces={false}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.content}>
+              <View style={styles.logoContainer}>
+                <Image 
+                  source={require('../../assets/logo.png')} 
+                  style={{ width: scale(120), height: scale(120), resizeMode: 'contain' }} 
+                />
+              </View>
 
-            <Text style={styles.title}>Welcome!</Text>
-            <Text style={styles.subtitle}>Your pet's health, our priority.</Text>
+              <Text style={styles.title}>Welcome!</Text>
+              <Text style={styles.subtitle}>Your pet's health, our priority.</Text>
 
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={styles.primaryButton}
-                activeOpacity={0.8}
-                onPress={() => navigation.navigate('Register')}
-              >
-                <Text style={styles.primaryButtonText}>Get Started</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.secondaryButton}
-                activeOpacity={0.8}
-                onPress={() => navigation.navigate('Login')}
-              >
-                <Text style={styles.secondaryButtonText}>Login</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Social Logins */}
-            <View style={styles.socialContainer}>
-              <Text style={styles.socialText}>Or connect with</Text>
-              <View style={styles.socialIconsRow}>
-                <TouchableOpacity style={styles.socialButton}>
-                  <FontAwesome5 name="google" size={20} color="#ffffff" />
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={styles.primaryButton}
+                  activeOpacity={0.8}
+                  onPress={() => navigation.navigate('Register')}
+                >
+                  <Text style={styles.primaryButtonText}>Get Started</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.socialButton}>
-                  <FontAwesome5 name="facebook-f" size={20} color="#ffffff" />
+
+                <TouchableOpacity
+                  style={styles.secondaryButton}
+                  activeOpacity={0.8}
+                  onPress={() => navigation.navigate('Login')}
+                >
+                  <Text style={styles.secondaryButtonText}>Login</Text>
                 </TouchableOpacity>
               </View>
+
+              {/* Social Logins */}
+              <View style={styles.socialContainer}>
+                <Text style={styles.socialText}>Or connect with</Text>
+                <View style={styles.socialIconsRow}>
+                  <TouchableOpacity style={styles.socialButton}>
+                    <FontAwesome5 name="google" size={scale(20)} color="#ffffff" />
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.socialButton}>
+                    <FontAwesome5 name="facebook-f" size={scale(20)} color="#ffffff" />
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
-          </View>
+          </ScrollView>
 
           {/* Abstract Wave Curve at bottom */}
           <View style={styles.waveContainer}>
@@ -111,30 +137,33 @@ const styles = StyleSheet.create({
   },
   safeArea: {
     flex: 1,
-    justifyContent: 'space-between',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   decorativePaw1: {
     position: 'absolute',
-    top: height * 0.05,
-    right: -40,
+    top: hp(5),
+    right: scale(-40),
     transform: [{ rotate: '25deg' }],
   },
   decorativePaw2: {
     position: 'absolute',
-    top: height * 0.45,
-    left: -20,
+    top: hp(45),
+    left: scale(-20),
     transform: [{ rotate: '-15deg' }],
     zIndex: 0,
   },
   content: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 30,
+    paddingHorizontal: moderateScale(30),
+    paddingVertical: verticalScale(20),
     zIndex: 10,
   },
   logoContainer: {
-    marginBottom: 30,
+    marginBottom: verticalScale(30),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.15,
@@ -143,25 +172,25 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: 'Catcut',
-    fontSize: 42,
+    fontSize: fontSize(42),
     color: '#ffffff',
-    marginBottom: 8,
+    marginBottom: verticalScale(8),
     letterSpacing: 0.5,
   },
   subtitle: {
     fontFamily: 'Montserrat-Regular',
-    fontSize: 16,
+    fontSize: fontSize(16),
     color: 'rgba(255, 255, 255, 0.85)',
-    marginBottom: 60,
+    marginBottom: verticalScale(40),
     textAlign: 'center',
   },
   buttonContainer: {
     width: '100%',
-    gap: 16, // Uses gap property for spacing between buttons
+    gap: verticalScale(16),
   },
   primaryButton: {
     backgroundColor: '#7ed44a',
-    height: 58,
+    height: verticalScale(58),
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
@@ -170,16 +199,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 10,
     elevation: 5,
-    marginBottom: 16, 
+    marginBottom: verticalScale(16), 
   },
   primaryButtonText: {
     fontFamily: 'Montserrat-Bold',
-    fontSize: 18,
+    fontSize: fontSize(18),
     color: '#0f2418',
   },
   secondaryButton: {
     backgroundColor: 'transparent',
-    height: 58,
+    height: verticalScale(58),
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
@@ -188,45 +217,45 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     fontFamily: 'Montserrat-SemiBold',
-    fontSize: 18,
+    fontSize: fontSize(18),
     color: '#ffffff',
   },
   socialContainer: {
-    marginTop: 40,
+    marginTop: verticalScale(30),
     alignItems: 'center',
   },
   socialText: {
     fontFamily: 'Montserrat-Medium',
     color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 16,
-    fontSize: 14,
+    marginBottom: verticalScale(16),
+    fontSize: fontSize(14),
   },
   socialIconsRow: {
     flexDirection: 'row',
   },
   socialButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: scale(50),
+    height: scale(50),
+    borderRadius: scale(25),
     backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 10,
+    marginHorizontal: scale(10),
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.2)',
   },
   waveContainer: {
     position: 'absolute',
-    bottom: -150, 
+    bottom: verticalScale(-150), 
     width: '100%',
     alignItems: 'center',
     zIndex: 1,
   },
   waveShape: {
-    width: width * 2,
-    height: 300,
+    width: wp(200),
+    height: verticalScale(300),
     backgroundColor: '#ffffff',
-    borderRadius: width, 
+    borderRadius: wp(100), 
     opacity: 0.08,
   }
 });

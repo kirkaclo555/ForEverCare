@@ -1,0 +1,416 @@
+const fs = require('fs');
+const path = require('path');
+
+const diagrams = [
+  {
+    mermaid: 'system_context_diagram.mermaid',
+    html: 'system_context_diagram.html',
+    title: 'System Context Diagram',
+    desc: 'Shows the FurEver PawCare system, its three user roles (Pet Owner, Clinic Staff, Super Admin), and the external services it connects to.',
+    type: 'flowchart',
+    maxWidth: 700
+  },
+  {
+    mermaid: 'use_case_diagram.mermaid',
+    html: 'use_case_diagram.html',
+    title: 'Use Case Diagram',
+    desc: 'Shows what each user role can do in the system: Pet Owner actions, Clinic Staff actions, and Super Admin actions.',
+    type: 'flowchart',
+    maxWidth: 900
+  },
+  {
+    mermaid: 'entity_relationship_diagram.mermaid',
+    html: 'entity_relationship_diagram.html',
+    title: 'Entity Relationship Diagram (ERD)',
+    desc: 'Shows all database tables and how they are related to each other in the FurEver PawCare system.',
+    type: 'er',
+    maxWidth: 1100
+  },
+  {
+    mermaid: 'admin_portal_flowchart.mermaid',
+    html: 'admin_portal_flowchart.html',
+    title: 'Clinic Staff (Admin) Flowchart',
+    desc: 'Shows the step-by-step navigation and actions available to clinic staff in the web admin portal.',
+    type: 'flowchart',
+    maxWidth: 900
+  },
+  {
+    mermaid: 'mobile_app_flowchart.mermaid',
+    html: 'mobile_app_flowchart.html',
+    title: 'Pet Owner (Mobile App) Flowchart',
+    desc: 'Shows the step-by-step navigation and actions available to pet owners in the mobile application.',
+    type: 'flowchart',
+    maxWidth: 900
+  },
+  {
+    mermaid: 'super_admin_portal_flowchart.mermaid',
+    html: 'super_admin_portal_flowchart.html',
+    title: 'Super Admin Flowchart',
+    desc: 'Shows the step-by-step navigation and actions available to the super admin in the web management portal.',
+    type: 'flowchart',
+    maxWidth: 800
+  },
+  {
+    mermaid: 'functional_decomposition_diagram.mermaid',
+    html: 'functional_decomposition_diagram.html',
+    title: 'Functional Decomposition Diagram',
+    desc: 'Breaks down the FurEver PawCare platform into its three portals and lists every module and feature in each.',
+    type: 'flowchart',
+    maxWidth: 1200
+  },
+  {
+    mermaid: 'system_design_procedure.mermaid',
+    html: 'system_design_procedure.html',
+    title: 'System Design Procedure',
+    desc: 'Shows the eight-phase development process from gathering requirements to launching the live system.',
+    type: 'flowchart',
+    maxWidth: 1200
+  },
+  {
+    mermaid: 'data_flow_diagram.mermaid',
+    html: 'data_flow_diagram.html',
+    title: 'Data Flow Diagram (Level 0)',
+    desc: 'Shows how data moves between users, system processes, data stores, and external services.',
+    type: 'flowchart',
+    maxWidth: 1100
+  },
+  {
+    mermaid: 'system_architecture.mermaid',
+    html: 'system_architecture.html',
+    title: 'System Architecture Diagram',
+    desc: 'Shows the three-tier architecture of the FurEver PawCare system: Client Layer, Application Layer, and Data Layer, along with external service integrations.',
+    type: 'flowchart',
+    maxWidth: 1000
+  },
+  {
+    mermaid: 'program_flowchart.mermaid',
+    html: 'program_flowchart.html',
+    title: 'Program Flowchart',
+    desc: 'Illustrates the internal logical flows, decision processes, and database/API updates for the core services (Authentication, Booking, Shop Checkout, and Vital Alerts).',
+    type: 'flowchart',
+    maxWidth: 1000
+  },
+  {
+    mermaid: 'activity_diagram_user.mermaid',
+    html: 'activity_diagram_user.html',
+    title: 'Activity Diagram - Pet Owner (User)',
+    desc: 'Shows all activities a Pet Owner performs: Registration, Login, Appointments, Shopping, Telemedicine, Pet Records, Pet Monitor, Tutorials, Feedback, Profile, Settings, and Logout.',
+    type: 'flowchart',
+    maxWidth: 1200
+  },
+  {
+    mermaid: 'activity_diagram_admin.mermaid',
+    html: 'activity_diagram_admin.html',
+    title: 'Activity Diagram - Admin (Clinic Staff)',
+    desc: 'Shows all administrative activities: Appointment Management, Inventory, Products, Billing, Telemedicine, SMS, Pet Records, Users, Reports, Analytics, Tutorials, Announcements, and Feedback.',
+    type: 'flowchart',
+    maxWidth: 1200
+  },
+  {
+    mermaid: 'activity_diagram_superadmin.mermaid',
+    html: 'activity_diagram_superadmin.html',
+    title: 'Activity Diagram - Super Admin',
+    desc: 'Shows all platform-wide Super Admin activities including Pet Monitor, Role Assignment, Global Archive, and all shared clinic management modules.',
+    type: 'flowchart',
+    maxWidth: 1200
+  },
+  {
+    mermaid: 'sequence_diagram.mermaid',
+    html: 'sequence_diagram.html',
+    title: 'Sequence Diagram',
+    desc: 'Shows the time-ordered interactions between Pet Owner, Mobile App, Server, Database, SMS Gateway, Admin, and Web Portal across key system processes.',
+    type: 'flowchart',
+    maxWidth: 1200
+  }
+];
+
+function buildHTML(cfg, mermaidCode) {
+  const fileBase = cfg.html.replace('.html', '');
+  const isER = cfg.type === 'er';
+  const mermaidInit = isER
+    ? `{ theme: currentTheme, startOnLoad: false, er: { useMaxWidth: true } }`
+    : `{ theme: currentTheme, startOnLoad: false, flowchart: { useMaxWidth: true, htmlLabels: true } }`;
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${cfg.title} - FurEver PawCare</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"><\/script>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --primary: #2e5e3e;
+            --primary-hover: #3f7d54;
+            --accent: #eaf3de;
+            --border-color: #334155;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .header-container {
+            text-align: center;
+            margin-bottom: 24px;
+            max-width: 800px;
+        }
+        h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            background: linear-gradient(135deg, #eaf3de 0%, #10b981 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            transition: all 0.3s ease;
+        }
+        p {
+            color: #94a3b8;
+            margin: 0;
+            font-size: 1rem;
+            transition: color 0.3s ease;
+        }
+        .actions-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        button {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background-color: var(--primary);
+            color: #ffffff;
+        }
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+        .btn-secondary {
+            background-color: #334155;
+            color: #f8fafc;
+            border: 1px solid var(--border-color);
+        }
+        .btn-secondary:hover {
+            background-color: #475569;
+            transform: translateY(-1px);
+        }
+        .flowchart-container {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 32px;
+            width: 90%;
+            max-width: ${cfg.maxWidth}px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+        .mermaid {
+            width: 100%;
+            background: transparent;
+        }
+        ::-webkit-scrollbar { height: 8px; width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        @media print {
+            body { background-color: #ffffff !important; color: #000000 !important; padding: 0; }
+            .actions-bar { display: none; }
+            .flowchart-container { border: none; box-shadow: none; padding: 0; width: 100%; background-color: #ffffff !important; }
+            h1 { -webkit-text-fill-color: initial !important; color: #000000 !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header-container">
+        <h1 id="title-text">${cfg.title}</h1>
+        <p id="desc-text">${cfg.desc}</p>
+    </div>
+    <div class="actions-bar">
+        <button class="btn-secondary" id="theme-toggle" onclick="toggleTheme()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+            Switch to Light Theme (White BG)
+        </button>
+        <button class="btn-primary" onclick="downloadPNG()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Download PNG Image
+        </button>
+        <button class="btn-secondary" onclick="downloadSVG()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Download SVG Image
+        </button>
+        <button class="btn-secondary" onclick="window.print()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+            Print / Save PDF
+        </button>
+    </div>
+    <div class="flowchart-container" id="flowchart-card">
+        <div class="mermaid" id="mermaid-container"></div>
+    </div>
+    <script>
+        const rawMermaidCode = \`${mermaidCode.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;
+        let currentTheme = 'dark';
+        mermaid.initialize(${mermaidInit.replace('currentTheme', "'dark'")});
+        renderDiagram();
+
+        async function renderDiagram() {
+            const container = document.getElementById('mermaid-container');
+            container.removeAttribute('data-processed');
+            container.innerHTML = rawMermaidCode;
+            mermaid.initialize(${mermaidInit});
+            await mermaid.run({ nodes: [container] });
+        }
+
+        function toggleTheme() {
+            currentTheme = currentTheme === 'dark' ? 'default' : 'dark';
+            const btn = document.getElementById('theme-toggle');
+            const card = document.getElementById('flowchart-card');
+            const title = document.getElementById('title-text');
+            const desc = document.getElementById('desc-text');
+            if (currentTheme === 'default') {
+                document.body.style.backgroundColor = '#ffffff';
+                document.body.style.color = '#0f172a';
+                card.style.backgroundColor = '#ffffff';
+                card.style.borderColor = '#cbd5e1';
+                desc.style.color = '#475569';
+                title.style.background = 'initial';
+                title.style.color = '#2e5e3e';
+                title.style.webkitTextFillColor = 'initial';
+                btn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg> Switch to Dark Theme';
+                btn.style.backgroundColor = '#e2e8f0';
+                btn.style.color = '#0f172a';
+            } else {
+                document.body.style.backgroundColor = '#0f172a';
+                document.body.style.color = '#f8fafc';
+                card.style.backgroundColor = '#1e293b';
+                card.style.borderColor = '#334155';
+                desc.style.color = '#94a3b8';
+                title.style.background = 'linear-gradient(135deg, #eaf3de 0%, #10b981 100%)';
+                title.style.webkitBackgroundClip = 'text';
+                title.style.webkitTextFillColor = 'transparent';
+                btn.innerHTML = '<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg> Switch to Light Theme (White BG)';
+                btn.style.backgroundColor = '#334155';
+                btn.style.color = '#f8fafc';
+            }
+            renderDiagram();
+        }
+
+        function downloadSVG() {
+            const svgElement = document.querySelector('.mermaid svg');
+            if (!svgElement) { alert('Diagram is still rendering.'); return; }
+            const clonedSvg = svgElement.cloneNode(true);
+            const bg = currentTheme === 'default' ? '#ffffff' : '#0f172a';
+            clonedSvg.setAttribute('style', 'background-color: ' + bg + '; padding: 20px; font-family: "Plus Jakarta Sans", sans-serif;');
+            const svgString = new XMLSerializer().serializeToString(clonedSvg);
+            const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = '${fileBase}_' + (currentTheme === 'default' ? 'white' : 'dark') + '.svg';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadPNG() {
+            const svgElement = document.querySelector('.mermaid svg');
+            if (!svgElement) { alert('Diagram is still rendering.'); return; }
+            const clonedSvg = svgElement.cloneNode(true);
+            const bgColor = currentTheme === 'default' ? '#ffffff' : '#0f172a';
+            clonedSvg.setAttribute('style', 'background-color: ' + bgColor + '; padding: 30px; font-family: "Plus Jakarta Sans", sans-serif;');
+            const svgString = new XMLSerializer().serializeToString(clonedSvg);
+            const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+            const blobURL = window.URL.createObjectURL(svgBlob);
+            const image = new Image();
+            image.onload = () => {
+                const canvas = document.createElement('canvas');
+                const scale = 2;
+                canvas.width = image.width * scale;
+                canvas.height = image.height * scale;
+                const context = canvas.getContext('2d');
+                context.scale(scale, scale);
+                context.fillStyle = bgColor;
+                context.fillRect(0, 0, image.width, image.height);
+                context.drawImage(image, 0, 0);
+                const pngURL = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.href = pngURL;
+                link.download = '${fileBase}_' + (currentTheme === 'default' ? 'white' : 'dark') + '.png';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(blobURL);
+            };
+            image.src = blobURL;
+        }
+    <\/script>
+</body>
+</html>`;
+}
+
+// Also generate the simple ERD export
+function buildERDExport(mermaidCode) {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ERD Export</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"><\/script>
+    <style>
+        body { margin: 0; padding: 20px; background: #ffffff; }
+        .mermaid { background: #ffffff; }
+    </style>
+</head>
+<body>
+    <div class="mermaid" id="diagram">
+${mermaidCode}
+    </div>
+    <script>
+        mermaid.initialize({ theme: 'default', startOnLoad: true, er: { useMaxWidth: false } });
+    <\/script>
+</body>
+</html>`;
+}
+
+const dir = __dirname;
+
+for (const cfg of diagrams) {
+  const mermaidCode = fs.readFileSync(path.join(dir, cfg.mermaid), 'utf-8').trim();
+  const html = buildHTML(cfg, mermaidCode);
+  fs.writeFileSync(path.join(dir, cfg.html), html, 'utf-8');
+  console.log(`Generated: ${cfg.html}`);
+}
+
+// Generate ERD export
+const erdCode = fs.readFileSync(path.join(dir, 'entity_relationship_diagram.mermaid'), 'utf-8').trim();
+fs.writeFileSync(path.join(dir, '_erd_export.html'), buildERDExport(erdCode), 'utf-8');
+console.log('Generated: _erd_export.html');
+
+console.log('\nAll HTML files generated successfully!');

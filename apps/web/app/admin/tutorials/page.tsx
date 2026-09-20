@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import './tutorials.css';
 
@@ -10,20 +10,15 @@ interface Video {
   description: string;
   url: string;
   isLocal: boolean;
+  category: string;
 }
 
 export default function TutorialsPage() {
   const router = useRouter();
 
-  const [videos, setVideos] = useState<Video[]>([
-    {
-      id: '1',
-      title: 'Platform Overview',
-      description: 'A quick tour of the FurEver Paw Care admin dashboard.',
-      url: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-      isLocal: false
-    }
-  ]);
+  const [videos, setVideos] = useState<Video[]>([]);
+  const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [loading, setLoading] = useState(false);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -37,10 +32,40 @@ export default function TutorialsPage() {
   const [formTitle, setFormTitle] = useState('');
   const [formDesc, setFormDesc] = useState('');
   const [formFile, setFormFile] = useState<File | null>(null);
+  const [formCategory, setFormCategory] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const fetchVideos = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/tutorials');
+      const data = await res.json();
+      if (data.success) {
+        const mapped = data.tutorials.map((t: any) => ({
+          id: t.id,
+          title: t.title,
+          description: t.description || '',
+          url: t.videoLink,
+          isLocal: t.videoLink.startsWith('/') || t.videoLink.includes('uploads') || t.videoLink.includes('w3schools'),
+          category: t.category || 'Other'
+        }));
+        setVideos(mapped);
+      }
+    } catch (err) {
+      console.error('Failed to fetch tutorials:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchVideos();
+  }, []);
 
   const resetForm = () => {
     setFormTitle('');
     setFormDesc('');
+    setFormCategory('');
     setFormFile(null);
   };
 
@@ -55,57 +80,102 @@ export default function TutorialsPage() {
     resetForm();
   };
 
-  const handleAddSubmit = (e: React.FormEvent) => {
+  const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle) return alert('Title is required');
+    if (!formCategory) return alert('Category is required');
+    if (!formFile) return alert('Please upload a video file.');
 
-    let videoUrl = '';
-    let isLocal = false;
+    setIsSaving(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', formFile);
+      const upRes = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const upData = await upRes.json();
+      if (!upData.success) {
+        throw new Error(upData.error || 'Failed to upload video');
+      }
 
-    if (formFile) {
-      videoUrl = URL.createObjectURL(formFile);
-      isLocal = true;
-    } else {
-      return alert('Please upload a video file.');
+      const res = await fetch('/api/tutorials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: formTitle,
+          description: formDesc,
+          videoLink: upData.url,
+          category: formCategory
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchVideos();
+        closeAddModal();
+      } else {
+        alert(data.error || 'Failed to save video tutorial');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error saving video tutorial');
+    } finally {
+      setIsSaving(false);
     }
-
-    const newVideo: Video = {
-      id: Date.now().toString(),
-      title: formTitle,
-      description: formDesc,
-      url: videoUrl,
-      isLocal
-    };
-
-    setVideos([...videos, newVideo]);
-    closeAddModal();
   };
 
-  const handleEditSubmit = (e: React.FormEvent) => {
+  const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle) return alert('Title is required');
+    if (!formCategory) return alert('Category is required');
 
-    const currentVideo = videos.find(v => v.id === editingVideoId);
-    let videoUrl = currentVideo?.url || '';
-    let isLocal = currentVideo?.isLocal || false;
+    setIsSaving(true);
+    try {
+      const currentVideo = videos.find(v => v.id === editingVideoId);
+      let videoUrl = currentVideo?.url || '';
 
-    if (formFile) {
-      videoUrl = URL.createObjectURL(formFile);
-      isLocal = true;
+      if (formFile) {
+        const formData = new FormData();
+        formData.append('file', formFile);
+        const upRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const upData = await upRes.json();
+        if (!upData.success) {
+          throw new Error(upData.error || 'Failed to upload video');
+        }
+        videoUrl = upData.url;
+      }
+
+      const res = await fetch(`/api/tutorials/${editingVideoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: formTitle,
+          description: formDesc,
+          videoLink: videoUrl,
+          category: formCategory
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchVideos();
+        closeEditModal();
+      } else {
+        alert(data.error || 'Failed to update video tutorial');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error updating video tutorial');
+    } finally {
+      setIsSaving(false);
     }
-
-    setVideos(videos.map(v => 
-      v.id === editingVideoId 
-        ? { ...v, title: formTitle, description: formDesc, url: videoUrl, isLocal } 
-        : v
-    ));
-    closeEditModal();
   };
 
   const openEditModal = (video: Video) => {
     setEditingVideoId(video.id);
     setFormTitle(video.title);
     setFormDesc(video.description);
+    setFormCategory(video.category);
     setFormFile(null);
     setIsEditModalOpen(true);
   };
@@ -120,47 +190,92 @@ export default function TutorialsPage() {
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = () => {
-    if (activeVideo) {
-      setVideos(videos.filter(v => v.id !== activeVideo.id));
+  const confirmDelete = async () => {
+    if (!activeVideo) return;
+    try {
+      const res = await fetch(`/api/tutorials/${activeVideo.id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchVideos();
+      } else {
+        alert(data.error || 'Failed to delete video tutorial');
+      }
+    } catch (err) {
+      alert('Error deleting video tutorial');
+    } finally {
+      setIsDeleteModalOpen(false);
+      setActiveVideo(null);
     }
-    setIsDeleteModalOpen(false);
-    setActiveVideo(null);
   };
+
+  const filteredVideos = filterCategory === 'all' 
+    ? videos 
+    : videos.filter(v => v.category === filterCategory);
+
+  const categories = [
+    'Dog Training',
+    'Cat Care',
+    'Grooming',
+    'Health & Diet',
+    'Getting Started',
+    'Appointment Management',
+    'Telemedicine',
+    'Billing & Payments',
+    'Inventory',
+    'Pet Records',
+    'User Management',
+    'Advanced Features'
+  ];
 
   return (
     <>
-      <div className="module-content" style={{ width: "100%", padding: 0, margin: 0 }} id="mainContent">
-          <div className="tutorials-container">
-              <div className="header-actions">
-                  <h2><i className="fas fa-graduation-cap"></i> Video Tutorials</h2>
-                  <button className="btn-add" onClick={() => setIsAddModalOpen(true)}>
-                    <i className="fas fa-plus"></i> Add New Video
-                  </button>
+      <div className="module-content" style={{ width: "100%", padding: '20px', margin: 0 }} id="mainContent">
+          <div className="tutorials-container" style={{ width: "100%" }}>
+              <div className="header-actions" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' }}>
+                  <h2 style={{ margin: 0 }}><i className="fas fa-graduation-cap"></i> Video Tutorials</h2>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                      <select 
+                          className="form-control" 
+                          style={{ width: '220px', padding: '10px 15px', borderRadius: '8px', border: '1px solid #e2e8f0', fontSize: '0.95rem', color: '#4a5568', background: 'white', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.02)' }}
+                          value={filterCategory}
+                          onChange={(e) => setFilterCategory(e.target.value)}
+                      >
+                          <option value="all">All Categories</option>
+                          {categories.map(cat => (
+                              <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                      </select>
+                      <button className="btn-add" onClick={() => setIsAddModalOpen(true)}>
+                        <i className="fas fa-plus"></i> Add New Video
+                      </button>
+                  </div>
               </div>
+
               <div id="videosGrid" className="videos-grid">
-                  {videos.length === 0 ? (
+                  {loading ? (
+                    <div style={{gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#a0aec0'}}>
+                      <i className="fas fa-spinner fa-spin" style={{fontSize: '3rem', marginBottom: '15px'}}></i>
+                      <p>Loading tutorials from database...</p>
+                    </div>
+                  ) : filteredVideos.length === 0 ? (
                     <div style={{gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#a0aec0'}}>
                       <i className="fas fa-video-slash" style={{fontSize: '3rem', marginBottom: '15px'}}></i>
-                      <p>No tutorial videos added yet.</p>
+                      <p>No tutorial videos found in this category.</p>
                     </div>
                   ) : (
-                    videos.map(video => (
+                    filteredVideos.map(video => (
                       <div className="video-card" key={video.id}>
                           <div className="video-thumbnail" onClick={() => openWatchModal(video)}>
-                              {video.isLocal ? (
-                                <video src={video.url} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
-                              ) : (
-                                <img src={`https://img.youtube.com/vi/${video.url.split('embed/')[1]?.split('?')[0]}/hqdefault.jpg`} alt={video.title} onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/640x360?text=Video')} />
-                              )}
+                              <video src={video.url} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
                               <div className="play-button"><i className="fas fa-play"></i></div>
                           </div>
                           <div className="video-info">
+                              <span style={{fontSize: '0.75rem', color: '#2E5E3E', fontWeight: 600, background: 'rgba(46,94,62,0.1)', padding: '2px 8px', borderRadius: '10px', display: 'inline-block', marginBottom: '8px'}}>{video.category}</span>
                               <h3 className="video-title">{video.title}</h3>
                               <p className="video-desc">{video.description}</p>
-                              <div className="video-meta">
-                                  <span><i className="fas fa-clock"></i> Just now</span>
-                              </div>
+                              
                               <div className="card-actions" style={{ marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #e2e8f0' }}>
                                   <button className="btn-edit" onClick={() => openEditModal(video)}><i className="fas fa-edit"></i> Edit</button>
                                   <button className="btn-delete" onClick={() => openDeleteModal(video)}><i className="fas fa-trash"></i> Delete</button>
@@ -195,11 +310,22 @@ export default function TutorialsPage() {
                             <label><i className="fas fa-align-left"></i> Description</label>
                             <textarea className="form-control" rows={3} value={formDesc} onChange={e => setFormDesc(e.target.value)} placeholder="Brief description of this tutorial..."></textarea>
                         </div>
+                        <div className="form-group">
+                            <label><i className="fas fa-tag"></i> Category</label>
+                            <select className="form-control" value={formCategory} onChange={e => setFormCategory(e.target.value)} required>
+                                <option value="">Select a category...</option>
+                                {categories.map(cat => (
+                                  <option key={cat} value={cat}>{cat}</option>
+                                ))}
+                            </select>
+                        </div>
                     </form>
                 </div>
                 <div className="modal-actions">
-                    <button className="btn btn-secondary" onClick={closeAddModal}>Cancel</button>
-                    <button className="btn btn-primary" onClick={handleAddSubmit}>Save Video</button>
+                    <button className="btn btn-secondary" onClick={closeAddModal} disabled={isSaving}>Cancel</button>
+                    <button className="btn btn-primary" onClick={handleAddSubmit} disabled={isSaving}>
+                      {isSaving ? 'Uploading...' : 'Save Video'}
+                    </button>
                 </div>
             </div>
         </div>
@@ -226,11 +352,22 @@ export default function TutorialsPage() {
                             <label><i className="fas fa-align-left"></i> Description</label>
                             <textarea className="form-control" rows={3} value={formDesc} onChange={e => setFormDesc(e.target.value)} placeholder="Brief description of this tutorial..."></textarea>
                         </div>
+                        <div className="form-group">
+                            <label><i className="fas fa-tag"></i> Category</label>
+                            <select className="form-control" value={formCategory} onChange={e => setFormCategory(e.target.value)} required>
+                                <option value="">Select a category...</option>
+                                {categories.map(cat => (
+                                  <option key={cat} value={cat}>{cat}</option>
+                                ))}
+                            </select>
+                        </div>
                     </form>
                 </div>
                 <div className="modal-actions">
-                    <button className="btn btn-secondary" onClick={closeEditModal}>Cancel</button>
-                    <button className="btn btn-primary" onClick={handleEditSubmit}>Update Video</button>
+                    <button className="btn btn-secondary" onClick={closeEditModal} disabled={isSaving}>Cancel</button>
+                    <button className="btn btn-primary" onClick={handleEditSubmit} disabled={isSaving}>
+                      {isSaving ? 'Saving...' : 'Update Video'}
+                    </button>
                 </div>
             </div>
         </div>
@@ -263,11 +400,7 @@ export default function TutorialsPage() {
                 </div>
                 <div className="modal-body">
                     <div style={{position: 'relative', paddingBottom: '56.25%', height: '0', overflow: 'hidden', background: '#000'}}>
-                        {activeVideo.isLocal ? (
-                          <video src={activeVideo.url} style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%'}} controls autoPlay></video>
-                        ) : (
-                          <iframe style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%'}} src={activeVideo.url} frameBorder={0} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
-                        )}
+                        <video src={activeVideo.url} style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%'}} controls autoPlay></video>
                     </div>
                     <p style={{marginTop: '15px', color: '#4a5568'}}>{activeVideo.description}</p>
                 </div>

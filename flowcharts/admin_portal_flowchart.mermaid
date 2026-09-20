@@ -1,0 +1,59 @@
+graph LR
+    %% Styles
+    classDef startEnd fill:#2E5E3E,stroke:#2E5E3E,color:#FFFFFF,stroke-width:2px;
+    classDef decision fill:#FFF2CC,stroke:#D6B656,color:#5A4A1C,stroke-width:2px;
+    classDef process fill:#F5F5F5,stroke:#CCCCCC,color:#333333,stroke-width:1.5px;
+    classDef action fill:#E8F0FE,stroke:#4285F4,color:#1A73E8,stroke-width:1px;
+
+    Start([START]) --> Login[Admin Login Page]
+    Login --> CheckLogin{Account Valid?}
+    CheckLogin -- No --> Login
+    CheckLogin -- Yes --> Dashboard[Admin Dashboard]
+
+    Dashboard --> SelectAction{Select Action}
+
+    %% 1. Management
+    SelectAction --> Management[Management Modules]
+    Management --> ManageDash[View Summary Metrics]
+    Management --> ManageInv[Track & Update Inventory]
+    Management --> ManageProd[Add / Edit Products]
+    Management --> ManageBilling[Create Invoice & Record Bill]
+    ManageBilling --> LoopBack1[Return to Dashboard] --> Dashboard
+
+    %% 2. Clinic Operations
+    SelectAction --> Clinic[Clinic Modules]
+    Clinic --> ManageAppt{Appointment Actions}
+    ManageAppt --> ApproveAppt[Approve Request]
+    ManageAppt --> CancelAppt[Decline / Cancel]
+    ManageAppt --> ReschedAppt[Reschedule Booking]
+    Clinic --> ManageTelemed[Start Video Consultation]
+    Clinic --> SendSMS[Send Manual/Auto SMS Reminders]
+    ApproveAppt & CancelAppt & ReschedAppt & ManageTelemed & SendSMS --> LoopBack2[Return to Dashboard] --> Dashboard
+
+    %% 3. Records Management
+    SelectAction --> Records[Records Modules]
+    Records --> PetRecs[Manage Pet Medical Logs]
+    Records --> UserRecs[Search & Edit Pet Owners]
+    Records --> Reports[Generate & Print Diagnostic Reports]
+    Records --> Analytics[View Disease & Dietary Analytics]
+    Records --> Tutorials[Upload Care Video Guides]
+    Records --> Announcements[Publish Announcements & News]
+    Records --> Feedback[Review User Ratings & Bug Reports]
+    PetRecs & UserRecs & Reports & Analytics & Tutorials & Announcements & Feedback --> LoopBack3[Return to Dashboard] --> Dashboard
+
+    %% 4. Profile & Settings
+    Dashboard --> Profile[Admin Profile] --> UpdateProfile[Save Changes] --> LoopBack4[Return to Dashboard] --> Dashboard
+    Dashboard --> Settings[Settings Dropdown]
+    Settings --> ChangePassword[Update Password]
+    Settings --> ToggleLang[Toggle Language]
+    Settings --> ToggleMode[Toggle Dark Mode]
+    Settings --> Archive[Access Archive & Restore Data]
+    ChangePassword & ToggleLang & ToggleMode & Archive --> LoopBack5[Return to Dashboard] --> Dashboard
+
+    %% Logout
+    Dashboard --> Logout[Logout] --> End([END])
+
+    class Start,End startEnd;
+    class CheckLogin,SelectAction,ManageAppt decision;
+    class Login,Dashboard,Management,Clinic,Records,Settings,Profile,Logout process;
+    class ManageDash,ManageInv,ManageProd,ManageBilling,ApproveAppt,CancelAppt,ReschedAppt,ManageTelemed,SendSMS,PetRecs,UserRecs,Reports,Analytics,Tutorials,Announcements,Feedback,UpdateProfile,ChangePassword,ToggleLang,ToggleMode,Archive,LoopBack1,LoopBack2,LoopBack3,LoopBack4,LoopBack5 action;

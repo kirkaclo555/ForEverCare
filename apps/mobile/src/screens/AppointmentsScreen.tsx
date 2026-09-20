@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -22,21 +22,79 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import { useUser } from '../context/UserContext';
 import { usePetContext } from '../context/PetContext';
+import { API_URL } from '../config/api';
+import { useTheme } from '../context/ThemeContext';
+import * as Clipboard from 'expo-clipboard';
+import * as ImagePicker from 'expo-image-picker';
+import GuestRestriction from '../components/GuestRestriction';
+import { useLanguage } from '../context/LanguageContext';
+import { promptGuestAuth } from '../utils/auth';
+
+const PetAvatar = ({ avatar, species, size = 16, color = 'white', style }: { avatar: string | null | undefined, species: string, size?: number, color?: string, style?: any }) => {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    setHasError(false);
+  }, [avatar]);
+
+  const isImage = avatar && 
+    (avatar.startsWith('file') || avatar.startsWith('http') || avatar.startsWith('data:image/')) && 
+    !hasError;
+
+  if (isImage) {
+    return (
+      <Image 
+        source={{ uri: avatar }} 
+        style={style} 
+        onError={() => setHasError(true)}
+      />
+    );
+  }
+
+  const iconName = avatar === 'cat' || avatar === 'dog' || avatar === 'paw' 
+    ? avatar 
+    : (species.toLowerCase() === 'cat' ? 'cat' : 'dog');
+
+  return (
+    <FontAwesome5 
+      name={iconName} 
+      size={size} 
+      color={color} 
+    />
+  );
+};
 
 export default function AppointmentsScreen() {
+  const { theme, isDarkMode } = useTheme();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user } = useUser();
-  const { pets } = usePetContext();
+  const { language } = useLanguage();
+  const { pets, refreshPets } = usePetContext();
   const [filter, setFilter] = useState('All');
   const [selectedPetId, setSelectedPetId] = useState(pets.length > 0 ? pets[0].id : '');
 
   const [appointments, setAppointments] = useState<any[]>([]);
   const [allAppointments, setAllAppointments] = useState<any[]>([]);
-  const [disabledTimeSlots, setDisabledTimeSlots] = useState<Record<string, {time: string, enabled: boolean}[]>>({});
+  const [disabledTimeSlots, setDisabledTimeSlots] = useState<Record<string, { time: string, enabled: boolean }[]>>({});
   const [refreshing, setRefreshing] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
+  const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
+  const [inpersonPrice, setInpersonPrice] = useState(500);
+  const [telemedicinePrice, setTelemedicinePrice] = useState(300);
+
+  const copyToClipboard = async (code: string) => {
+    await Clipboard.setStringAsync(code);
+    Alert.alert("Code Copied", "Session code copied to clipboard!");
+  };
 
   const fetchAppointments = () => {
-    fetch('http://192.168.100.16:3000/api/timeslots')
+    fetch(`${API_URL}/api/timeslots?t=${Date.now()}`, {
+      cache: 'no-store',
+      headers: {
+        'Pragma': 'no-cache',
+        'Cache-Control': 'no-cache'
+      }
+    })
       .then(res => res.json())
       .then(data => {
         if (data && typeof data === 'object' && !data.error) {
@@ -45,13 +103,13 @@ export default function AppointmentsScreen() {
       })
       .catch(err => console.error('Failed to fetch timeslots:', err));
 
-    return fetch('http://192.168.100.16:3000/api/appointments')
+    return fetch(`${API_URL}/api/appointments`)
       .then(res => res.json())
       .then(data => {
         if (data && Array.isArray(data)) {
           setAllAppointments(data);
 
-          const userAppointments = data.filter((app: any) => 
+          const userAppointments = data.filter((app: any) =>
             app.owner === user?.fullName || app.contact === user?.phoneNumber
           );
 
@@ -65,31 +123,80 @@ export default function AppointmentsScreen() {
             mode: app.type === 'telemedicine' ? '📹 Telemedicine' : '🏥 In-Person',
             date: app.date,
             time: app.time,
-            status: app.status === 'Cancelled' ? 'Cancelled' : app.status === 'pending' || app.status === 'confirmed' ? 'Upcoming' : 'Completed',
-            statusColor: app.status === 'Cancelled' ? { bg: '#fed7d7', text: '#e53e3e' } : app.status === 'confirmed' ? { bg: '#feebc8', text: '#dd6b20' } : { bg: '#e6fffa', text: '#319795' }
+            sessionCode: app.sessionCode,
+            createdAt: app.createdAt,
+            purpose: app.purpose,
+            status: app.purpose?.startsWith('[CANCEL_REQUESTED]') ? 'Cancel Pending' :
+              app.status?.toLowerCase() === 'cancelled' ? 'Cancelled' :
+                app.status?.toLowerCase() === 'declined' ? 'Declined' :
+                (app.status?.toLowerCase() === 'pending' || app.status?.toLowerCase() === 'confirmed' || app.status?.toLowerCase() === 'paid') ? 'Upcoming' :
+                  'Completed',
+            rawStatus: app.status?.toLowerCase() || 'pending',
+            statusLabel: app.status?.toLowerCase() === 'pending' ? 'Awaiting Verification' :
+              app.status?.toLowerCase() === 'paid' ? 'Payment Verified' :
+                app.status?.toLowerCase() === 'confirmed' ? 'Confirmed' :
+                  app.status?.toLowerCase() === 'cancelled' ? 'Cancelled' :
+                    app.status?.toLowerCase() === 'declined' ? 'Declined' :
+                      app.status?.toLowerCase() === 'completed' ? 'Completed' : app.status,
+            statusColor: app.purpose?.startsWith('[CANCEL_REQUESTED]') ? { bg: '#fee2e2', text: '#ef4444' } :
+              app.status?.toLowerCase() === 'cancelled' ? { bg: '#fed7d7', text: '#e53e3e' } :
+                app.status?.toLowerCase() === 'declined' ? { bg: '#fefcbf', text: '#dd6b20' } :
+                app.status?.toLowerCase() === 'confirmed' ? { bg: '#feebc8', text: '#dd6b20' } :
+                  app.status?.toLowerCase() === 'paid' ? { bg: '#dbeafe', text: '#2563eb' } :
+                    app.status?.toLowerCase() === 'pending' ? { bg: '#edf2f7', text: '#4a5568' } :
+                      { bg: '#e6fffa', text: '#319795' }
           }));
-          setAppointments(mapped.reverse());
+          const sorted = [...mapped].sort((a, b) => {
+            const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            const validA = isNaN(timeA) ? 0 : timeA;
+            const validB = isNaN(timeB) ? 0 : timeB;
+            return validB - validA;
+          });
+          setAppointments(sorted);
         }
       })
       .catch(err => console.error('Failed to fetch appointments:', err));
   };
 
+  const fetchPrices = React.useCallback(async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/appointments/prices?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Pragma': 'no-cache',
+          'Cache-Control': 'no-cache'
+        }
+      });
+      const data = await response.json();
+      if (data) {
+        if (data.inperson !== undefined) setInpersonPrice(data.inperson);
+        if (data.telemedicine !== undefined) setTelemedicinePrice(data.telemedicine);
+      }
+    } catch (err) {
+      console.error('Error fetching appointment prices on mobile:', err);
+    }
+  }, []);
+
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
-    // Since fetchAppointments returns the second fetch promise, we can chain finally
+    fetchPrices();
     fetchAppointments()?.finally(() => setRefreshing(false));
-  }, []);
+  }, [fetchPrices]);
 
 
   const stats = [
     { label: 'My Total', count: appointments.length, icon: 'paw', color: '#3182ce' },
-    { label: 'Upcoming', count: appointments.filter(a => a.status === 'Upcoming').length, icon: 'calendar-alt', color: '#dd6b20' },
+    { label: 'Upcoming', count: appointments.filter(a => a.status === 'Upcoming' || a.status === 'Cancel Pending').length, icon: 'calendar-alt', color: '#dd6b20' },
     { label: 'Completed', count: appointments.filter(a => a.status === 'Completed').length, icon: 'check-circle', color: '#38a169' },
   ];
 
-  const filteredAppointments = appointments.filter(app =>
-    filter === 'All' ? true : app.status === filter
-  );
+  const filteredAppointments = appointments.filter(app => {
+    if (filter === 'All') return true;
+    if (filter === 'Upcoming') return app.status === 'Upcoming' || app.status === 'Cancel Pending';
+    if (filter === 'Cancelled') return app.status === 'Cancelled' || app.status === 'Declined';
+    return app.status === filter;
+  });
 
   // === BOOKING MODAL STATE ===
   const [isModalVisible, setModalVisible] = useState(false);
@@ -97,12 +204,57 @@ export default function AppointmentsScreen() {
   const [calendarMonthOffset, setCalendarMonthOffset] = useState(0);
 
   const [consultType, setConsultType] = useState('In-Person Visit');
-  const [selectedDate, setSelectedDate] = useState('Today');
+  const [selectedDate, setSelectedDate] = useState('Select Date');
   const [selectedTime, setSelectedTime] = useState('09:00 AM');
   const [appointmentReason, setAppointmentReason] = useState('Annual Checkup');
   const [appointmentNote, setAppointmentNote] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [referenceNumber, setReferenceNumber] = useState('');
+  const [receiptImage, setReceiptImage] = useState('');
+
+  const handlePickReceiptImage = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (permissionResult.granted === false) {
+      Alert.alert("Permission Refused", "You've refused to allow this app to access your photos!");
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.3,
+      base64: true,
+    });
+    const isCancelled = result.canceled !== undefined ? result.canceled : (result as any).cancelled;
+    if (!isCancelled) {
+      const asset = result.assets ? result.assets[0] : (result as any);
+      let newReceiptUri = asset.uri;
+      if (asset.base64) {
+        newReceiptUri = `data:image/jpeg;base64,${asset.base64}`;
+      }
+      setReceiptImage(newReceiptUri);
+
+      // Upload to Cloudinary in background to obtain permanent short URL
+      try {
+        fetch(`${API_URL}/api/upload`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            base64: newReceiptUri,
+            name: `receipt_${Date.now()}.jpg`,
+          }),
+        })
+          .then(res => res.json())
+          .then(uploadData => {
+            if (uploadData.success && uploadData.url) {
+              setReceiptImage(uploadData.url);
+            }
+          })
+          .catch(upErr => console.warn('Receipt background upload warning:', upErr));
+      } catch (uploadCatch) {
+        console.warn('Receipt upload exception:', uploadCatch);
+      }
+    }
+  };
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentFailed, setPaymentFailed] = useState(false);
@@ -115,53 +267,128 @@ export default function AppointmentsScreen() {
 
   React.useEffect(() => {
     fetchAppointments();
-  }, [isModalVisible, isRescheduleModalVisible]);
+    fetchPrices();
 
-  const feeAmount = consultType === 'In-Person Visit' ? 500 : 300;
+    const interval = setInterval(() => {
+      fetchAppointments();
+      fetchPrices();
+    }, 8000); // Poll every 8 seconds for dynamic updates
+
+    return () => clearInterval(interval);
+  }, [isModalVisible, isRescheduleModalVisible, fetchPrices]);
+
+  const feeAmount = consultType === 'In-Person Visit' ? inpersonPrice : telemedicinePrice;
 
   // Helpers
   const formatDateForUI = (dateString: string) => {
     if (!dateString || dateString === 'Today' || dateString === 'Select Date') return dateString;
     if (dateString.includes('-')) {
-        const [y, m, d] = dateString.split('-');
-        const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-        return date.toLocaleString('default', { month: 'short', day: 'numeric', year: 'numeric' });
+      const [y, m, d] = dateString.split('-');
+      const date = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+      return date.toLocaleString('default', { month: 'short', day: 'numeric', year: 'numeric' });
     }
     return dateString;
   };
 
-  const nextStep = () => {
+  const nextStep = async () => {
+    if (currentStep === 1) {
+      if (!selectedPetId) {
+        Alert.alert("Pet Required", "Please select a pet for this appointment.");
+        return;
+      }
+    }
+
+    if (currentStep === 2) {
+      if (selectedDate === 'Select Date' || selectedDate === 'Today') {
+        Alert.alert("Date Required", "Please select an available date on the calendar.");
+        return;
+      }
+      const bookedTimes = getBookedTimesForDate(selectedDate);
+      if (bookedTimes.includes(selectedTime)) {
+        Alert.alert("Time Required", "The selected time slot is already booked. Please choose another time.");
+        return;
+      }
+    }
+
     if (currentStep === 4) {
-      if (!paymentMethod) return;
-      
+      if (!paymentMethod) {
+        Alert.alert("Required", "Please choose a payment method.");
+        return;
+      }
+      if ((paymentMethod === 'GCash' || paymentMethod === 'Maya') && (!referenceNumber || referenceNumber.trim().length < 13)) {
+        Alert.alert("Required", `Please enter a valid 13-digit ${paymentMethod} reference number.`);
+        return;
+      }
+      if ((paymentMethod === 'GCash' || paymentMethod === 'Maya') && !receiptImage) {
+        Alert.alert("Required", `Please upload a screenshot of your ${paymentMethod} receipt.`);
+        return;
+      }
+
+      const formattedDate = selectedDate;
+      const selectedPet = pets.find(p => p.id === selectedPetId);
+
+      if (!user?.id || user.id === '' || !selectedPet?.id || selectedPet.id === '') {
+        Alert.alert("Error", "Invalid user or pet ID. Please ensure your profile and pets are synced to the database before booking.");
+        return;
+      }
+
+      // Check duplicate locally in allAppointments
+      const isDuplicate = allAppointments.some((app: any) => {
+        const isSamePet = app.pet?.toLowerCase() === selectedPet?.name?.toLowerCase();
+        const isSameDate = app.date === formattedDate;
+        const isSameTime = app.time === selectedTime;
+        const isNotCancelled = app.status?.toLowerCase() !== 'cancelled';
+        return isSamePet && isSameDate && isSameTime && isNotCancelled;
+      });
+
+      if (isDuplicate) {
+        Alert.alert(
+          "Duplicate Appointment",
+          `An appointment for ${selectedPet?.name} on ${formatDateForUI(formattedDate)} at ${selectedTime} already exists.`
+        );
+        return;
+      }
+
       setPaymentFailed(false);
       setIsProcessing(true);
       setCurrentStep(5);
 
-      const formattedDate = selectedDate === 'Today' ? new Date().toISOString().split('T')[0] : selectedDate;
-
-      const selectedPet = pets.find(p => p.id === selectedPetId);
-
-      if (!user?.id || user.id === '' || !selectedPet?.id || String(selectedPet.id).includes('.')) {
-        Alert.alert("Error", "Invalid user or pet ID. Please ensure your profile and pets are synced to the database before booking.");
-        setIsProcessing(false);
-        setCurrentStep(4);
-        return;
+      // Pre-sync pet if it has an unsynced or temporary ID
+      let resolvedPetId = selectedPet.id;
+      if (resolvedPetId.startsWith('temp-') || resolvedPetId.includes('.')) {
+        try {
+          const syncRes = await fetch(`${API_URL}/api/pets`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: user.id, pet: selectedPet })
+          });
+          if (syncRes.ok) {
+            const syncData = await syncRes.json();
+            if (syncData.pet?.id) {
+              resolvedPetId = syncData.pet.id;
+              refreshPets();
+            }
+          }
+        } catch (syncErr) {
+          console.warn('Pre-booking pet sync error:', syncErr);
+        }
       }
 
       const newAppointment = {
         ownerId: user?.id,
-        petId: selectedPet?.id,
+        petId: resolvedPetId,
+        pet: selectedPet,
         date: formattedDate,
         time: selectedTime,
         type: consultType === 'In-Person Visit' ? 'inperson' : 'telemedicine',
         purpose: appointmentReason,
         status: "pending",
-        referenceNumber: paymentMethod === 'GCash' ? referenceNumber : undefined,
+        referenceNumber: (paymentMethod === 'GCash' || paymentMethod === 'Maya') ? referenceNumber : undefined,
         amountPaid: feeAmount,
+        receiptImage: (paymentMethod === 'GCash' || paymentMethod === 'Maya') ? receiptImage : undefined,
       };
 
-      fetch('http://192.168.100.16:3000/api/appointments', {
+      fetch(`${API_URL}/api/appointments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newAppointment)
@@ -174,6 +401,7 @@ export default function AppointmentsScreen() {
           return res.json();
         })
         .then(() => fetchAppointments())
+        .then(() => refreshPets())
         .then(() => {
           setIsProcessing(false);
           setCurrentStep(6); // Success + Receipt
@@ -183,6 +411,7 @@ export default function AppointmentsScreen() {
           setIsProcessing(false);
           setPaymentFailed(true);
           setCurrentStep(4); // Kick back to step 4 on failure
+          Alert.alert("Booking Failed", err.message || "An unexpected error occurred. Please try again.");
         });
 
       return;
@@ -195,11 +424,13 @@ export default function AppointmentsScreen() {
     setTimeout(() => {
       setCurrentStep(1);
       setConsultType('In-Person Visit');
-      setSelectedDate('Today');
+      setSelectedDate('Select Date');
       setSelectedTime('09:00 AM');
       setAppointmentReason('Annual Checkup');
       setAppointmentNote('');
       setPaymentMethod('');
+      setReferenceNumber('');
+      setReceiptImage('');
       setPaymentFailed(false);
       setIsProcessing(false);
       setCalendarMonthOffset(0);
@@ -210,13 +441,40 @@ export default function AppointmentsScreen() {
 
   const getBookedTimesForDate = (formattedDate: string) => {
     const booked = allAppointments
-      .filter(a => a.date === formattedDate && a.status !== 'Cancelled')
+      .filter(a => a.date === formattedDate && a.status?.toLowerCase() !== 'cancelled')
       .map(a => a.time);
-    
+
     const disabledForDate = disabledTimeSlots[formattedDate] || [];
     const disabled = disabledForDate.filter(s => !s.enabled).map(s => s.time);
 
-    return Array.from(new Set([...booked, ...disabled]));
+    // Add past slots for today
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${year}-${month}-${day}`;
+
+    const pastSlots: string[] = [];
+    if (formattedDate === todayStr) {
+      ALL_TIME_SLOTS.forEach(t => {
+        const match = t.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
+        if (match) {
+          let hours = parseInt(match[1], 10);
+          const minutes = parseInt(match[2], 10);
+          const ampm = match[3].toUpperCase();
+          if (ampm === 'PM' && hours < 12) hours += 12;
+          if (ampm === 'AM' && hours === 12) hours = 0;
+
+          const currentHours = today.getHours();
+          const currentMinutes = today.getMinutes();
+          if (hours < currentHours || (hours === currentHours && minutes <= currentMinutes)) {
+            pastSlots.push(t);
+          }
+        }
+      });
+    }
+
+    return Array.from(new Set([...booked, ...disabled, ...pastSlots]));
   };
 
   const getFullyBookedDates = (year: number, month: number) => {
@@ -237,20 +495,24 @@ export default function AppointmentsScreen() {
   };
 
   const processCancel = (appId: string) => {
-    fetch(`http://192.168.100.16:3000/api/appointments/${appId}`, {
+    fetch(`${API_URL}/api/appointments/${appId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'Cancelled' })
+      body: JSON.stringify({ cancelRequested: true })
     })
       .then(res => res.json())
-      .then(() => fetchAppointments())
-      .catch(err => Alert.alert("Error", "Failed to cancel appointment."));
+      .then(() => {
+        fetchAppointments();
+        Alert.alert("Cancellation Requested", "Your request for cancellation has been sent to the admin.");
+      })
+      .catch(err => Alert.alert("Error", "Failed to submit cancellation request."));
   };
 
   const handleCancelClick = (appId: string) => {
-    const bookedAt = parseInt(appId, 10);
+    const app = appointments.find(a => a.id === appId);
+    const createdTime = app?.createdAt ? new Date(app.createdAt).getTime() : Date.now();
     const now = Date.now();
-    const isWithin24Hours = (now - bookedAt) < 24 * 60 * 60 * 1000;
+    const isWithin24Hours = (now - createdTime) < 24 * 60 * 60 * 1000;
 
     if (!isWithin24Hours) {
       Alert.alert(
@@ -261,15 +523,63 @@ export default function AppointmentsScreen() {
       return;
     }
 
+    // Look up the raw status from the original appointment data
+    const rawApp = allAppointments.find((a: any) => a.id === appId);
+    const rawStatus = rawApp?.status?.toLowerCase() || app?.rawStatus || 'pending';
+    const isPaymentVerified = rawStatus === 'paid';
+
+    if (isPaymentVerified) {
+      Alert.alert(
+        "Cancel Appointment",
+        "Your payment has been verified by the clinic. If you proceed with cancellation, a refund will be initiated and may take 3-5 business days to process. Do you want to continue?",
+        [
+          { text: "Go Back", style: "cancel" },
+          {
+            text: "Continue Cancellation",
+            style: "destructive",
+            onPress: () => processCancel(appId)
+          }
+        ]
+      );
+    } else {
+      Alert.alert(
+        "Cancel Appointment",
+        "Your payment has not yet been verified by the clinic. If you cancel now, no refund will be issued. Do you want to continue?",
+        [
+          { text: "Go Back", style: "cancel" },
+          {
+            text: "Continue Cancellation",
+            style: "destructive",
+            onPress: () => processCancel(appId)
+          }
+        ]
+      );
+    }
+  };
+
+  const processWithdrawCancel = (appId: string) => {
+    fetch(`${API_URL}/api/appointments/${appId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ withdrawCancel: true })
+    })
+      .then(res => res.json())
+      .then(() => {
+        fetchAppointments();
+        Alert.alert("Cancellation Withdrawn", "Your cancellation request has been successfully withdrawn. Your appointment remains active.");
+      })
+      .catch(err => Alert.alert("Error", "Failed to withdraw cancellation request."));
+  };
+
+  const handleWithdrawCancelClick = (appId: string) => {
     Alert.alert(
-      "Cancel Appointment",
-      "Are you sure you want to cancel this appointment?",
+      "Keep Appointment",
+      "Are you sure you want to withdraw your cancellation request and keep this appointment?",
       [
         { text: "No", style: "cancel" },
-        { 
-          text: "Yes, Cancel", 
-          style: "destructive",
-          onPress: () => processCancel(appId)
+        {
+          text: "Yes, Withdraw",
+          onPress: () => processWithdrawCancel(appId)
         }
       ]
     );
@@ -288,10 +598,10 @@ export default function AppointmentsScreen() {
       Alert.alert("Error", "Please select a valid new date.");
       return;
     }
-    
+
     const formattedDate = rescheduleDate;
 
-    fetch(`http://192.168.100.16:3000/api/appointments/${rescheduleAppId}`, {
+    fetch(`${API_URL}/api/appointments/${rescheduleAppId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ date: formattedDate, time: rescheduleTime })
@@ -325,11 +635,13 @@ export default function AppointmentsScreen() {
                 onPress={() => setSelectedPetId(pet.id)}
               >
                 <View style={[styles.petSelectAvatar, selectedPetId === pet.id && styles.petSelectAvatarActive]}>
-                  {pet.avatar.startsWith('file') || pet.avatar.startsWith('http') ? (
-                    <Image source={{ uri: pet.avatar }} style={{width: 30, height: 30, borderRadius: 15}} />
-                  ) : (
-                    <FontAwesome5 name={pet.avatar} size={16} color={selectedPetId === pet.id ? '#3a7d55' : '#718096'} />
-                  )}
+                  <PetAvatar 
+                    avatar={pet.avatar} 
+                    species={pet.species} 
+                    size={16} 
+                    color={selectedPetId === pet.id ? '#3a7d55' : '#718096'} 
+                    style={{ width: 30, height: 30, borderRadius: 15 }} 
+                  />
                 </View>
                 <Text style={[styles.petSelectName, selectedPetId === pet.id && styles.petSelectNameActive]}>{pet.name}</Text>
               </TouchableOpacity>
@@ -344,7 +656,7 @@ export default function AppointmentsScreen() {
             <FontAwesome5 name="hospital" size={24} color={consultType === 'In-Person Visit' ? '#3a7d55' : '#a0aec0'} />
             <View style={styles.typeCardTextGroup}>
               <Text style={[styles.typeCardTitle, consultType === 'In-Person Visit' && styles.typeCardTitleSelected]}>In-Person Visit</Text>
-              <Text style={styles.typeCardDesc}>Visit the clinic physically (₱500)</Text>
+              <Text style={styles.typeCardDesc}>Visit the clinic physically (₱{inpersonPrice})</Text>
             </View>
           </TouchableOpacity>
 
@@ -358,7 +670,7 @@ export default function AppointmentsScreen() {
             <FontAwesome5 name="video" size={24} color={consultType === 'Telemedicine' ? '#3a7d55' : '#a0aec0'} />
             <View style={styles.typeCardTextGroup}>
               <Text style={[styles.typeCardTitle, consultType === 'Telemedicine' && styles.typeCardTitleSelected]}>Telemedicine</Text>
-              <Text style={styles.typeCardDesc}>Consult via video call (₱300)</Text>
+              <Text style={styles.typeCardDesc}>Consult via video call (₱{telemedicinePrice})</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -373,11 +685,11 @@ export default function AppointmentsScreen() {
       const fullMonthName = targetDate.toLocaleString('default', { month: 'long', year: 'numeric' });
       const daysInMonth = new Date(year, month + 1, 0).getDate();
       const startDayOfWeek = new Date(year, month, 1).getDay();
-      
+
       const fullyBookedDates = getFullyBookedDates(year, month);
-      
-      const twoDaysFromNow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2);
-      twoDaysFromNow.setHours(0, 0, 0, 0);
+
+      const minDate = consultType === 'Telemedicine' ? new Date(today.getFullYear(), today.getMonth(), today.getDate()) : new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2);
+      minDate.setHours(0, 0, 0, 0);
 
       const renderCalendarDays = () => {
         const days = [];
@@ -392,19 +704,19 @@ export default function AppointmentsScreen() {
           } else {
             const slotDate = new Date(year, month, dayNumber);
             slotDate.setHours(0, 0, 0, 0);
-            
-            const isPast = slotDate < twoDaysFromNow;
+
+            const isPast = slotDate < minDate;
             const isBooked = fullyBookedDates.includes(dayNumber);
             const isAvailable = !isPast && !isBooked;
 
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(dayNumber).padStart(2, '0')}`;
-            
+
             let isSelected = false;
             if (selectedDate === 'Today') {
-               const todayDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-               isSelected = dateStr === todayDateStr;
+              const todayDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+              isSelected = dateStr === todayDateStr;
             } else {
-               isSelected = selectedDate === dateStr;
+              isSelected = selectedDate === dateStr;
             }
 
             days.push(
@@ -443,23 +755,23 @@ export default function AppointmentsScreen() {
       if (selectedDate === 'Today') {
         formattedSelectedDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
       }
-      
+
       const bookedTimes = getBookedTimesForDate(formattedSelectedDate);
 
       return (
         <View style={styles.stepContainer}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-            <TouchableOpacity 
+            <TouchableOpacity
               onPress={() => setCalendarMonthOffset(prev => prev - 1)}
               disabled={calendarMonthOffset === 0}
               style={{ padding: 10, opacity: calendarMonthOffset === 0 ? 0.3 : 1 }}
             >
               <FontAwesome5 name="chevron-left" size={16} color="#4a5568" />
             </TouchableOpacity>
-            
+
             <Text style={[styles.stepHeader, { marginBottom: 0 }]}>{fullMonthName}</Text>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               onPress={() => setCalendarMonthOffset(prev => prev + 1)}
               style={{ padding: 10 }}
             >
@@ -483,14 +795,14 @@ export default function AppointmentsScreen() {
             {ALL_TIME_SLOTS.map(t => {
               const isTimeBooked = bookedTimes.includes(t);
               return (
-              <TouchableOpacity
-                key={t}
-                style={[styles.timeSlot, selectedTime === t && styles.timeSlotActive, isTimeBooked && styles.timeSlotDisabled]}
-                onPress={() => !isTimeBooked && setSelectedTime(t)}
-                activeOpacity={isTimeBooked ? 1 : 0.7}
-              >
-                <Text style={[styles.timeText, selectedTime === t && styles.timeTextActive, isTimeBooked && styles.timeTextDisabled]}>{t}</Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  key={t}
+                  style={[styles.timeSlot, selectedTime === t && styles.timeSlotActive, isTimeBooked && styles.timeSlotDisabled]}
+                  onPress={() => !isTimeBooked && setSelectedTime(t)}
+                  activeOpacity={isTimeBooked ? 1 : 0.7}
+                >
+                  <Text style={[styles.timeText, selectedTime === t && styles.timeTextActive, isTimeBooked && styles.timeTextDisabled]}>{t}</Text>
+                </TouchableOpacity>
               )
             })}
           </View>
@@ -511,7 +823,7 @@ export default function AppointmentsScreen() {
                 <TouchableOpacity
                   key={r}
                   style={[
-                    styles.reasonChip, 
+                    styles.reasonChip,
                     appointmentReason === r && !isDisabled && styles.reasonChipActive,
                     isDisabled && { opacity: 0.4, backgroundColor: '#f7fafc', borderColor: '#e2e8f0' }
                   ]}
@@ -520,7 +832,7 @@ export default function AppointmentsScreen() {
                   activeOpacity={isDisabled ? 1 : 0.7}
                 >
                   <Text style={[
-                    styles.reasonChipText, 
+                    styles.reasonChipText,
                     appointmentReason === r && !isDisabled && styles.reasonChipTextActive,
                     isDisabled && { color: '#a0aec0' }
                   ]}>{r}</Text>
@@ -566,11 +878,11 @@ export default function AppointmentsScreen() {
           <Text style={styles.stepHeader}>Payment Method</Text>
           {['GCash', 'Maya', 'Credit/Debit Card', 'Pay at Clinic'].map(method => (
             <View key={method}>
-              <TouchableOpacity
+               <TouchableOpacity
                 style={[
                   styles.paymentMethodCard,
                   paymentMethod === method && styles.paymentMethodCardActive,
-                  method === 'GCash' && paymentMethod === 'GCash' && { borderBottomLeftRadius: 0, borderBottomRightRadius: 0, borderBottomWidth: 0, marginBottom: 0 }
+                  (method === 'GCash' || method === 'Maya') && paymentMethod === method && { borderBottomLeftRadius: 0, borderBottomRightRadius: 0, borderBottomWidth: 0, marginBottom: 0 }
                 ]}
                 onPress={() => setPaymentMethod(method)}
               >
@@ -586,9 +898,46 @@ export default function AppointmentsScreen() {
                   <View style={{ alignItems: 'center', marginBottom: 20 }}>
                     <Image source={require('../../assets/gcash-qr.jpg')} style={{ width: 220, height: 220, borderRadius: 12 }} resizeMode="contain" />
                   </View>
-                  <View style={{ backgroundColor: '#ebf8ff', padding: 15, borderRadius: 10, marginBottom: 20 }}>
-                    <Text style={{ textAlign: 'center', fontSize: 18, fontFamily: 'Catcut', color: '#2b6cb0', letterSpacing: 1 }}>KI*K A.</Text>
-                    <Text style={{ textAlign: 'center', fontSize: 15, color: '#4a5568', marginTop: 6, fontFamily: 'Poppins-Medium' }}>+63 963 237 ****</Text>
+
+                  <Text style={{ fontSize: 14, fontFamily: 'Poppins-Bold', color: '#4a5568', marginBottom: 10 }}>Reference Number</Text>
+                  <TextInput
+                    style={{ borderWidth: 1, borderColor: '#cbd5e0', borderRadius: 10, padding: 15, fontSize: 16, backgroundColor: '#f7fafc', marginBottom: 20, color: '#2d3748' }}
+                    placeholder="Enter 13-digit Reference No."
+                    placeholderTextColor="#a0aec0"
+                    keyboardType="numeric"
+                    maxLength={13}
+                    value={referenceNumber}
+                    onChangeText={setReferenceNumber}
+                  />
+
+                  {receiptImage ? (
+                    <View style={{ marginBottom: 20, alignItems: 'center' }}>
+                      <Image source={{ uri: receiptImage }} style={{ width: 200, height: 200, borderRadius: 8, marginBottom: 10 }} resizeMode="cover" />
+                      <TouchableOpacity 
+                        onPress={() => setReceiptImage('')}
+                        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fed7d7', padding: 10, borderRadius: 8, borderWidth: 1, borderColor: '#feb2b2', width: '100%' }}
+                      >
+                        <FontAwesome5 name="trash" size={14} color="#c53030" style={{ marginRight: 6 }} />
+                        <Text style={{ fontFamily: 'Poppins-Bold', color: '#c53030', fontSize: 14 }}>Remove Screenshot</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TouchableOpacity 
+                      onPress={handlePickReceiptImage}
+                      style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#e2e8f0', padding: 16, borderRadius: 10, borderWidth: 1, borderColor: '#cbd5e0', borderStyle: 'dashed' }}
+                    >
+                      <FontAwesome5 name="upload" size={16} color="#4a5568" style={{ marginRight: 10 }} />
+                      <Text style={{ fontFamily: 'Poppins-Bold', color: '#4a5568', fontSize: 15 }}>Upload Screenshot of Receipt</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+
+              {method === 'Maya' && paymentMethod === 'Maya' && (
+                <View style={{ backgroundColor: 'white', padding: 20, borderBottomLeftRadius: 12, borderBottomRightRadius: 12, marginBottom: 12, borderWidth: 2, borderColor: '#5ebc16', borderTopWidth: 0 }}>
+                  <Text style={{ textAlign: 'center', fontFamily: 'Poppins-Bold', color: '#5ebc16', marginBottom: 15, fontSize: 16 }}>Scan to Pay via Maya</Text>
+                  <View style={{ alignItems: 'center', marginBottom: 20 }}>
+                    <Image source={require('../../assets/maya-qr.jpg')} style={{ width: 220, height: 220, borderRadius: 12 }} resizeMode="contain" />
                   </View>
 
                   <Text style={{ fontSize: 14, fontFamily: 'Poppins-Bold', color: '#4a5568', marginBottom: 10 }}>Reference Number</Text>
@@ -602,10 +951,26 @@ export default function AppointmentsScreen() {
                     onChangeText={setReferenceNumber}
                   />
 
-                  <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#e2e8f0', padding: 16, borderRadius: 10, borderWidth: 1, borderColor: '#cbd5e0', borderStyle: 'dashed' }}>
-                    <FontAwesome5 name="upload" size={16} color="#4a5568" style={{ marginRight: 10 }} />
-                    <Text style={{ fontFamily: 'Poppins-Bold', color: '#4a5568', fontSize: 15 }}>Upload Screenshot of Receipt</Text>
-                  </TouchableOpacity>
+                  {receiptImage ? (
+                    <View style={{ marginBottom: 20, alignItems: 'center' }}>
+                      <Image source={{ uri: receiptImage }} style={{ width: 200, height: 200, borderRadius: 8, marginBottom: 10 }} resizeMode="cover" />
+                      <TouchableOpacity 
+                        onPress={() => setReceiptImage('')}
+                        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fed7d7', padding: 10, borderRadius: 8, borderWidth: 1, borderColor: '#feb2b2', width: '100%' }}
+                      >
+                        <FontAwesome5 name="trash" size={14} color="#c53030" style={{ marginRight: 6 }} />
+                        <Text style={{ fontFamily: 'Poppins-Bold', color: '#c53030', fontSize: 14 }}>Remove Screenshot</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <TouchableOpacity 
+                      onPress={handlePickReceiptImage}
+                      style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', backgroundColor: '#e2e8f0', padding: 16, borderRadius: 10, borderWidth: 1, borderColor: '#cbd5e0', borderStyle: 'dashed' }}
+                    >
+                      <FontAwesome5 name="upload" size={16} color="#4a5568" style={{ marginRight: 10 }} />
+                      <Text style={{ fontFamily: 'Poppins-Bold', color: '#4a5568', fontSize: 15 }}>Upload Screenshot of Receipt</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
               )}
             </View>
@@ -671,8 +1036,10 @@ export default function AppointmentsScreen() {
 
     const fullyBookedDates = getFullyBookedDates(year, month);
 
-    const twoDaysFromNow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2);
-    twoDaysFromNow.setHours(0, 0, 0, 0);
+    const appToReschedule = allAppointments.find(a => a.id === rescheduleAppId);
+    const isTele = appToReschedule?.type === 'telemedicine';
+    const minDate = isTele ? new Date(today.getFullYear(), today.getMonth(), today.getDate()) : new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2);
+    minDate.setHours(0, 0, 0, 0);
 
     const days = [];
     const totalSlots = 42;
@@ -686,8 +1053,8 @@ export default function AppointmentsScreen() {
       } else {
         const slotDate = new Date(year, month, dayNumber);
         slotDate.setHours(0, 0, 0, 0);
-        
-        const isPast = slotDate < twoDaysFromNow;
+
+        const isPast = slotDate < minDate;
         const isBooked = fullyBookedDates.includes(dayNumber);
         const isAvailable = !isPast && !isBooked;
 
@@ -726,12 +1093,13 @@ export default function AppointmentsScreen() {
     return days;
   };
 
+
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" />
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: theme.headerBackground }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
           {navigation?.canGoBack() && (
             <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 15, padding: 5 }}>
@@ -740,13 +1108,22 @@ export default function AppointmentsScreen() {
           )}
           <Text style={styles.headerTitle}>My Appointments</Text>
         </View>
-        <TouchableOpacity style={styles.bookNowButton} onPress={() => setModalVisible(true)}>
+        <TouchableOpacity 
+          style={styles.bookNowButton} 
+          onPress={() => {
+            if (!user?.id || user.id.trim() === '') {
+              promptGuestAuth(navigation, language);
+            } else {
+              setModalVisible(true);
+            }
+          }}
+        >
           <Text style={styles.bookNowText}>Book Now</Text>
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
-        style={styles.mainScroll} 
+      <ScrollView
+        style={styles.mainScroll}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3a7d55']} />
@@ -756,12 +1133,12 @@ export default function AppointmentsScreen() {
         {/* Stats Grid */}
         <View style={styles.statsContainer}>
           {stats.map((stat, idx) => (
-            <View key={idx} style={styles.statCard}>
+            <View key={idx} style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
               <View style={[styles.statIconBadge, { backgroundColor: stat.color + '15' }]}>
                 <FontAwesome5 name={stat.icon} size={16} color={stat.color} />
               </View>
-              <Text style={styles.statCount}>{stat.count}</Text>
-              <Text style={styles.statLabel}>{stat.label}</Text>
+              <Text style={[styles.statCount, { color: theme.text }]}>{stat.count}</Text>
+              <Text style={[styles.statLabel, { color: theme.subtext }]}>{stat.label}</Text>
             </View>
           ))}
         </View>
@@ -772,10 +1149,10 @@ export default function AppointmentsScreen() {
             {['All', 'Upcoming', 'Completed', 'Cancelled'].map((f) => (
               <TouchableOpacity
                 key={f}
-                style={[styles.filterChip, filter === f && styles.filterChipActive]}
+                style={[styles.filterChip, { backgroundColor: theme.card, borderColor: theme.border }, filter === f && styles.filterChipActive]}
                 onPress={() => setFilter(f)}
               >
-                <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>{f}</Text>
+                <Text style={[styles.filterText, { color: theme.subtext }, filter === f && styles.filterTextActive]}>{f}</Text>
               </TouchableOpacity>
             ))}
           </ScrollView>
@@ -784,55 +1161,83 @@ export default function AppointmentsScreen() {
         {/* Appointment List */}
         <View style={styles.listContainer}>
           {filteredAppointments.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>No appointments yet. Book your first visit! 🐾</Text>
+            <View style={[styles.emptyState, { backgroundColor: theme.card, borderColor: theme.border }]}>
+              <Text style={[styles.emptyStateText, { color: theme.subtext }]}>No appointments yet. Book your first visit! 🐾</Text>
             </View>
           ) : (
             filteredAppointments.map((app) => (
-              <View key={app.id} style={styles.listItem}>
-                <View style={styles.itemHeader}>
-                  <View style={styles.itemDateBadge}>
-                    <Text style={styles.itemDateText}>{app.date}</Text>
-                    <Text style={styles.itemTimeText}>{app.time}</Text>
+              <View key={app.id} style={[styles.listItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => {
+                    setSelectedAppointment(app);
+                    setIsDetailModalVisible(true);
+                  }}
+                >
+                  <View style={[styles.itemHeader, { borderBottomColor: theme.border }]}>
+                    <View style={styles.itemDateBadge}>
+                      <Text style={[styles.itemDateText, { color: theme.text }]}>{app.date}</Text>
+                      <Text style={[styles.itemTimeText, { color: theme.subtext }]}>{app.time}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <View style={[styles.statusTag, { backgroundColor: app.statusColor.bg }]}>
+                        <Text style={[styles.statusTagText, { color: app.statusColor.text }]}>{app.status === 'Upcoming' ? app.statusLabel : app.status}</Text>
+                      </View>
+                      <FontAwesome5 name="chevron-right" size={12} color={isDarkMode ? '#718096' : '#a0aec0'} />
+                    </View>
                   </View>
-                  <View style={[styles.statusTag, { backgroundColor: app.statusColor.bg }]}>
-                    <Text style={[styles.statusTagText, { color: app.statusColor.text }]}>{app.status}</Text>
-                  </View>
-                </View>
 
-                <View style={styles.itemBody}>
-                  <View style={styles.clientSection}>
-                    <View style={styles.petAvatar}>
-                      <FontAwesome5 name={app.petIcon} size={20} color="#2E5E3E" />
+                  <View style={styles.itemBody}>
+                    <View style={styles.clientSection}>
+                      <View style={[styles.petAvatar, { backgroundColor: isDarkMode ? '#1c330e' : '#e6f2eb' }]}>
+                        <FontAwesome5 name={app.petIcon} size={20} color={isDarkMode ? '#EAF3DE' : '#2E5E3E'} />
+                      </View>
+                      <View>
+                        <Text style={[styles.petNameHeader, { color: theme.text }]}>{app.petName}</Text>
+                        <Text style={[styles.petBreedText, { color: theme.subtext }]}>{app.breed}</Text>
+                      </View>
                     </View>
-                    <View>
-                      <Text style={styles.petNameHeader}>{app.petName}</Text>
-                      <Text style={styles.petBreedText}>{app.breed}</Text>
+                    <View style={[styles.serviceSection, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f7fafc' }]}>
+                      <View>
+                        <Text style={[styles.serviceType, { color: theme.text }]}>{app.service}</Text>
+                        <Text style={[styles.serviceMode, { color: theme.subtext }]}>{app.mode}</Text>
+                        {app.sessionCode && (
+                          <Text style={{ fontSize: 13, fontFamily: 'Montserrat-Bold', color: '#2D5016', marginTop: 4 }}>
+                            🔑 Code: {app.sessionCode}
+                          </Text>
+                        )}
+                      </View>
                     </View>
                   </View>
-                  <View style={styles.serviceSection}>
-                    <View>
-                      <Text style={styles.serviceType}>{app.service}</Text>
-                      <Text style={styles.serviceMode}>{app.mode}</Text>
-                    </View>
-                    <View style={styles.vetContainer}>
-                      <FontAwesome5 name="user-md" size={12} color="#718096" />
-                      <Text style={styles.vetNameText}>{app.vetName}</Text>
-                    </View>
-                  </View>
-                </View>
+                </TouchableOpacity>
 
-                {/* Owner Actions for Upcoming Appointments */}
-                {app.status === 'Upcoming' && (
-                  <View style={styles.actionRowList}>
-                    <TouchableOpacity style={styles.actionButtonList} onPress={() => handleRescheduleClick(app.id)}>
-                      <Text style={styles.actionButtonTextList}>Reschedule</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={[styles.actionButtonList, styles.cancelButtonList]} onPress={() => handleCancelClick(app.id)}>
-                      <Text style={[styles.actionButtonTextList, styles.cancelButtonTextList]}>Cancel</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
+                {/* Owner Actions for Upcoming or Cancel Pending Appointments */}
+                {(app.status === 'Upcoming' || app.status === 'Cancel Pending') && (() => {
+                  if (app.status === 'Cancel Pending') {
+                    return (
+                      <View style={styles.actionRowList}>
+                        <TouchableOpacity style={[styles.actionButtonList, styles.withdrawButtonList]} onPress={() => handleWithdrawCancelClick(app.id)}>
+                          <Text style={[styles.actionButtonTextList, styles.withdrawButtonTextList]}>Withdraw Cancellation</Text>
+                        </TouchableOpacity>
+                      </View>
+                    );
+                  }
+                  const createdTime = app.createdAt ? new Date(app.createdAt).getTime() : Date.now();
+                  const now = Date.now();
+                  const isWithin24Hours = (now - createdTime) < 24 * 60 * 60 * 1000;
+                  return (
+                    <View style={styles.actionRowList}>
+                      <TouchableOpacity style={styles.actionButtonList} onPress={() => handleRescheduleClick(app.id)}>
+                        <Text style={styles.actionButtonTextList}>Reschedule</Text>
+                      </TouchableOpacity>
+                      {isWithin24Hours && (
+                        <TouchableOpacity style={[styles.actionButtonList, styles.cancelButtonList]} onPress={() => handleCancelClick(app.id)}>
+                          <Text style={[styles.actionButtonTextList, styles.cancelButtonTextList]}>Cancel</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  );
+                })()}
               </View>
             ))
           )}
@@ -840,32 +1245,214 @@ export default function AppointmentsScreen() {
         <View style={{ height: 40 }} />
       </ScrollView>
 
+      {/* Appointment Detail Modal */}
+      <Modal
+        visible={isDetailModalVisible}
+        animationType="slide"
+        presentationStyle="formSheet"
+        transparent={Platform.OS === 'android'}
+        onRequestClose={() => setIsDetailModalVisible(false)}
+      >
+        <SafeAreaView style={[styles.modalSafeArea, { backgroundColor: isDarkMode ? (Platform.OS === 'android' ? 'rgba(0,0,0,0.7)' : theme.background) : undefined }]}>
+          <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
+            {selectedAppointment && (
+              <>
+                {/* Detail Header */}
+                <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
+                  <TouchableOpacity onPress={() => setIsDetailModalVisible(false)} style={styles.backBtn}>
+                    <FontAwesome5 name="times" size={20} color={theme.subtext} />
+                  </TouchableOpacity>
+                  <Text style={[styles.modalTitle, { color: theme.text }]}>Appointment Details</Text>
+                  <View style={{ width: 20 }} />
+                </View>
+
+                <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+                  {/* Status Banner */}
+                  <View style={[styles.detailStatusBanner, { backgroundColor: selectedAppointment.statusColor.bg }]}>
+                    <FontAwesome5
+                      name={selectedAppointment.status === 'Completed' ? 'check-circle' : selectedAppointment.status === 'Cancelled' ? 'times-circle' : selectedAppointment.status === 'Cancel Pending' ? 'exclamation-circle' : 'clock'}
+                      size={20}
+                      color={selectedAppointment.statusColor.text}
+                    />
+                    <Text style={[styles.detailStatusText, { color: selectedAppointment.statusColor.text }]}>{selectedAppointment.status === 'Upcoming' ? selectedAppointment.statusLabel : selectedAppointment.status}</Text>
+                  </View>
+
+                  {/* Pet Info */}
+                  <View style={styles.detailSection}>
+                    <Text style={styles.detailSectionTitle}>Pet Information</Text>
+                    <View style={styles.detailPetRow}>
+                      <View style={styles.detailPetAvatar}>
+                        <FontAwesome5 name={selectedAppointment.petIcon} size={28} color="#2E5E3E" />
+                      </View>
+                      <View>
+                        <Text style={styles.detailPetName}>{selectedAppointment.petName}</Text>
+                        <Text style={styles.detailPetBreed}>{selectedAppointment.breed}</Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Schedule */}
+                  <View style={styles.detailSection}>
+                    <Text style={styles.detailSectionTitle}>Schedule</Text>
+                    <View style={styles.detailInfoRow}>
+                      <View style={styles.detailInfoIcon}>
+                        <FontAwesome5 name="calendar-alt" size={14} color="#3a7d55" />
+                      </View>
+                      <View>
+                        <Text style={styles.detailInfoLabel}>Date</Text>
+                        <Text style={styles.detailInfoValue}>{formatDateForUI(selectedAppointment.date)}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.detailInfoRow}>
+                      <View style={styles.detailInfoIcon}>
+                        <FontAwesome5 name="clock" size={14} color="#3a7d55" />
+                      </View>
+                      <View>
+                        <Text style={styles.detailInfoLabel}>Time</Text>
+                        <Text style={styles.detailInfoValue}>{selectedAppointment.time}</Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Service Details */}
+                  <View style={styles.detailSection}>
+                    <Text style={styles.detailSectionTitle}>Service Details</Text>
+                    <View style={styles.detailInfoRow}>
+                      <View style={styles.detailInfoIcon}>
+                        <FontAwesome5 name={selectedAppointment.mode.includes('Telemedicine') ? 'video' : 'hospital'} size={14} color="#3a7d55" />
+                      </View>
+                      <View>
+                        <Text style={styles.detailInfoLabel}>Consultation Type</Text>
+                        <Text style={styles.detailInfoValue}>{selectedAppointment.mode}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.detailInfoRow}>
+                      <View style={styles.detailInfoIcon}>
+                        <FontAwesome5 name="stethoscope" size={14} color="#3a7d55" />
+                      </View>
+                      <View>
+                        <Text style={styles.detailInfoLabel}>Service</Text>
+                        <Text style={styles.detailInfoValue}>{selectedAppointment.service}</Text>
+                      </View>
+                    </View>
+                    {selectedAppointment.sessionCode && (
+                      <View style={[styles.detailInfoRow, { justifyContent: 'space-between', alignItems: 'center' }]}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                          <View style={styles.detailInfoIcon}>
+                            <FontAwesome5 name="key" size={14} color="#3a7d55" />
+                          </View>
+                          <View>
+                            <Text style={styles.detailInfoLabel}>Session Code</Text>
+                            <Text style={[styles.detailInfoValue, { color: '#2D5016', fontFamily: 'Montserrat-Bold' }]}>{selectedAppointment.sessionCode}</Text>
+                          </View>
+                        </View>
+                        <TouchableOpacity 
+                          style={{
+                            padding: 8,
+                            backgroundColor: '#EAF3DE',
+                            borderRadius: 8,
+                            borderWidth: 1,
+                            borderColor: '#D4EDBA',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                          }}
+                          onPress={() => copyToClipboard(selectedAppointment.sessionCode)}
+                        >
+                          <FontAwesome5 name="copy" size={14} color="#2D5016" />
+                        </TouchableOpacity>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Booking Info */}
+                  {selectedAppointment.createdAt && (
+                    <View style={styles.detailSection}>
+                      <Text style={styles.detailSectionTitle}>Booking Info</Text>
+                      <View style={styles.detailInfoRow}>
+                        <View style={styles.detailInfoIcon}>
+                          <FontAwesome5 name="receipt" size={14} color="#3a7d55" />
+                        </View>
+                        <View>
+                          <Text style={styles.detailInfoLabel}>Booked On</Text>
+                          <Text style={styles.detailInfoValue}>{new Date(selectedAppointment.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</Text>
+                        </View>
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Actions for Upcoming or Cancel Pending */}
+                  {selectedAppointment.status === 'Cancel Pending' && (
+                    <View style={{ marginTop: 10, gap: 10 }}>
+                      <TouchableOpacity
+                        style={{ backgroundColor: '#2D5016', paddingVertical: 14, borderRadius: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
+                        onPress={() => { setIsDetailModalVisible(false); handleWithdrawCancelClick(selectedAppointment.id); }}
+                      >
+                        <FontAwesome5 name="undo" size={14} color="white" />
+                        <Text style={{ color: 'white', fontFamily: 'Montserrat-Bold', fontSize: 15 }}>Withdraw Cancellation</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  {selectedAppointment.status === 'Upcoming' && (() => {
+                    const createdTime = selectedAppointment.createdAt ? new Date(selectedAppointment.createdAt).getTime() : Date.now();
+                    const now = Date.now();
+                    const isWithin24Hours = (now - createdTime) < 24 * 60 * 60 * 1000;
+                    return (
+                      <View style={{ marginTop: 10, gap: 10 }}>
+                        <TouchableOpacity
+                          style={{ backgroundColor: '#2D5016', paddingVertical: 14, borderRadius: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
+                          onPress={() => { setIsDetailModalVisible(false); handleRescheduleClick(selectedAppointment.id); }}
+                        >
+                          <FontAwesome5 name="calendar-alt" size={14} color="white" />
+                          <Text style={{ color: 'white', fontFamily: 'Montserrat-Bold', fontSize: 15 }}>Reschedule</Text>
+                        </TouchableOpacity>
+                        {isWithin24Hours && (
+                          <TouchableOpacity
+                            style={{ backgroundColor: '#fff5f5', paddingVertical: 14, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: '#fed7d7', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
+                            onPress={() => { setIsDetailModalVisible(false); handleCancelClick(selectedAppointment.id); }}
+                          >
+                            <FontAwesome5 name="times-circle" size={14} color="#e53e3e" />
+                            <Text style={{ color: '#e53e3e', fontFamily: 'Montserrat-Bold', fontSize: 15 }}>Cancel Appointment</Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    );
+                  })()}
+
+                  <View style={{ height: 30 }} />
+                </ScrollView>
+              </>
+            )}
+          </View>
+        </SafeAreaView>
+      </Modal>
+
       {/* Reschedule Modal */}
       <Modal visible={isRescheduleModalVisible} animationType="slide" presentationStyle="formSheet" transparent={Platform.OS === 'android'}>
-        <SafeAreaView style={styles.modalSafeArea}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
+        <SafeAreaView style={[styles.modalSafeArea, { backgroundColor: isDarkMode ? (Platform.OS === 'android' ? 'rgba(0,0,0,0.7)' : theme.background) : undefined }]}>
+          <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
               <TouchableOpacity onPress={() => setRescheduleModalVisible(false)} style={styles.backBtn}>
-                <FontAwesome5 name={'times'} size={20} color="#4a5568" />
+                <FontAwesome5 name={'times'} size={20} color={theme.subtext} />
               </TouchableOpacity>
-              <Text style={styles.modalTitle}>Reschedule Appointment</Text>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Reschedule Appointment</Text>
               <View style={{ width: 20 }} />
             </View>
             <ScrollView style={styles.modalScroll}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, marginTop: 15 }}>
-                <TouchableOpacity 
+                <TouchableOpacity
                   onPress={() => setRescheduleCalendarMonthOffset(prev => prev - 1)}
                   disabled={rescheduleCalendarMonthOffset === 0}
                   style={{ padding: 10, opacity: rescheduleCalendarMonthOffset === 0 ? 0.3 : 1 }}
                 >
                   <FontAwesome5 name="chevron-left" size={16} color="#4a5568" />
                 </TouchableOpacity>
-                
+
                 <Text style={[styles.stepHeader, { marginBottom: 0, marginTop: 0 }]}>
                   {new Date(new Date().getFullYear(), new Date().getMonth() + rescheduleCalendarMonthOffset, 1).toLocaleString('default', { month: 'long', year: 'numeric' })}
                 </Text>
-                
-                <TouchableOpacity 
+
+                <TouchableOpacity
                   onPress={() => setRescheduleCalendarMonthOffset(prev => prev + 1)}
                   style={{ padding: 10 }}
                 >
@@ -875,7 +1462,7 @@ export default function AppointmentsScreen() {
 
               <View style={styles.calendarGrid}>
                 <View style={styles.calendarHeaderRow}>
-                  {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => <Text key={d} style={styles.calendarDayHeader}>{d}</Text>)}
+                  {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => <Text key={d} style={styles.calendarDayHeader}>{d}</Text>)}
                 </View>
                 <View style={styles.calendarDaysContainer}>
                   {renderRescheduleCalendarDays()}
@@ -887,7 +1474,7 @@ export default function AppointmentsScreen() {
                 {(() => {
                   const formattedRescheduleDate = rescheduleDate !== 'Select Date' ? rescheduleDate : '';
                   const bookedTimes = formattedRescheduleDate ? getBookedTimesForDate(formattedRescheduleDate) : [];
-                  
+
                   return ALL_TIME_SLOTS.map(time => {
                     const isTimeBooked = bookedTimes.includes(time);
                     return (
@@ -915,16 +1502,16 @@ export default function AppointmentsScreen() {
 
       {/* Booking Flow Modal */}
       <Modal visible={isModalVisible} animationType="slide" presentationStyle="formSheet" transparent={Platform.OS === 'android'}>
-        <SafeAreaView style={styles.modalSafeArea}>
-          <View style={styles.modalContent}>
+        <SafeAreaView style={[styles.modalSafeArea, { backgroundColor: isDarkMode ? (Platform.OS === 'android' ? 'rgba(0,0,0,0.7)' : theme.background) : undefined }]}>
+          <View style={[styles.modalContent, { backgroundColor: theme.card }]}>
 
             {/* Modal Header & Progress */}
             {currentStep < 5 && (
-              <View style={styles.modalHeader}>
+              <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
                 <TouchableOpacity onPress={currentStep === 1 ? resetAndClose : prevStep} style={styles.backBtn}>
-                  <FontAwesome5 name={currentStep === 1 ? 'times' : 'chevron-left'} size={20} color="#4a5568" />
+                  <FontAwesome5 name={currentStep === 1 ? 'times' : 'chevron-left'} size={20} color={theme.subtext} />
                 </TouchableOpacity>
-                <Text style={styles.modalTitle}>Book Appointment</Text>
+                <Text style={[styles.modalTitle, { color: theme.text }]}>Book Appointment</Text>
                 <View style={{ width: 20 }} />
               </View>
             )}
@@ -1113,15 +1700,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+    flexShrink: 0,
   },
   itemDateText: { fontSize: 14, fontFamily: 'Montserrat-Bold', color: '#2d3748' },
   itemTimeText: { fontSize: 12, color: '#718096', fontFamily: 'Montserrat-Regular' },
   statusTag: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
     borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  statusTagText: { fontSize: 11, fontFamily: 'Montserrat-Bold' },
+  statusTagText: { fontSize: 11, fontFamily: 'Montserrat-Bold', letterSpacing: 0.3 },
   itemBody: {},
   clientSection: {
     flexDirection: 'row',
@@ -1184,6 +1774,12 @@ const styles = StyleSheet.create({
   },
   cancelButtonTextList: {
     color: '#e53e3e',
+  },
+  withdrawButtonList: {
+    backgroundColor: '#EAF3DE',
+  },
+  withdrawButtonTextList: {
+    color: '#2D5016',
   },
 
   // Modal Styles
@@ -1460,4 +2056,115 @@ const styles = StyleSheet.create({
   },
   nextBtnDisabled: { backgroundColor: '#a0aec0' },
   nextBtnText: { color: 'white', fontSize: 16, fontFamily: 'Montserrat-Bold' },
+
+  // Detail Modal Styles
+  detailOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  detailSheet: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '85%',
+    paddingHorizontal: 20,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+  },
+  detailHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: '#edf2f7',
+  },
+  detailHeaderTitle: {
+    fontSize: 17,
+    fontFamily: 'Catcut',
+    color: '#1a202c',
+  },
+  detailStatusBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 12,
+    borderRadius: 12,
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  detailStatusText: {
+    fontSize: 15,
+    fontFamily: 'Montserrat-Bold',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  detailSection: {
+    marginTop: 18,
+    backgroundColor: '#f8faf9',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 0.5,
+    borderColor: 'rgba(0,0,0,0.05)',
+  },
+  detailSectionTitle: {
+    fontSize: 13,
+    fontFamily: 'Montserrat-Bold',
+    color: '#2D5016',
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  detailPetRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+  },
+  detailPetAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: '#e8f5e9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detailPetName: {
+    fontSize: 18,
+    fontFamily: 'Montserrat-Bold',
+    color: '#1a202c',
+  },
+  detailPetBreed: {
+    fontSize: 13,
+    fontFamily: 'Montserrat-Regular',
+    color: '#718096',
+    marginTop: 2,
+  },
+  detailInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 12,
+  },
+  detailInfoIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    backgroundColor: '#e8f5e9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  detailInfoLabel: {
+    fontSize: 11,
+    fontFamily: 'Montserrat-Medium',
+    color: '#a0aec0',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  detailInfoValue: {
+    fontSize: 15,
+    fontFamily: 'Montserrat-SemiBold',
+    color: '#2d3748',
+    marginTop: 1,
+  },
 });

@@ -1,12 +1,11 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../../../../lib/prisma';
 
-const prisma = new PrismaClient();
 
-export async function PUT(request: Request, { params }: { params: { id: string } }) {
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const data = await request.json();
-    const id = params.id;
+    const { id } = await params;
 
     if (!id) {
       return NextResponse.json({ error: 'Pet ID is required' }, { status: 400 });
@@ -20,12 +19,23 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     if (data.age !== undefined) updateData.age = data.age ? parseInt(data.age.replace(/[^0-9]/g, ''), 10) : null;
     if (data.color !== undefined) updateData.color = data.color;
     if (data.weight !== undefined) updateData.weight = data.weight ? parseFloat(data.weight.replace(/[^0-9.]/g, '')) : null;
+    if (data.environment !== undefined) updateData.environment = data.environment;
+    if (data.activity !== undefined) updateData.activity = data.activity;
     if (data.vaccine !== undefined) updateData.vaccinationRecord = data.vaccine;
     if (data.veterinarian !== undefined) updateData.veterinarian = data.veterinarian;
     if (data.pastIllness !== undefined) updateData.pastIllness = data.pastIllness;
     if (data.previousSurgeries !== undefined) updateData.previousSurgeries = data.previousSurgeries;
+    if (data.avatar !== undefined) updateData.avatar = data.avatar;
+    if (data.isArchived !== undefined) updateData.isArchived = data.isArchived;
+    if (data.verificationStatus !== undefined) {
+      updateData.verificationStatus = data.verificationStatus;
+      if (data.verificationStatus === 'VERIFIED') {
+        updateData.verifiedAt = new Date();
+        updateData.verifiedBy = data.verifiedBy || 'Clinic Admin';
+      }
+    }
 
-    const updatedPet = await prisma.pet.update({
+    const updatedPet: any = await (prisma.pet as any).update({
       where: { id },
       data: updateData,
       include: {
@@ -42,6 +52,8 @@ export async function PUT(request: Request, { params }: { params: { id: string }
         age: updatedPet.age ? `${updatedPet.age} years` : 'Unknown',
         color: updatedPet.color || 'Unknown',
         weight: updatedPet.weight ? `${updatedPet.weight} kg` : 'Unknown',
+        environment: updatedPet.environment || 'Indoor',
+        activity: updatedPet.activity || 'Moderate',
         ownerName: updatedPet.user?.fullName || 'Unknown Owner',
         contact: updatedPet.user?.phoneNumber || 'No Contact',
         address: updatedPet.user?.address || 'No Address',
@@ -49,7 +61,12 @@ export async function PUT(request: Request, { params }: { params: { id: string }
         pastIllness: updatedPet.pastIllness || 'None',
         previousSurgeries: updatedPet.previousSurgeries || 'None',
         vaccine: updatedPet.vaccinationRecord || 'Pending',
-        veterinarian: updatedPet.veterinarian || 'Not Assigned'
+        veterinarian: updatedPet.veterinarian || 'Not Assigned',
+        avatar: updatedPet.avatar || '',
+        verificationStatus: updatedPet.verificationStatus || 'PENDING',
+        verifiedAt: updatedPet.verifiedAt,
+        verifiedBy: updatedPet.verifiedBy,
+        isArchived: updatedPet.isArchived
     };
 
     return NextResponse.json({ success: true, record: formattedRecord });
@@ -59,9 +76,9 @@ export async function PUT(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const id = params.id;
+    const { id } = await params;
     if (!id) {
       return NextResponse.json({ error: 'Pet ID is required' }, { status: 400 });
     }

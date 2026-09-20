@@ -12,18 +12,26 @@ import {
   TouchableWithoutFeedback,
   Alert,
   Image,
-  Dimensions,
   Animated,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useUser } from '../context/UserContext';
-import * as LocalAuthentication from 'expo-local-authentication';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Modal } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
+import { API_URL } from '../config/api';
+import { scale, verticalScale, moderateScale, fontSize, wp, hp, device } from '../utils/responsive';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
+import { makeRedirectUri } from 'expo-auth-session';
+
+WebBrowser.maybeCompleteAuthSession();
+
 
 type RootStackParamList = {
   Login: undefined;
@@ -39,22 +47,30 @@ type Props = {
   navigation: LoginScreenNavigationProp;
 };
 
-const { height } = Dimensions.get('window');
+const GOOGLE_WEB_CLIENT_ID = '763437324119-neuj1g0eqp1ksu0lshq25coj3hlcchod.apps.googleusercontent.com';
+
+const slideAnimValue = device.height;
 
 export default function LoginScreen({ navigation }: Props) {
+  const { theme, isDarkMode } = useTheme();
+  const insets = useSafeAreaInsets();
   const { updateUser } = useUser();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  const [is2FAModalVisible, setIs2FAModalVisible] = useState(false);
-  const [twoFactorCode, setTwoFactorCode] = useState('');
-  const [expected2FACode, setExpected2FACode] = useState('');
-  const [pendingUserAuth, setPendingUserAuth] = useState<any>(null);
+  // Google OAuth setup
+  const [request, response, promptAsync] = Google.useAuthRequest({
+    webClientId: GOOGLE_WEB_CLIENT_ID,
+    androidClientId: GOOGLE_WEB_CLIENT_ID,
+    iosClientId: GOOGLE_WEB_CLIENT_ID,
+    redirectUri: makeRedirectUri({ scheme: 'fureverpawcare' }),
+  });
 
-  const slideAnim = useRef(new Animated.Value(height)).current;
+  const slideAnim = useRef(new Animated.Value(slideAnimValue)).current;
 
   useEffect(() => {
     Animated.spring(slideAnim, {
@@ -64,40 +80,86 @@ export default function LoginScreen({ navigation }: Props) {
       useNativeDriver: true,
     }).start();
     
-    checkBiometricLogin();
+    checkRememberedUser();
   }, [slideAnim]);
 
-  const checkBiometricLogin = async () => {
+  // Handle Google OAuth response
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { authentication } = response;
+      if (authentication?.accessToken) {
+        handleGoogleAuthSuccess(authentication.accessToken);
+      }
+    } else if (response?.type === 'error') {
+      Alert.alert('Google Sign-In Failed', response.error?.message || 'An error occurred during Google sign-in.');
+    }
+  }, [response]);
+
+  const checkRememberedUser = async () => {
     try {
-      const credentialsString = await AsyncStorage.getItem('global_biometric_credentials');
-      if (credentialsString) {
-        const credentials = JSON.parse(credentialsString);
-        
-        const hasHardware = await LocalAuthentication.hasHardwareAsync();
-        const isEnrolled = await LocalAuthentication.isEnrolledAsync();
-        
-        if (hasHardware && isEnrolled) {
-          const result = await LocalAuthentication.authenticateAsync({
-            promptMessage: 'Login with Biometrics',
-            fallbackLabel: 'Use Password',
-          });
-          
-          if (result.success) {
-            setIdentifier(credentials.identifier);
-            setPassword(credentials.password);
-            // Auto login with credentials
-            performLogin(credentials.identifier, credentials.password);
-          }
-        }
+      const storedUser = await AsyncStorage.getItem('remembered_user');
+      if (storedUser) {
+        const { identifier: storedIdentifier, password: storedPassword } = JSON.parse(storedUser);
+        setIdentifier(storedIdentifier);
+        setPassword(storedPassword);
+        setRememberMe(true);
       }
     } catch (e) {
-      console.error('Biometric auto-login error:', e);
+      console.error('Error loading remembered user:', e);
     }
   };
+
+
 
   const handleLogin = () => {
     performLogin(identifier, password);
   };
+
+  const handleGoogleAuthSuccess = async (accessToken: string) => {
+    setIsGoogleLoading(true);
+    try {
+      // Fetch the user's Google profile using the access token
+      const profileRes = await fetch('https://www.googleapis.com/userinfo/v2/me', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      const profile = await profileRes.json();
+
+      if (!profile.email) {
+        Alert.alert('Google Sign-In Failed', 'Could not retrieve email from your Google account.');
+        return;
+      }
+
+      // Send to our backend social auth endpoint
+      const response = await fetch(`${API_URL}/api/auth/mobile/social`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: profile.email,
+          fullName: profile.name || `${profile.given_name || ''} ${profile.family_name || ''}`.trim() || profile.email,
+          provider: 'google',
+          providerId: profile.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        Alert.alert('Sign-In Failed', data.error || 'An error occurred. Please try again.');
+      } else {
+        completeLogin(data.user);
+      }
+    } catch (error) {
+      console.error('Google auth success handler error:', error);
+      Alert.alert('Error', 'Could not connect to the server. Please try again.');
+    } finally {
+      setIsGoogleLoading(false);
+    }
+  };
+
+  const handleGoogleSignIn = () => {
+    promptAsync();
+  };
+
 
   const performLogin = async (loginIdentifier: string, loginPassword: string) => {
     if (!loginIdentifier || !loginPassword) {
@@ -107,7 +169,7 @@ export default function LoginScreen({ navigation }: Props) {
 
     setIsLoading(true);
     try {
-      const response = await fetch('http://192.168.100.16:3000/api/auth/mobile/login', {
+      const response = await fetch(`${API_URL}/api/auth/mobile/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier: loginIdentifier, password: loginPassword }),
@@ -121,20 +183,13 @@ export default function LoginScreen({ navigation }: Props) {
         // Save latest successful login credentials for biometrics (if they have it enabled, this is handled via account security later)
         await AsyncStorage.setItem('latest_successful_login', JSON.stringify({ identifier: loginIdentifier, password: loginPassword }));
 
-        if (data.user.twoFactorEnabled) {
-          // Mock 2FA Code Generation
-          const code = Math.floor(100000 + Math.random() * 900000).toString();
-          setExpected2FACode(code);
-          setPendingUserAuth(data.user);
-          setIs2FAModalVisible(true);
-          
-          // Display the code since there is no SMS provider
-          setTimeout(() => {
-            Alert.alert('Mock SMS Received', `Your FurEverPawCare 2FA code is: ${code}`);
-          }, 1000);
+        if (rememberMe) {
+          await AsyncStorage.setItem('remembered_user', JSON.stringify({ identifier: loginIdentifier, password: loginPassword }));
         } else {
-          completeLogin(data.user);
+          await AsyncStorage.removeItem('remembered_user');
         }
+
+        completeLogin(data.user);
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -150,31 +205,26 @@ export default function LoginScreen({ navigation }: Props) {
       fullName: user.fullName,
       email: user.email,
       phoneNumber: user.phoneNumber,
+      address: user.address || '',
       avatarUri: user.profileImage || null,
+      language: user.language || 'en',
     });
     navigation.replace('PetOwnerTabs');
   };
 
-  const verify2FA = () => {
-    if (twoFactorCode === expected2FACode) {
-      setIs2FAModalVisible(false);
-      completeLogin(pendingUserAuth);
-    } else {
-      Alert.alert('Error', 'Invalid 2FA code. Please try again.');
-    }
-  };
+
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
       <StatusBar style="light" />
 
       <LinearGradient
         colors={['#1a3d28', '#2E5E3E']}
-        style={styles.gradientBackground}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, height: '50%' }}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-      >
-        <SafeAreaView style={styles.safeArea} edges={['top']}>
+      />
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
           {/* Subtle Decorative Paw Prints */}
           <View style={styles.decorativePaw1}>
             <FontAwesome5 name="paw" size={140} color="rgba(126,212,74,0.08)" />
@@ -184,7 +234,7 @@ export default function LoginScreen({ navigation }: Props) {
           </View>
           
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.keyboardAvoidingView}
           >
             <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="always" keyboardDismissMode="none" bounces={false} showsVerticalScrollIndicator={false}>
@@ -202,57 +252,57 @@ export default function LoginScreen({ navigation }: Props) {
                 </View>
 
                 {/* Bottom Login Card */}
-                <Animated.View style={[styles.card, { transform: [{ translateY: slideAnim }] }]}>
+                <Animated.View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border, transform: [{ translateY: slideAnim }] }]}>
                   <View style={styles.headerTextContainer}>
-                    <Text style={styles.welcomeText}>FurEver Paw Care</Text>
-                    <Text style={styles.subtitleText}>Login to your account</Text>
+                    <Text style={[styles.welcomeText, { color: isDarkMode ? theme.text : '#2E5E3E' }]}>FurEver Paw Care</Text>
+                    <Text style={[styles.subtitleText, { color: theme.subtext }]}>Login to your account</Text>
                   </View>
 
                   {/* Input Fields */}
-                  <View style={styles.inputContainer}>
-                    <Ionicons name="person-outline" size={20} color="#a0aec0" style={styles.inputIcon} />
+                  <View style={[styles.inputContainer, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f8faf9', borderColor: theme.border }]}>
+                    <Ionicons name="person-outline" size={20} color={theme.subtext} style={styles.inputIcon} />
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, { color: theme.text }]}
                       value={identifier}
                       onChangeText={setIdentifier}
                       placeholder="Phone Number or Email"
-                      placeholderTextColor="#a0aec0"
+                      placeholderTextColor={theme.subtext}
                       autoCapitalize="none"
                     />
                   </View>
 
-                  <View style={styles.inputContainer}>
-                    <Ionicons name="lock-closed-outline" size={20} color="#a0aec0" style={styles.inputIcon} />
+                  <View style={[styles.inputContainer, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f8faf9', borderColor: theme.border }]}>
+                    <Ionicons name="lock-closed-outline" size={20} color={theme.subtext} style={styles.inputIcon} />
                     <TextInput
-                      style={styles.input}
+                      style={[styles.input, { color: theme.text }]}
                       value={password}
                       onChangeText={setPassword}
                       placeholder="Password"
-                      placeholderTextColor="#a0aec0"
+                      placeholderTextColor={theme.subtext}
                       secureTextEntry={!showPassword}
                     />
                     <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIconToggle}>
-                      <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color="#a0aec0" />
+                      <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color={theme.subtext} />
                     </TouchableOpacity>
                   </View>
 
                   {/* Options: Remember me & Forgot Password */}
                   <View style={styles.optionsRow}>
                     <TouchableOpacity style={styles.checkboxContainer} onPress={() => setRememberMe(!rememberMe)} activeOpacity={0.7}>
-                      <View style={[styles.checkbox, rememberMe && styles.checkboxActive]}>
+                      <View style={[styles.checkbox, { backgroundColor: theme.card, borderColor: theme.border }, rememberMe && styles.checkboxActive]}>
                         {rememberMe && <Ionicons name="checkmark" size={14} color="#ffffff" />}
                       </View>
-                      <Text style={styles.rememberText}>Remember me</Text>
+                      <Text style={[styles.rememberText, { color: theme.text }]}>Remember me</Text>
                     </TouchableOpacity>
 
                     <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} activeOpacity={0.7}>
-                      <Text style={styles.forgotText}>Forgot password?</Text>
+                      <Text style={[styles.forgotText, { color: isDarkMode ? theme.text : '#2E5E3E' }]}>Forgot password?</Text>
                     </TouchableOpacity>
                   </View>
 
                   {/* Login Button */}
                   <TouchableOpacity onPress={handleLogin} activeOpacity={0.8} style={styles.loginBtn} disabled={isLoading}>
-                    <Text style={styles.loginBtnText}>{isLoading ? "Logging in..." : "Login"}</Text>
+                    <Text style={styles.loginBtnText}>Login</Text>
                   </TouchableOpacity>
 
                   {/* OR Divider */}
@@ -264,19 +314,30 @@ export default function LoginScreen({ navigation }: Props) {
 
                   {/* Social Logins */}
                   <View style={styles.socialIconsRow}>
-                    <TouchableOpacity style={styles.socialButton}>
-                      <FontAwesome5 name="google" size={20} color="#2E5E3E" />
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.socialButton}>
-                      <FontAwesome5 name="facebook-f" size={20} color="#2E5E3E" />
+                    <TouchableOpacity 
+                      style={[styles.socialButton, styles.googleButton, { borderColor: isGoogleLoading ? '#4285F4' : theme.border }]} 
+                      onPress={handleGoogleSignIn} 
+                      disabled={isLoading || isGoogleLoading || !request}
+                      activeOpacity={0.8}
+                    >
+                      {isGoogleLoading ? (
+                        <ActivityIndicator size="small" color="#4285F4" />
+                      ) : (
+                        <>
+                          <View style={styles.googleIconWrapper}>
+                            <Text style={styles.googleG}>G</Text>
+                          </View>
+                          <Text style={[styles.googleBtnText, { color: theme.text }]}>Continue with Google</Text>
+                        </>
+                      )}
                     </TouchableOpacity>
                   </View>
 
                   {/* Sign Up Link */}
-                  <View style={styles.footerRow}>
-                    <Text style={styles.footerText}>New user? </Text>
+                  <View style={[styles.footerRow, { paddingBottom: Math.max(insets.bottom, verticalScale(20)) }]}>
+                    <Text style={[styles.footerText, { color: theme.subtext }]}>New user? </Text>
                     <TouchableOpacity onPress={() => navigation.navigate('Register')} activeOpacity={0.7}>
-                      <Text style={styles.registerText}>Sign Up</Text>
+                      <Text style={[styles.registerText, { color: isDarkMode ? theme.text : '#2E5E3E' }]}>Sign Up</Text>
                     </TouchableOpacity>
                   </View>
 
@@ -285,34 +346,17 @@ export default function LoginScreen({ navigation }: Props) {
             </ScrollView>
           </KeyboardAvoidingView>
 
-          {/* 2FA Modal */}
-          <Modal visible={is2FAModalVisible} animationType="fade" transparent>
-            <View style={styles.modalOverlay}>
-              <View style={styles.modalContent}>
-                <Text style={styles.modalTitle}>Two-Factor Authentication</Text>
-                <Text style={{marginBottom: 15, color: '#718096', fontSize: 14}}>Please enter the 6-digit code sent to your registered phone number.</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  placeholder="Enter 6-digit code"
-                  keyboardType="number-pad"
-                  maxLength={6}
-                  value={twoFactorCode}
-                  onChangeText={setTwoFactorCode}
-                />
-                <View style={styles.modalButtons}>
-                  <TouchableOpacity style={styles.cancelBtn} onPress={() => setIs2FAModalVisible(false)}>
-                    <Text style={styles.cancelBtnText}>Cancel</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.saveBtn} onPress={verify2FA}>
-                    <Text style={styles.saveBtnText}>Verify</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
+          {/* Loading Modal */}
+          <Modal transparent={true} visible={isLoading} animationType="fade">
+            <View style={styles.loadingOverlay}>
+              <ActivityIndicator size="large" color="#7ed44a" />
+              <Text style={styles.loadingText}>Logging in...</Text>
             </View>
           </Modal>
 
+
+
         </SafeAreaView>
-      </LinearGradient>
     </View>
   );
 }
@@ -322,23 +366,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#ffffff',
   },
-  gradientBackground: {
-    flex: 1,
-  },
   safeArea: {
     flex: 1,
   },
   decorativePaw1: {
     position: 'absolute',
-    top: height * 0.05,
-    right: -40,
-    transform: [{ rotate: '25deg' }],
+    top: hp(5),
+    right: scale(-40),
   },
   decorativePaw2: {
     position: 'absolute',
-    top: height * 0.35,
-    left: -20,
-    transform: [{ rotate: '-15deg' }],
+    top: hp(35),
+    left: scale(-20),
     zIndex: 0,
   },
   keyboardAvoidingView: {
@@ -355,14 +394,14 @@ const styles = StyleSheet.create({
     flex: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: 10,
-    paddingBottom: 10,
+    paddingTop: verticalScale(10),
+    paddingBottom: verticalScale(10),
   },
   backButton: {
     position: 'absolute',
-    top: 10,
-    left: 20,
-    padding: 10,
+    top: verticalScale(10),
+    left: scale(20),
+    padding: scale(10),
     zIndex: 10,
   },
   brandingContainer: {
@@ -370,7 +409,7 @@ const styles = StyleSheet.create({
   },
   brandText: {
     fontFamily: 'Catcut',
-    fontSize: 26,
+    fontSize: fontSize(26),
     color: '#ffffff',
     letterSpacing: 0.5,
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
@@ -379,75 +418,75 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#ffffff',
-    borderTopLeftRadius: 40,
-    borderTopRightRadius: 40,
-    paddingHorizontal: 30,
-    paddingTop: 25,
-    paddingBottom: Platform.OS === 'ios' ? 25 : 20,
+    borderTopLeftRadius: scale(40),
+    borderTopRightRadius: scale(40),
+    paddingHorizontal: scale(30),
+    paddingTop: verticalScale(25),
+    paddingBottom: Platform.OS === 'ios' ? verticalScale(25) : verticalScale(20),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -10 },
     shadowOpacity: 0.1,
-    shadowRadius: 20,
+    shadowRadius: scale(20),
     elevation: 20,
   },
   headerTextContainer: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: verticalScale(20),
   },
   welcomeText: {
     fontFamily: 'Catcut',
-    fontSize: 28,
+    fontSize: fontSize(28),
     color: '#2E5E3E',
-    marginBottom: 6,
+    marginBottom: verticalScale(6),
     textAlign: 'center',
   },
   subtitleText: {
     fontFamily: 'Montserrat-Regular',
-    fontSize: 15,
+    fontSize: fontSize(15),
     color: '#718096',
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f8faf9',
-    borderRadius: 16,
+    borderRadius: scale(16),
     borderWidth: 1.5,
     borderColor: '#e2e8f0',
-    paddingHorizontal: 16,
-    height: 56,
-    marginBottom: 16,
+    paddingHorizontal: scale(16),
+    height: verticalScale(56),
+    marginBottom: verticalScale(16),
   },
   inputIcon: {
-    marginRight: 12,
+    marginRight: scale(12),
   },
   input: {
     fontFamily: 'Montserrat-Regular',
     flex: 1,
     height: '100%',
-    fontSize: 16,
+    fontSize: fontSize(16),
     color: '#2d3748',
   },
   eyeIconToggle: {
-    padding: 4,
+    padding: scale(4),
   },
   optionsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
-    marginTop: 4,
+    marginBottom: verticalScale(20),
+    marginTop: verticalScale(4),
   },
   checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 6,
+    width: scale(20),
+    height: scale(20),
+    borderRadius: scale(6),
     borderWidth: 1.5,
     borderColor: '#cbd5e0',
-    marginRight: 8,
+    marginRight: scale(8),
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#ffffff',
@@ -458,37 +497,37 @@ const styles = StyleSheet.create({
   },
   rememberText: {
     fontFamily: 'Montserrat-Medium',
-    fontSize: 14,
+    fontSize: fontSize(14),
     color: '#4a5568',
   },
   forgotText: {
     fontFamily: 'Montserrat-SemiBold',
-    fontSize: 14,
+    fontSize: fontSize(14),
     color: '#2E5E3E',
   },
   loginBtn: {
-    height: 56,
+    height: verticalScale(56),
     backgroundColor: '#2E5E3E',
-    borderRadius: 14,
+    borderRadius: scale(14),
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#2E5E3E',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.25,
-    shadowRadius: 10,
+    shadowRadius: scale(10),
     elevation: 6,
-    marginBottom: 15,
+    marginBottom: verticalScale(15),
   },
   loginBtnText: {
     fontFamily: 'Montserrat-Bold',
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: fontSize(16),
     letterSpacing: 0.5,
   },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 15,
+    marginBottom: verticalScale(15),
   },
   dividerLine: {
     flex: 1,
@@ -497,25 +536,45 @@ const styles = StyleSheet.create({
   },
   dividerText: {
     fontFamily: 'Montserrat-SemiBold',
-    marginHorizontal: 15,
+    marginHorizontal: scale(15),
     color: '#a0aec0',
-    fontSize: 14,
+    fontSize: fontSize(14),
   },
   socialIconsRow: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginBottom: 20,
+    marginBottom: verticalScale(20),
   },
   socialButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: '#f8faf9',
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 10,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
+    height: verticalScale(52),
+    borderRadius: scale(14),
+    borderWidth: 1.5,
+    paddingHorizontal: scale(16),
+  },
+  googleButton: {
+    backgroundColor: 'transparent',
+  },
+  googleIconWrapper: {
+    width: scale(28),
+    height: scale(28),
+    borderRadius: scale(14),
+    backgroundColor: '#4285F4',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: scale(12),
+  },
+  googleG: {
+    color: '#ffffff',
+    fontSize: fontSize(15),
+    fontFamily: 'PlusJakartaSans-Bold',
+  },
+  googleBtnText: {
+    fontSize: fontSize(15),
+    fontFamily: 'PlusJakartaSans-SemiBold',
   },
   footerRow: {
     flexDirection: 'row',
@@ -524,12 +583,12 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontFamily: 'Montserrat-Regular',
-    fontSize: 14,
+    fontSize: fontSize(14),
     color: '#718096',
   },
   registerText: {
     fontFamily: 'Montserrat-Bold',
-    fontSize: 14,
+    fontSize: fontSize(14),
     color: '#2E5E3E',
   },
   modalOverlay: {
@@ -537,28 +596,28 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: scale(20),
   },
   modalContent: {
     backgroundColor: 'white',
     width: '100%',
-    borderRadius: 16,
-    padding: 25,
+    borderRadius: scale(16),
+    padding: scale(25),
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: fontSize(20),
     fontFamily: 'Catcut',
     color: '#2D5016',
-    marginBottom: 10,
+    marginBottom: verticalScale(10),
   },
   modalInput: {
     backgroundColor: '#f7fafc',
     borderWidth: 1,
     borderColor: '#e2e8f0',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 20,
-    fontSize: 16,
+    borderRadius: scale(10),
+    padding: scale(15),
+    marginBottom: verticalScale(20),
+    fontSize: fontSize(16),
     color: '#2d3748',
     textAlign: 'center',
     letterSpacing: 4,
@@ -566,26 +625,38 @@ const styles = StyleSheet.create({
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
-    gap: 15,
+    gap: scale(15),
   },
   cancelBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
+    paddingVertical: verticalScale(12),
+    paddingHorizontal: scale(20),
   },
   cancelBtnText: {
     color: '#718096',
-    fontSize: 15,
+    fontSize: fontSize(15),
     fontFamily: 'Montserrat-SemiBold',
   },
   saveBtn: {
     backgroundColor: '#2D5016',
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 10,
+    paddingVertical: verticalScale(12),
+    paddingHorizontal: scale(25),
+    borderRadius: scale(10),
   },
   saveBtnText: {
     color: 'white',
-    fontSize: 15,
+    fontSize: fontSize(15),
     fontFamily: 'Montserrat-Bold',
+  },
+  loadingOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    fontFamily: 'Montserrat-Bold',
+    color: 'white',
+    marginTop: verticalScale(15),
+    fontSize: fontSize(16),
   }
 });

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient, AnnouncementStatus } from '@prisma/client';
+import prisma from '../../../lib/prisma';
+import { AnnouncementStatus } from '@prisma/client';
 
-const prisma = new PrismaClient();
 
 export const dynamic = 'force-dynamic';
 
@@ -28,15 +28,44 @@ export async function GET(req: Request) {
         if (reaction) userReaction = reaction.type;
       }
 
+      let cleanContent = ann.content;
+      let files: any[] = [];
+      let media: any[] = [];
+
+      const parts = ann.content.split('---ATTACHMENTS---');
+      const partsFirst = parts[0];
+      const partsSecond = parts[1];
+      if (partsFirst !== undefined && partsSecond !== undefined) {
+        try {
+          const attachments = JSON.parse(partsSecond.trim());
+          cleanContent = partsFirst.trim();
+          files = attachments.files || [];
+          media = attachments.media || [];
+        } catch (err) {
+          // ignore
+        }
+      }
+
+      // Format media structure to match expected fields (url, name, isImage, isVideo)
+      const formattedMedia = media.map((m: any) => {
+        const name = m.name || '';
+        const url = m.url || '';
+        const isImage = /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(name) || name.toLowerCase().includes('image');
+        const isVideo = /\.(mp4|webm|ogg|mov)$/i.test(name) || name.toLowerCase().includes('video');
+        return { name, url, isImage, isVideo };
+      });
+
       return {
         id: ann.id,
         title: ann.title,
-        content: ann.content,
+        content: cleanContent,
         status: ann.status,
         date: ann.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         hearts,
         likes,
-        userReaction
+        userReaction,
+        files,
+        media: formattedMedia
       };
     });
 
@@ -87,6 +116,32 @@ export async function POST(req: Request) {
         adminId: admin.id
       }
     });
+
+    if (announcement.status === AnnouncementStatus.PUBLISHED) {
+      try {
+        const targetUsers = await prisma.user.findMany({
+          where: {
+            role: {
+              notIn: ['ADMIN', 'SUPER_ADMIN']
+            }
+          }
+        });
+
+        if (targetUsers.length > 0) {
+          const notifications = targetUsers.map(u => ({
+            userId: u.id,
+            title: `New Announcement: ${title}`,
+            message: content.length > 120 ? content.substring(0, 120) + '...' : content
+          }));
+
+          await prisma.notification.createMany({
+            data: notifications
+          });
+        }
+      } catch (err) {
+        console.error("Failed to generate user notifications for announcement:", err);
+      }
+    }
 
     return NextResponse.json({ success: true, announcement });
   } catch (error) {

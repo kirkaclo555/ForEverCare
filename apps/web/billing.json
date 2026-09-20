@@ -1,146 +1,854 @@
 [
   {
-    "clientName": "szaASsaa",
-    "date": "2026-05-17",
+    "id": "INV-1559",
+    "appointmentId": "4632d345-15ff-4de2-b972-564be4ee04f1",
+    "clientName": "Alexis Pensona",
+    "userEmail": "alexisknp08@gmail.com",
+    "date": "2026-09-16",
     "items": [
       {
-        "id": "1779008434815",
+        "id": "1789577869463",
         "name": "Telemedicine Consultation Fee",
         "quantity": 1,
-        "price": 800
+        "price": 350
       }
     ],
-    "totalAmount": 800,
-    "status": "pending",
-    "source": "appointment",
-    "id": "INV-7427"
+    "totalAmount": 350,
+    "status": "paid",
+    "source": "telemedicine",
+    "emailed": true
   },
   {
+    "id": "INV-6053",
+    "appointmentId": "2af9ef39-d9fb-4b7a-a061-968ac9b2b73a",
+    "clientName": "Jealene Mae Ranido",
+    "userEmail": "ranidojealenemae@gmail.com",
+    "date": "2026-09-16",
+    "items": [
+      {
+        "id": "1789560713759",
+        "name": "Telemedicine Consultation Fee",
+        "quantity": 1,
+        "price": 350
+      }
+    ],
+    "totalAmount": 350,
+    "status": "paid",
+    "source": "telemedicine",
+    "emailed": true
+  },
+  {
+    "id": "INV-5903",
+    "orderId": "9a359700-c28f-4e20-ad62-3709591d8116",
+    "clientName": "Alexis Pensona",
+    "userEmail": "alexisknp08@gmail.com",
+    "date": "2026-09-16",
+    "items": [
+      {
+        "id": "c981198c-9224-419e-bf50-d2203eb66214",
+        "name": "Pedigree",
+        "quantity": 1,
+        "price": 157.5
+      }
+    ],
+    "totalAmount": 157.5,
+    "status": "pending",
+    "source": "product"
+  },
+  {
+    "id": "INV-2445",
+    "orderId": "a96cce98-3511-43b0-96a9-f2774d31e92d",
+    "clientName": "Alexis Pensona",
+    "userEmail": "alexisknp08@gmail.com",
+    "date": "2026-09-16",
+    "items": [
+      {
+        "id": "506b680a-cdca-4e7b-ac42-94c1f1cb9da2",
+        "name": "Pedigree",
+        "quantity": 1,
+        "price": 157.5
+      }
+    ],
+    "totalAmount": 157.5,
+    "status": "pending",
+    "source": "product"
+  },
+  {
+    "id": "INV-8348",
+    "orderId": "038c4890-9ab3-4c27-95fb-9088b7cde869",
+    "clientName": "Alexis Pensona",
+    "userEmail": "alexisknp08@gmail.com",
+    "date": "2026-09-16",
+    "items": [
+      {
+        "id": "cd5eb40c-23c9-41e8-8ed8-0462b8bdbbdf",
+        "name": "Pedigree",
+        "quantity": 2,
+        "price": 157.5
+      }
+    ],
+    "totalAmount": 315,
+    "status": "pending",
+    "source": "product"
+  },
+  {
+    "id": "INV-1118",
+    "orderId": "12faa4e3-7655-4e9d-8f1d-2c17eb0d8135",
+    "clientName": "Alexis Pensona",
+    "userEmail": "alexisknp08@gmail.com",
+    "date": "2026-09-16",
+    "items": [
+      {
+        "id": "f256e6d1-aa7c-4e0c-bfd4-42c3913a7899",
+        "name": "Pedigree",
+        "quantity": 3,
+        "price": 157.5
+      }
+    ],
+    "totalAmount": 472.5,
+    "status": "pending",
+    "source": "product"
+  },
+  {
+    "id": "INV-9933",
+    "orderId": "35cb7c3d-c2e7-4478-b345-b68b095cdb4f",
+    "clientName": "Jealene Mae Ranido",
+    "userEmail": "ranidojealenemae@gmail.com",
+    "date": "2026-09-16",
+    "items": [
+      {
+        "id": "d27396ae-1734-4e16-a7c3-c977b6c84fea",
+        "name": "Pedigree",
+        "quantity": 1,
+        "price": 157.5
+      }
+    ],
+    "totalAmount": 157.5,
+    "status": "pending",
+    "source": "product"
+  },
+  {
+    "id": "INV-2983",
+    "orderId": "4522a12a-d659-4864-89b2-314c889d8afc",
+    "clientName": "Jealene Mae Ranido",
+    "userEmail": "ranidojealenemae@gmail.com",
+    "date": "2026-09-16",
+    "items": [
+      {
+        "id": "9825fd29-09be-4867-abae-cd3a56f9376c",
+        "name": "Pedigree",
+        "quantity": 1,
+        "price": 157.5
+      }
+    ],
+    "totalAmount": 157.5,
+    "status": "pending",
+    "source": "product"
+  },
+  {
+    "id": "INV-7154",
+    "orderId": "0a7d29bb-4298-47e3-977c-c2719ce9239c",
+    "clientName": "Alexis Pensona",
+    "userEmail": "alexisknp08@gmail.com",
+    "date": "2026-09-16",
+    "items": [
+      {
+        "id": "1aca5e52-71f3-4f33-99d7-8351e602b974",
+        "name": "Pedigree",
+        "quantity": 2,
+        "price": 157.5
+      }
+    ],
+    "totalAmount": 315,
+    "status": "pending",
+    "source": "product"
+  },
+  {
+    "id": "INV-4284",
+    "appointmentId": "ca99a41f-8d00-48d9-915e-4786ef5a1681",
+    "clientName": "Jealene Mae Ranido",
+    "userEmail": "ranidojealenemae@gmail.com",
+    "date": "2026-09-15",
+    "items": [
+      {
+        "id": "1789446943074",
+        "name": "Telemedicine Consultation Fee",
+        "quantity": 1,
+        "price": 350
+      }
+    ],
+    "totalAmount": 350,
+    "status": "paid",
+    "source": "telemedicine",
+    "emailed": true
+  },
+  {
+    "id": "INV-6105",
+    "appointmentId": "c8b9d423-1a6e-4b78-9534-babf7c707a6e",
+    "clientName": "Alexis Pensona",
+    "userEmail": "alexisknp08@gmail.com",
+    "date": "2026-09-15",
+    "items": [
+      {
+        "id": "1789446155749",
+        "name": "In-Person Consultation Fee",
+        "quantity": 1,
+        "price": 350
+      }
+    ],
+    "totalAmount": 350,
+    "status": "paid",
+    "source": "appointment",
+    "emailed": true
+  },
+  {
+    "id": "INV-5843",
+    "appointmentId": "47016a2a-3fd6-4767-9221-2fbf26a87f15",
+    "clientName": "Jealene Mae Ranido",
+    "userEmail": "ranidojealenemae@gmail.com",
+    "date": "2026-09-15",
+    "items": [
+      {
+        "id": "1789444382886",
+        "name": "In-Person Consultation Fee",
+        "quantity": 1,
+        "price": 350
+      }
+    ],
+    "totalAmount": 350,
+    "status": "paid",
+    "source": "appointment",
+    "emailed": true
+  },
+  {
+    "id": "INV-9610",
+    "orderId": "51521550-7323-4a2b-8edc-a878fda12906",
     "clientName": "Kirk Aclo",
-    "date": "2026-05-17",
+    "userEmail": "kirkaclo05@gmail.com",
+    "date": "2026-08-17",
     "items": [
       {
-        "id": "1779008170282",
+        "id": "72f3569f-641f-49c0-856a-4c2bc823d104",
+        "name": "Pedigree",
+        "quantity": 2,
+        "price": 157.5
+      }
+    ],
+    "totalAmount": 315,
+    "status": "paid",
+    "source": "product",
+    "emailed": true
+  },
+  {
+    "id": "INV-3778",
+    "appointmentId": "14d5682d-3d86-420d-9c90-4a3179c5a842",
+    "clientName": "Kirk Aclo",
+    "userEmail": "kirkaclo05@gmail.com",
+    "date": "2026-08-17",
+    "items": [
+      {
+        "id": "1786986805246",
         "name": "Telemedicine Consultation Fee",
         "quantity": 1,
-        "price": 800
+        "price": 350
       }
     ],
-    "totalAmount": 800,
-    "status": "pending",
+    "totalAmount": 350,
+    "status": "paid",
+    "source": "telemedicine",
+    "emailed": true
+  },
+  {
+    "id": "INV-5480",
+    "appointmentId": "a9ca7975-eb58-40bb-b255-91662d70f97a",
+    "clientName": "Kirk Aclo",
+    "userEmail": "kirkaclo05@gmail.com",
+    "date": "2026-08-17",
+    "items": [
+      {
+        "id": "1786986548653",
+        "name": "In-Person Consultation Fee",
+        "quantity": 1,
+        "price": 250
+      }
+    ],
+    "totalAmount": 250,
+    "status": "paid",
     "source": "appointment",
-    "id": "INV-4947"
+    "emailed": true
   },
   {
-    "clientName": "Walk-in Customer",
-    "date": "2026-05-16",
+    "id": "INV-4004",
+    "appointmentId": "f7ec3575-d55e-4300-bc76-ecf844d9cc2b",
+    "clientName": "Rafael Nadela",
+    "userEmail": "nadelafael@gmail.com",
+    "date": "2026-08-11",
     "items": [
       {
-        "id": "2e7866bd-7eb3-4a55-9b4f-ec82abf3e86f",
-        "name": "Collar",
+        "id": "1786460430146",
+        "name": "In-Person Consultation Fee",
         "quantity": 1,
-        "price": 45
+        "price": 250
       }
     ],
-    "totalAmount": 45,
+    "totalAmount": 250,
     "status": "paid",
-    "source": "product",
-    "id": "INV-4287"
+    "source": "appointment",
+    "emailed": true
   },
   {
-    "id": "INV-3906",
-    "clientName": "Mobile User",
-    "date": "2026-05-16",
+    "id": "INV-7505",
+    "appointmentId": "e85aa89a-1f79-4da3-b29e-ed3e2cbe288b",
+    "clientName": "Jealene Mae Ranido",
+    "userEmail": "jealenemaehubilla@gmail.com",
+    "date": "2026-06-08",
     "items": [
       {
-        "id": "2e7866bd-7eb3-4a55-9b4f-ec82abf3e86f",
-        "name": "Collar",
+        "id": "1780938039277",
+        "name": "Telemedicine Consultation Fee",
         "quantity": 1,
-        "price": 45
+        "price": 350
       }
     ],
-    "totalAmount": 45,
+    "totalAmount": 350,
     "status": "paid",
+    "source": "telemedicine",
+    "emailed": true
+  },
+  {
+    "id": "INV-6024",
+    "appointmentId": "dea46493-ec68-4cae-9920-c25dc84ebf18",
+    "clientName": "Jealene Mae Ranido",
+    "userEmail": "jealenemaehubilla@gmail.com",
+    "date": "2026-06-03",
+    "items": [
+      {
+        "id": "1780512746050",
+        "name": "In-Person Consultation Fee",
+        "quantity": 1,
+        "price": 250
+      }
+    ],
+    "totalAmount": 250,
+    "status": "completed",
+    "source": "appointment",
+    "emailed": true
+  },
+  {
+    "id": "INV-8440",
+    "appointmentId": "b17ba8c1-27e8-45a6-bddf-8716aca3a0a4",
+    "clientName": "Rafael Nadela",
+    "userEmail": "nadelafael@gmail.com",
+    "date": "2026-06-02",
+    "items": [
+      {
+        "id": "1780399212805",
+        "name": "Telemedicine Consultation Fee",
+        "quantity": 1,
+        "price": 350
+      }
+    ],
+    "totalAmount": 350,
+    "status": "paid",
+    "source": "telemedicine",
+    "emailed": true
+  },
+  {
+    "id": "INV-2607",
+    "appointmentId": "cf6e9819-79e5-4ebc-a727-cb5e15666094",
+    "clientName": "Rafael Nadela",
+    "userEmail": "nadelafael@gmail.com",
+    "date": "2026-06-01",
+    "items": [
+      {
+        "id": "1780316719493",
+        "name": "Telemedicine Consultation Fee",
+        "quantity": 1,
+        "price": 300
+      }
+    ],
+    "totalAmount": 300,
+    "status": "paid",
+    "source": "telemedicine",
+    "emailed": true
+  },
+  {
+    "id": "INV-2801",
+    "appointmentId": "187aa524-325f-45d6-aff9-015f5f05ac00",
+    "clientName": "Alexis Kate Pensona",
+    "userEmail": "alexisknp08@gmail.com",
+    "date": "2026-05-29",
+    "items": [
+      {
+        "id": "1780076614076",
+        "name": "Telemedicine Consultation Fee",
+        "quantity": 1,
+        "price": 300
+      }
+    ],
+    "totalAmount": 300,
+    "status": "paid",
+    "source": "telemedicine",
+    "emailed": true
+  },
+  {
+    "id": "INV-7865",
+    "orderId": "69f72431-b07d-4e04-9e15-1ccf2fa060a9",
+    "clientName": "Fiona Kate Pederaja",
+    "userEmail": "mmoonbyte@gmail.com",
+    "date": "2026-05-29",
+    "items": [
+      {
+        "id": "3df02227-e571-4ae7-8185-b62c7378a99f",
+        "name": "VETIQ Multivitamin Soft Dog Chews, Hickory Smoke Flavored 60ct",
+        "quantity": 1,
+        "price": 135
+      },
+      {
+        "id": "aade5ebc-f6a1-41bb-bab2-5d681a18abb6",
+        "name": "21-in-1 Dog Multivitamin - Dog Vitamins and Supplements for Senior Dogs and Puppies - Multivitamin for Dogs for Skin, Coat, Heart, Immune Support",
+        "quantity": 1,
+        "price": 99
+      }
+    ],
+    "totalAmount": 234,
+    "status": "completed",
     "source": "product"
   },
   {
-    "id": "INV-5748",
-    "clientName": "Mobile User",
-    "date": "2026-05-16",
+    "id": "INV-7777",
+    "appointmentId": "076cd5bc-af99-4e26-bca0-680b3c15be2a",
+    "clientName": "Fiona Kate Pederaja",
+    "userEmail": "mmoonbyte@gmail.com",
+    "date": "2026-05-29",
     "items": [
       {
-        "id": "2e7866bd-7eb3-4a55-9b4f-ec82abf3e86f",
-        "name": "Collar",
+        "id": "1780074954768",
+        "name": "Telemedicine Consultation Fee",
         "quantity": 1,
-        "price": 45
+        "price": 300
       }
     ],
-    "totalAmount": 45,
+    "totalAmount": 300,
     "status": "paid",
-    "source": "product"
+    "source": "telemedicine",
+    "emailed": true
   },
   {
-    "clientName": "Walk-in Customer",
-    "date": "2026-05-06",
+    "id": "INV-8649",
+    "appointmentId": "1e4fd0c6-f8c9-4609-8718-49c3a13813f5",
+    "clientName": "Fiona Kate Pederaja",
+    "userEmail": "mmoonbyte@gmail.com",
+    "date": "2026-05-29",
     "items": [
       {
-        "id": "1",
-        "name": "Collar",
+        "id": "1780074763182",
+        "name": "In-Person Consultation Fee",
         "quantity": 1,
-        "price": 45
+        "price": 500
       }
     ],
-    "totalAmount": 45,
+    "totalAmount": 500,
+    "status": "paid",
+    "source": "appointment",
+    "emailed": true
+  },
+  {
+    "id": "INV-7296",
+    "orderId": "8171f6af-ed5d-49cb-b7ab-6d5daf911673",
+    "clientName": "Fiona Kate Pederaja",
+    "userEmail": "mmoonbyte@gmail.com",
+    "date": "2026-05-29",
+    "items": [
+      {
+        "id": "faa1dd1d-595e-47ee-8243-a0e1e9cc5e1b",
+        "name": "PUAINTA Multivitamins for dogs and Cat for Immune System Appetite Booster Hair Loss Pet Essentials",
+        "quantity": 1,
+        "price": 78
+      }
+    ],
+    "totalAmount": 78,
+    "status": "completed",
+    "source": "product",
+    "emailed": true
+  },
+  {
+    "id": "INV-3234",
+    "orderId": "a924bb8f-ffac-4a54-82ea-89fe60211f12",
+    "clientName": "Fiona Kate Pederaja",
+    "userEmail": "mmoonbyte@gmail.com",
+    "date": "2026-05-29",
+    "items": [
+      {
+        "id": "59d31dc6-f7d6-4af7-90d9-02edfb2e6c86",
+        "name": "Wet Dog Food",
+        "quantity": 1,
+        "price": 90
+      }
+    ],
+    "totalAmount": 90,
     "status": "paid",
     "source": "product",
-    "id": "INV-7608"
+    "emailed": true
   },
   {
-    "id": "INV-3781",
-    "clientName": "Mobile User",
-    "date": "2026-05-06",
+    "id": "INV-1091",
+    "orderId": "503ed7ba-7356-4c08-83c3-a61455e79636",
+    "clientName": "Fiona Kate Pederaja",
+    "userEmail": "mmoonbyte@gmail.com",
+    "date": "2026-05-29",
     "items": [
       {
-        "id": "1",
-        "name": "collar",
+        "id": "bff533a6-f327-4b7e-8880-6d4e5b8c06d5",
+        "name": "PET SHOW 4 Pack Dog Hawaiian Shirts",
+        "quantity": 1,
+        "price": 110
+      }
+    ],
+    "totalAmount": 110,
+    "status": "paid",
+    "source": "product",
+    "emailed": true
+  },
+  {
+    "id": "INV-3293",
+    "orderId": "83a480e6-9603-4739-8d1a-b217cf44eb57",
+    "clientName": "Fiona Kate Pederaja",
+    "userEmail": "mmoonbyte@gmail.com",
+    "date": "2026-05-29",
+    "items": [
+      {
+        "id": "3ac4db74-b7a3-478c-baa2-207771c86692",
+        "name": "Pedigree Adult Chicken and Vegetable Dry dog food 1.5kg",
+        "quantity": 1,
+        "price": 150
+      }
+    ],
+    "totalAmount": 150,
+    "status": "paid",
+    "source": "product",
+    "emailed": true
+  },
+  {
+    "id": "INV-8136",
+    "orderId": "6a824a51-0faf-474d-be6d-0e1db2e5bfe1",
+    "clientName": "Fiona Kate Pederaja",
+    "userEmail": "mmoonbyte@gmail.com",
+    "date": "2026-05-29",
+    "items": [
+      {
+        "id": "51ddcef4-f021-4182-a453-372a525cc0dc",
+        "name": "Whiskas Kitten (2-12 Months) Ocean Fish Flavour",
+        "quantity": 1,
+        "price": 115
+      }
+    ],
+    "totalAmount": 115,
+    "status": "paid",
+    "source": "product",
+    "emailed": true
+  },
+  {
+    "id": "INV-6717",
+    "appointmentId": "69f3b239-79c2-41f3-8697-7552d4d21a76",
+    "clientName": "Fiona Kate Pederaja",
+    "userEmail": "mmoonbyte@gmail.com",
+    "date": "2026-05-29",
+    "items": [
+      {
+        "id": "1780062254976",
+        "name": "Telemedicine Consultation Fee",
+        "quantity": 1,
+        "price": 300
+      }
+    ],
+    "totalAmount": 300,
+    "status": "paid",
+    "source": "telemedicine",
+    "emailed": true
+  },
+  {
+    "id": "INV-9937",
+    "appointmentId": "7c90e727-8bb0-4b6d-9390-743d3c5bb1e0",
+    "clientName": "Fiona Kate Pederaja",
+    "userEmail": "mmoonbyte@gmail.com",
+    "date": "2026-05-29",
+    "items": [
+      {
+        "id": "1780058878383",
+        "name": "In-Person Consultation Fee",
+        "quantity": 1,
+        "price": 500
+      }
+    ],
+    "totalAmount": 500,
+    "status": "paid",
+    "source": "appointment",
+    "emailed": true
+  },
+  {
+    "id": "INV-5915",
+    "appointmentId": "a204cfc9-884b-4d98-a919-0814fcf5a5e8",
+    "clientName": "Fiona Kate Pederaja",
+    "userEmail": "mmoonbyte@gmail.com",
+    "date": "2026-05-29",
+    "items": [
+      {
+        "id": "1780056701814",
+        "name": "In-Person Consultation Fee",
+        "quantity": 1,
+        "price": 500
+      }
+    ],
+    "totalAmount": 500,
+    "status": "paid",
+    "source": "appointment",
+    "emailed": true
+  },
+  {
+    "id": "INV-4679",
+    "orderId": "a2ca145b-fdf7-4a14-b131-ccbdfb98a617",
+    "clientName": "Jealene Mae Ranido",
+    "userEmail": "jealenemaehubilla@gmail.com",
+    "date": "2026-05-28",
+    "items": [
+      {
+        "id": "041a8afa-ea92-46aa-a09f-0972ad6b64d0",
+        "name": "Plush Squeaky Dog Toy",
+        "quantity": 1,
+        "price": 35
+      },
+      {
+        "id": "c029f513-aa6b-4247-a1eb-909af8cf6de7",
+        "name": "Vetactiv8 Omega 3 Dog and Cat Supplement – Pets' Station",
+        "quantity": 1,
+        "price": 89
+      }
+    ],
+    "totalAmount": 124,
+    "status": "paid",
+    "source": "product",
+    "emailed": true,
+    "isArchived": false
+  },
+  {
+    "id": "INV-7138",
+    "appointmentId": "010415fa-e901-424c-9233-598b47a46755",
+    "clientName": "Jealene Mae Ranido",
+    "userEmail": "jealenemaehubilla@gmail.com",
+    "date": "2026-05-28",
+    "items": [
+      {
+        "id": "1779952747844",
+        "name": "In-Person Consultation Fee",
+        "quantity": 1,
+        "price": 500
+      }
+    ],
+    "totalAmount": 500,
+    "status": "paid",
+    "source": "appointment",
+    "emailed": true
+  },
+  {
+    "id": "INV-5709",
+    "appointmentId": "717ace25-7db2-4b88-a54e-637cc0d36e47",
+    "clientName": "Jealene Mae Ranido",
+    "userEmail": "jealenemaehubilla@gmail.com",
+    "date": "2026-05-28",
+    "items": [
+      {
+        "id": "1779950481499",
+        "name": "Telemedicine Consultation Fee",
+        "quantity": 1,
+        "price": 300
+      }
+    ],
+    "totalAmount": 300,
+    "status": "paid",
+    "source": "telemedicine",
+    "emailed": true
+  },
+  {
+    "id": "INV-7796",
+    "appointmentId": "75a7d24b-562f-44ca-a97f-34db7bb28a45",
+    "clientName": "Alexis Kate Pensona",
+    "userEmail": "alexisknp08@gmail.com",
+    "date": "2026-05-28",
+    "items": [
+      {
+        "id": "1779949686341",
+        "name": "Telemedicine Consultation Fee",
+        "quantity": 1,
+        "price": 300
+      }
+    ],
+    "totalAmount": 300,
+    "status": "paid",
+    "source": "telemedicine",
+    "emailed": true
+  },
+  {
+    "id": "INV-5065",
+    "orderId": "6e37875d-6d07-4dfe-80dd-821cbe1ed065",
+    "clientName": "Jealene Mae Ranido",
+    "userEmail": "jealenemaehubilla@gmail.com",
+    "date": "2026-05-26",
+    "items": [
+      {
+        "id": "1fc71a29-2b93-4c02-a41e-6834ed52b279",
+        "name": "VETIQ Multivitamin Soft Dog Chews, Hickory Smoke Flavored 60ct",
+        "quantity": 2,
+        "price": 135
+      }
+    ],
+    "totalAmount": 270,
+    "status": "paid",
+    "source": "product",
+    "emailed": true
+  },
+  {
+    "id": "INV-6794",
+    "appointmentId": "c97f53dd-d7fa-4e1d-b40b-c29b3554b62d",
+    "clientName": "Jealene Mae Ranido",
+    "userEmail": "jealenemaehubilla@gmail.com",
+    "date": "2026-05-26",
+    "items": [
+      {
+        "id": "1779775963503",
+        "name": "Telemedicine Consultation Fee",
+        "quantity": 1,
+        "price": 300
+      }
+    ],
+    "totalAmount": 300,
+    "status": "paid",
+    "source": "telemedicine",
+    "emailed": true
+  },
+  {
+    "id": "INV-3446",
+    "appointmentId": "eab54901-e4ff-404b-b752-3dc96cff519a",
+    "clientName": "Jealene Mae Ranido",
+    "userEmail": "jealenemaehubilla@gmail.com",
+    "date": "2026-05-26",
+    "items": [
+      {
+        "id": "1779773592829",
+        "name": "Telemedicine Consultation Fee",
+        "quantity": 1,
+        "price": 300
+      }
+    ],
+    "totalAmount": 300,
+    "status": "paid",
+    "source": "telemedicine",
+    "emailed": true
+  },
+  {
+    "id": "INV-7481",
+    "orderId": "6c1fccce-ca65-44be-b140-648d1f2db678",
+    "clientName": "Alexis Kate Pensona",
+    "userEmail": "alexisknp08@gmail.com",
+    "date": "2026-05-22",
+    "items": [
+      {
+        "id": "5f21880e-e001-4dbe-96f4-c1fbf5b6f48c",
+        "name": "Plush Squeaky Dog Toy",
         "quantity": 1,
         "price": 35
       }
     ],
     "totalAmount": 35,
     "status": "paid",
-    "source": "product"
+    "source": "product",
+    "emailed": true
   },
   {
-    "id": "INV-1001",
-    "clientName": "Juan Dela Cruz",
-    "date": "2026-05-06",
+    "id": "INV-2862",
+    "appointmentId": "8f2aeab7-df8d-4c20-8c4c-cbac425c8023",
+    "clientName": "Alexis Kate Pensona",
+    "userEmail": "alexisknp08@gmail.com",
+    "date": "2026-05-22",
     "items": [
       {
-        "id": "1",
-        "name": "Premium Dog Food",
-        "quantity": 2,
-        "price": 45.99
-      }
-    ],
-    "totalAmount": 91.98,
-    "status": "paid",
-    "source": "product"
-  },
-  {
-    "id": "INV-1002",
-    "clientName": "Maria Santos",
-    "date": "2026-05-06",
-    "items": [
-      {
-        "id": "2",
-        "name": "Consultation Fee",
+        "id": "1779451520200",
+        "name": "In-Person Consultation Fee",
         "quantity": 1,
         "price": 500
       }
     ],
     "totalAmount": 500,
+    "status": "paid",
+    "source": "appointment",
+    "emailed": true
+  },
+  {
+    "id": "INV-4857",
+    "appointmentId": "d4184d87-57ad-4abc-9dba-4d3f82411cb1",
+    "clientName": "Alexis Kate Pensona",
+    "userEmail": "alexisknp08@gmail.com",
+    "date": "2026-05-22",
+    "items": [
+      {
+        "id": "1779445371144",
+        "name": "Telemedicine Consultation Fee",
+        "quantity": 1,
+        "price": 300
+      }
+    ],
+    "totalAmount": 300,
+    "status": "paid",
+    "source": "telemedicine",
+    "emailed": true
+  },
+  {
+    "id": "INV-3551",
+    "orderId": "549e5c8a-54fb-4b09-a28d-107cfa9cb778",
+    "clientName": "Alexis Kate Pensona",
+    "userEmail": "alexisknp08@gmail.com",
+    "date": "2026-05-22",
+    "items": [
+      {
+        "id": "10f019d3-0e7a-4567-bfa7-ec9d0e21b60f",
+        "name": "Pedigree Adult Chicken and Vegetable Dry dog food 1.5kg",
+        "quantity": 1,
+        "price": 150
+      }
+    ],
+    "totalAmount": 150,
+    "status": "paid",
+    "source": "product",
+    "emailed": true
+  },
+  {
+    "id": "INV-5901",
+    "orderId": "164dfdd2-86e5-4b82-8707-c8e05ee10aba",
+    "clientName": "Kirk Aclo",
+    "userEmail": "kirkaclo05@gmail.com",
+    "date": "2026-05-22",
+    "items": [],
+    "totalAmount": 90,
     "status": "pending",
-    "source": "appointment"
+    "source": "product"
+  },
+  {
+    "id": "INV-9712",
+    "orderId": "994d620a-3bbf-40f3-9864-fb7c2588633c",
+    "clientName": "Jealene Mae Ranido",
+    "userEmail": "jealenemaehubilla@gmail.com",
+    "date": "2026-05-22",
+    "items": [
+      {
+        "id": "cb70e6c5-97ff-473c-8ce1-c6123362b3e2",
+        "name": "Taimasi 32 PCS Cat toys kit",
+        "quantity": 3,
+        "price": 169
+      }
+    ],
+    "totalAmount": 507,
+    "status": "paid",
+    "source": "product",
+    "emailed": true
   }
 ]

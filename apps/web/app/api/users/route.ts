@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../../../lib/prisma';
 import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
 
 export async function GET(request: Request) {
   try {
@@ -24,13 +23,34 @@ export async function GET(request: Request) {
         role: true,
         status: true,
         profileImage: true,
+        pets: {
+          where: { isArchived: false },
+          select: {
+            id: true,
+            petName: true,
+            species: true,
+            breed: true,
+          }
+        }
       },
       orderBy: {
         fullName: 'asc'
       }
     });
 
-    return NextResponse.json(users);
+    const mappedUsers = users.map(u => ({
+      ...u,
+      name: u.fullName,
+      pets: (u.pets || []).map(p => ({
+        id: p.id,
+        name: p.petName,
+        petName: p.petName,
+        species: p.species || 'Dog',
+        breed: p.breed || 'Unknown'
+      }))
+    }));
+
+    return NextResponse.json(mappedUsers);
   } catch (error) {
     console.error('Error fetching users:', error);
     return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 });

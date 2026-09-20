@@ -6,7 +6,9 @@ type UserProfile = {
   fullName: string;
   email: string;
   phoneNumber: string;
+  address?: string;
   avatarUri: string | null;
+  language?: 'en' | 'tl';
 };
 
 type UserContextType = {
@@ -19,7 +21,9 @@ const defaultUser: UserProfile = {
   fullName: '',
   email: '',
   phoneNumber: '',
+  address: '',
   avatarUri: null,
+  language: 'en',
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -32,7 +36,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       try {
         const storedUser = await AsyncStorage.getItem('@user_profile');
         if (storedUser) {
-          setUser(JSON.parse(storedUser));
+          const parsed = JSON.parse(storedUser);
+          setUser({
+            ...defaultUser,
+            ...parsed,
+          });
         }
       } catch (e) {
         console.error('Failed to load user profile', e);
@@ -42,13 +50,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const updateUser = async (updates: Partial<UserProfile>) => {
-    const updatedUser = { ...user, ...updates };
-    setUser(updatedUser);
-    try {
-      await AsyncStorage.setItem('@user_profile', JSON.stringify(updatedUser));
-    } catch (e) {
-      console.error('Failed to save user profile', e);
-    }
+    setUser((prev) => {
+      const updatedUser = { ...prev, ...updates };
+      AsyncStorage.setItem('@user_profile', JSON.stringify(updatedUser)).catch((e) => {
+        console.error('Failed to save user profile', e);
+      });
+      return updatedUser;
+    });
   };
 
   return (

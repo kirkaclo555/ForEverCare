@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Dictionary - FurEver PawCare</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #10b981;
+            --primary-dark: #059669;
+            --accent: #2e5e3e;
+            --border-color: #334155;
+            --th-bg: #0f172a;
+            --tr-hover: #1e293b;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 32px 24px;
+            min-height: 100vh;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        .header-container {
+            text-align: center;
+            max-width: 1000px;
+            margin: 0 auto 32px auto;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0 0 12px 0;
+            background: linear-gradient(135deg, #eaf3de 0%, #10b981 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin: 0;
+        }
+
+        .controls-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto 24px auto;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .search-container {
+            position: relative;
+            flex-grow: 1;
+            max-width: 500px;
+        }
+
+        .search-input {
+            width: 100%;
+            font-family: inherit;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 12px 16px 12px 40px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .search-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 14px;
+            color: var(--text-muted);
+        }
+
+        .actions-bar {
+            display: flex;
+            gap: 12px;
+        }
+
+        button {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background-color: var(--accent);
+            color: #ffffff;
+        }
+
+        .btn-primary:hover {
+            background-color: #3b754e;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: #334155;
+            color: #f8fafc;
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: #475569;
+            transform: translateY(-1px);
+        }
+
+        .domain-tabs {
+            display: flex;
+            gap: 8px;
+            max-width: 1200px;
+            margin: 0 auto 32px auto;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 12px;
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .tab-btn.active, .tab-btn:hover {
+            background-color: var(--card-bg);
+            color: var(--text-color);
+        }
+
+        .dictionary-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .table-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+
+        .table-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 0;
+        }
+
+        .table-mapped {
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            background-color: rgba(0,0,0,0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .table-description {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin: 0 0 16px 0;
+            line-height: 1.5;
+        }
+
+        .specs-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.9rem;
+        }
+
+        .specs-table th {
+            background-color: var(--th-bg);
+            color: var(--text-color);
+            padding: 12px 16px;
+            font-weight: 600;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .specs-table td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: #e2e8f0;
+            line-height: 1.4;
+        }
+
+        .specs-table tr:hover td {
+            background-color: rgba(255,255,255,0.02);
+        }
+
+        .specs-table code {
+            font-family: monospace;
+            font-size: 0.9rem;
+            background-color: rgba(0,0,0,0.15);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #34d399;
+        }
+
+        .specs-table tr.highlight code {
+            color: #fb7185; /* Highlights primary keys */
+        }
+
+        /* Enums Cards Grid */
+        .enums-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .enum-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .enum-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin: 0 0 8px 0;
+            font-family: monospace;
+        }
+
+        .enum-values-list {
+            padding-left: 20px;
+            margin: 0;
+            line-height: 1.6;
+            font-size: 0.9rem;
+            color: #e2e8f0;
+        }
+
+        .enum-values-list code {
+            font-family: monospace;
+            color: #34d399;
+        }
+
+        .section-divider {
+            max-width: 1200px;
+            margin: 40px auto 20px auto;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        .section-divider h2 {
+            margin: 0;
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #f8fafc 0%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Print styles optimization */
+        @media print {
+            body {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+                padding: 0;
+            }
+
+            .controls-bar, .domain-tabs, button {
+                display: none !important;
+            }
+
+            .table-card, .enum-card {
+                background-color: #ffffff !important;
+                border: 1px solid #cbd5e1 !important;
+                box-shadow: none !important;
+                page-break-inside: avoid;
+                margin-bottom: 24px;
+                padding: 16px;
+            }
+
+            .table-title, .enum-title {
+                color: #047857 !important;
+            }
+
+            .specs-table th {
+                background-color: #f1f5f9 !important;
+                color: #000000 !important;
+                border-bottom: 2px solid #94a3b8 !important;
+            }
+
+            .specs-table td {
+                color: #000000 !important;
+                border-bottom: 1px solid #e2e8f0 !important;
+            }
+
+            .specs-table code, .enum-values-list code {
+                background-color: #f1f5f9 !important;
+                color: #0f172a !important;
+                border: 1px solid #cbd5e1 !important;
+            }
+
+            h1 {
+                -webkit-text-fill-color: initial !important;
+                color: #000000 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <h1 id="title-text">Database Data Dictionary</h1>
+        <p class="subtitle" id="desc-text">Interactive physical schema documentation for the FurEver PawCare PostgreSQL database.</p>
+    </div>
+
+    <div class="controls-bar">
+        <div class="search-container">
+            <svg class="search-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" id="search-box" class="search-input" placeholder="Search tables, columns, types, or descriptions..." onkeyup="filterDictionary()">
+        </div>
+        <div class="actions-bar">
+            <button class="btn-secondary" id="theme-toggle" onclick="toggleTheme()">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg>
+                Light Theme
+            </button>
+            <button class="btn-primary" onclick="window.print()">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
+                Print / Save PDF Documentation
+            </button>
+        </div>
+    </div>
+
+    <div class="domain-tabs">
+        <button class="tab-btn active" onclick="filterDomain('all')">All Domains</button>
+        <button class="tab-btn" onclick="filterDomain('identity')">Identity & Profile</button>
+        <button class="tab-btn" onclick="filterDomain('clinical')">Clinical & Telehealth</button>
+        <button class="tab-btn" onclick="filterDomain('ecommerce')">E-Commerce</button>
+        <button class="tab-btn" onclick="filterDomain('billing')">Financial & Billing</button>
+        <button class="tab-btn" onclick="filterDomain('engagement')">Engagement</button>
+    </div>
+
+    <div class="dictionary-container" id="dict-container">
+        
+        <div class="section-divider" data-domain="identity">
+            <h2>Identity & Profile Domain</h2>
+        </div>
+
+        <!-- 1. Users Table -->
+        <div class="table-card" data-domain="identity" id="table-users">
+            <div class="table-header">
+                <h3 class="table-title">users</h3>
+            </div>
+            <p class="table-description">Stores primary credentials, security states, profiles, and contact channels for all registered clients, clerk admins, and doctors.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th>Column Name</th>
+                        <th>Prisma Type</th>
+                        <th>PostgreSQL Type</th>
+                        <th>Keys</th>
+                        <th>Default</th>
+                        <th>Description / Constraints</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="highlight">
+                        <td><code>user_id</code></td>
+                        <td><code>String</code></td>
+                        <td><code>UUID</code></td>
+                        <td><strong>PK</strong></td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique account identifier mapping.</td>
+                    </tr>
+                    <tr>
+                        <td><code>full_name</code></td>
+                        <td><code>String</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>Full legal name of the user.</td>
+                    </tr>
+                    <tr>
+                        <td><code>email</code></td>
+                        <td><code>String</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><strong>UK</strong></td>
+                        <td>-</td>
+                        <td>Unique email used for login credentials.</td>
+                    </tr>
+                    <tr>
+                        <td><code>password</code></td>
+                        <td><code>String</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>Salted and hashed password.</td>
+                    </tr>
+                    <tr>
+                        <td><code>phone_number</code></td>
+                        <td><code>String?</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td>-</td>
+                        <td><code>NULL</code></td>
+                        <td>Optional contact phone number.</td>
+                    </tr>
+                    <tr>
+                        <td><code>address</code></td>
+                        <td><code>String?</code></td>
+                        <td><code>TEXT</code></td>
+                        <td>-</td>
+                        <td><code>NULL</code></td>
+                        <td>Optional billing/shipping street address.</td>
+                    </tr>
+                    <tr>
+                        <td><code>role</code></td>
+                        <td><code>Role</code></td>
+                        <td><code>ENUM</code></td>
+                        <td>-</td>
+                        <td><code>'USER'</code></td>
+                        <td>Account role privileges. Values: <code>USER</code>, <code>ADMIN</code>, <code>SUPER_ADMIN</code>.</td>
+                    </tr>
+                    <tr>
+                        <td><code>profile_image</code></td>
+                        <td><code>String?</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td>-</td>
+                        <td><code>NULL</code></td>
+                        <td>Optional URL/file path to user avatar.</td>
+                    </tr>
+                    <tr>
+                        <td><code>created_at</code></td>
+                        <td><code>DateTime</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td>-</td>
+                        <td><code>NOW()</code></td>
+                        <td>Record registration timestamp.</td>
+                    </tr>
+                    <tr>
+                        <td><code>updated_at</code></td>
+                        <td><code>DateTime</code></td>
+                        <td><code>TIMESTAMPTZ</code></td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>Auto-updating edit timestamp.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 2. Admin Staff Table -->
+        <div class="table-card" data-domain="identity" id="table-admin-staff">
+            <div class="table-header">
+                <h3 class="table-title">admin_staff</h3>
+            </div>
+            <p class="table-description">Holds extended administrative/employment details linked one-to-one with a primary user account.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th>Column Name</th>
+                        <th>Prisma Type</th>
+                        <th>PostgreSQL Type</th>
+                        <th>Keys</th>
+                        <th>Default</th>
+                        <th>Description / Constraints</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="highlight">
+                        <td><code>user_id</code></td>
+                        <td><code>String</code></td>
+                        <td><code>UUID</code></td>
+                        <td><strong>PK, FK</strong></td>
+                        <td>-</td>
+                        <td>References <code>users.user_id</code>. Cascade delete.</td>
+                    </tr>
+                    <tr>
+                        <td><code>employee_code</code></td>
+                        <td><code>String</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td><strong>UK</strong></td>
+                        <td>-</td>
+                        <td>Unique staff code identifier.</td>
+                    </tr>
+                    <tr>
+                        <td><code>position</code></td>
+                        <td><code>String</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>Employment position (e.g. 'Lead Vet', 'Clerk').</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section-divider" data-domain="clinical">
+            <h2>Clinical & Telehealth Domain</h2>
+        </div>
+
+        <!-- 3. Pets Table -->
+        <div class="table-card" data-domain="clinical" id="table-pets">
+            <div class="table-header">
+                <h3 class="table-title">pets</h3>
+            </div>
+            <p class="table-description">Stores details of registered pets linked to their owner's user account.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th>Column Name</th>
+                        <th>Prisma Type</th>
+                        <th>PostgreSQL Type</th>
+                        <th>Keys</th>
+                        <th>Default</th>
+                        <th>Description / Constraints</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="highlight">
+                        <td><code>pet_id</code></td>
+                        <td><code>String</code></td>
+                        <td><code>UUID</code></td>
+                        <td><strong>PK</strong></td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique pet record ID.</td>
+                    </tr>
+                    <tr>
+                        <td><code>user_id</code></td>
+                        <td><code>String</code></td>
+                        <td><code>UUID</code></td>
+                        <td><strong>FK</strong></td>
+                        <td>-</td>
+                        <td>References <code>users.user_id</code> (pet owner).</td>
+                    </tr>
+                    <tr>
+                        <td><code>pet_name</code></td>
+                        <td><code>String</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>Name of the pet.</td>
+                    </tr>
+                    <tr>
+                        <td><code>species</code></td>
+                        <td><code>String?</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td>-</td>
+                        <td><code>NULL</code></td>
+                        <td>Optional species classification (e.g. 'Dog', 'Cat').</td>
+                    </tr>
+                    <tr>
+                        <td><code>breed</code></td>
+                        <td><code>String?</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td>-</td>
+                        <td><code>NULL</code></td>
+                        <td>Optional breed specification.</td>
+                    </tr>
+                    <tr>
+                        <td><code>age</code></td>
+                        <td><code>Int?</code></td>
+                        <td><code>INTEGER</code></td>
+                        <td>-</td>
+                        <td><code>NULL</code></td>
+                        <td>Optional age in years.</td>
+                    </tr>
+                    <tr>
+                        <td><code>gender</code></td>
+                        <td><code>String?</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td>-</td>
+                        <td><code>NULL</code></td>
+                        <td>Optional pet gender.</td>
+                    </tr>
+                    <tr>
+                        <td><code>weight</code></td>
+                        <td><code>Float?</code></td>
+                        <td><code>DOUBLE PRECISION</code></td>
+                        <td>-</td>
+                        <td><code>NULL</code></td>
+                        <td>Optional weight in kilograms.</td>
+                    </tr>
+                    <tr>
+                        <td><code>avatar</code></td>
+                        <td><code>String?</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td>-</td>
+                        <td><code>NULL</code></td>
+                        <td>Optional URL/file path to pet photo.</td>
+                    </tr>
+                    <tr>
+                        <td><code>is_archived</code></td>
+                        <td><code>Boolean</code></td>
+                        <td><code>BOOLEAN</code></td>
+                        <td>-</td>
+                        <td><code>false</code></td>
+                        <td>Indicates if this pet has been soft-archived.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 4. Pet Monitoring Table -->
+        <div class="table-card" data-domain="clinical" id="table-pet-monitoring">
+            <div class="table-header">
+                <h3 class="table-title">pet_monitoring</h3>
+            </div>
+            <p class="table-description">Stores triage data and health telemetry, managing continuous pet diagnostics.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th>Column Name</th>
+                        <th>Prisma Type</th>
+                        <th>PostgreSQL Type</th>
+                        <th>Keys</th>
+                        <th>Default</th>
+                        <th>Description / Constraints</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="highlight">
+                        <td><code>monitor_id</code></td>
+                        <td><code>String</code></td>
+                        <td><code>UUID</code></td>
+                        <td><strong>PK</strong></td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique monitoring record ID.</td>
+                    </tr>
+                    <tr>
+                        <td><code>pet_id</code></td>
+                        <td><code>String</code></td>
+                        <td><code>UUID</code></td>
+                        <td><strong>FK</strong></td>
+                        <td>-</td>
+                        <td>References <code>pets.pet_id</code>.</td>
+                    </tr>
+                    <tr>
+                        <td><code>monitoring_status</code></td>
+                        <td><code>MonitoringStatus</code></td>
+                        <td><code>ENUM</code></td>
+                        <td>-</td>
+                        <td><code>'ACTIVE'</code></td>
+                        <td>Current health tier. Values: <code>ACTIVE</code>, <code>RESOLVED</code>, <code>CRITICAL</code>.</td>
+                    </tr>
+                    <tr>
+                        <td><code>symptoms</code></td>
+                        <td><code>String?</code></td>
+                        <td><code>TEXT</code></td>
+                        <td>-</td>
+                        <td><code>NULL</code></td>
+                        <td>Logged physiological symptoms.</td>
+                    </tr>
+                    <tr>
+                        <td><code>behavior_changes</code></td>
+                        <td><code>String?</code></td>
+                        <td><code>TEXT</code></td>
+                        <td>-</td>
+                        <td><code>NULL</code></td>
+                        <td>Noticed mood variations.</td>
+                    </tr>
+                    <tr>
+                        <td><code>is_forwarded</code></td>
+                        <td><code>Boolean</code></td>
+                        <td><code>BOOLEAN</code></td>
+                        <td>-</td>
+                        <td><code>false</code></td>
+                        <td>Toggled if escalated from admin to vet.</td>
+                    </tr>
+                    <tr>
+                        <td><code>chat_messages</code></td>
+                        <td><code>Json?</code></td>
+                        <td><code>JSONB</code></td>
+                        <td>-</td>
+                        <td><code>NULL</code></td>
+                        <td>Optional diagnostic conversation raw payload logs.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section-divider" data-domain="ecommerce">
+            <h2>E-Commerce Domain</h2>
+        </div>
+
+        <!-- 5. Products Table -->
+        <div class="table-card" data-domain="ecommerce" id="table-products">
+            <div class="table-header">
+                <h3 class="table-title">products</h3>
+            </div>
+            <p class="table-description">Details the items available for sale in the online veterinary e-commerce store.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th>Column Name</th>
+                        <th>Prisma Type</th>
+                        <th>PostgreSQL Type</th>
+                        <th>Keys</th>
+                        <th>Default</th>
+                        <th>Description / Constraints</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="highlight">
+                        <td><code>product_id</code></td>
+                        <td><code>String</code></td>
+                        <td><code>UUID</code></td>
+                        <td><strong>PK</strong></td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique catalog stock SKU number.</td>
+                    </tr>
+                    <tr>
+                        <td><code>product_name</code></td>
+                        <td><code>String</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>Retail item catalog name.</td>
+                    </tr>
+                    <tr>
+                        <td><code>category</code></td>
+                        <td><code>String</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>Subgroup categorizations (e.g. 'Food').</td>
+                    </tr>
+                    <tr>
+                        <td><code>price</code></td>
+                        <td><code>Float</code></td>
+                        <td><code>DOUBLE PRECISION</code></td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>Retail unit base price.</td>
+                    </tr>
+                    <tr>
+                        <td><code>stock_quantity</code></td>
+                        <td><code>Int</code></td>
+                        <td><code>INTEGER</code></td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>Count of items in warehouse.</td>
+                    </tr>
+                    <tr>
+                        <td><code>status</code></td>
+                        <td><code>ProductStatus</code></td>
+                        <td><code>ENUM</code></td>
+                        <td>-</td>
+                        <td><code>'AVAILABLE'</code></td>
+                        <td>State of catalog availability. Values: <code>AVAILABLE</code>, <code>OUT_OF_STOCK</code>, <code>DISCONTINUED</code>.</td>
+                    </tr>
+                    <tr>
+                        <td><code>is_archived</code></td>
+                        <td><code>Boolean</code></td>
+                        <td><code>BOOLEAN</code></td>
+                        <td>-</td>
+                        <td><code>false</code></td>
+                        <td>Whether catalog item has been soft-archived.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section-divider" data-domain="billing">
+            <h2>Financial & Billing Domain</h2>
+        </div>
+
+        <!-- 6. Payments Table -->
+        <div class="table-card" data-domain="billing" id="table-payments">
+            <div class="table-header">
+                <h3 class="table-title">payments</h3>
+            </div>
+            <p class="table-description">Main ledger mapping financial clearances of checkouts, appointments, and telemetry diagnostics.</p>
+            <table class="specs-table">
+                <thead>
+                    <tr>
+                        <th>Column Name</th>
+                        <th>Prisma Type</th>
+                        <th>PostgreSQL Type</th>
+                        <th>Keys</th>
+                        <th>Default</th>
+                        <th>Description / Constraints</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="highlight">
+                        <td><code>payment_id</code></td>
+                        <td><code>String</code></td>
+                        <td><code>UUID</code></td>
+                        <td><strong>PK</strong></td>
+                        <td><code>uuid_generate_v4()</code></td>
+                        <td>Unique financial txn receipt key.</td>
+                    </tr>
+                    <tr>
+                        <td><code>order_id</code></td>
+                        <td><code>String?</code></td>
+                        <td><code>UUID</code></td>
+                        <td><strong>FK</strong></td>
+                        <td><code>NULL</code></td>
+                        <td>Optional billing reference to <code>orders</code>.</td>
+                    </tr>
+                    <tr>
+                        <td><code>appointment_id</code></td>
+                        <td><code>String?</code></td>
+                        <td><code>UUID</code></td>
+                        <td><strong>FK</strong></td>
+                        <td><code>NULL</code></td>
+                        <td>Optional billing reference to <code>appointments</code>.</td>
+                    </tr>
+                    <tr>
+                        <td><code>telemed_id</code></td>
+                        <td><code>String?</code></td>
+                        <td><code>UUID</code></td>
+                        <td><strong>FK</strong></td>
+                        <td><code>NULL</code></td>
+                        <td>Optional billing reference to <code>telemedicine</code>.</td>
+                    </tr>
+                    <tr>
+                        <td><code>payment_amount</code></td>
+                        <td><code>Float</code></td>
+                        <td><code>DOUBLE PRECISION</code></td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>Paid currency decimal sum.</td>
+                    </tr>
+                    <tr>
+                        <td><code>payment_status</code></td>
+                        <td><code>PaymentStatus</code></td>
+                        <td><code>ENUM</code></td>
+                        <td>-</td>
+                        <td><code>'PENDING'</code></td>
+                        <td>Clearing stage. Values: <code>PENDING</code>, <code>COMPLETED</code>, <code>FAILED</code>, <code>REFUNDED</code>.</td>
+                    </tr>
+                    <tr>
+                        <td><code>reference_number</code></td>
+                        <td><code>String?</code></td>
+                        <td><code>VARCHAR</code></td>
+                        <td>-</td>
+                        <td><code>NULL</code></td>
+                        <td>Optional reference codes from GCash/E-Wallet.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="section-divider">
+            <h2>Custom Database Enums</h2>
+        </div>
+
+        <div class="enums-grid" id="enums-container">
+            <div class="enum-card">
+                <h4 class="enum-title">Role</h4>
+                <ul class="enum-values-list">
+                    <li><code>SUPER_ADMIN</code> — Full system permissions</li>
+                    <li><code>ADMIN</code> — Clinic staff & receptionist</li>
+                    <li><code>USER</code> — Regular pet owners & shoppers</li>
+                </ul>
+            </div>
+            <div class="enum-card">
+                <h4 class="enum-title">AppointmentStatus</h4>
+                <ul class="enum-values-list">
+                    <li><code>PENDING</code> | <code>CONFIRMED</code></li>
+                    <li><code>COMPLETED</code> | <code>CANCELLED</code></li>
+                    <li><code>PAID</code> | <code>DECLINED</code></li>
+                </ul>
+            </div>
+            <div class="enum-card">
+                <h4 class="enum-title">MonitoringStatus</h4>
+                <ul class="enum-values-list">
+                    <li><code>ACTIVE</code> — Diagnostic cycle running</li>
+                    <li><code>RESOLVED</code> — Treated & healthy pet</li>
+                    <li><code>CRITICAL</code> — Flagged for emergency care</li>
+                </ul>
+            </div>
+            <div class="enum-card">
+                <h4 class="enum-title">PaymentStatus</h4>
+                <ul class="enum-values-list">
+                    <li><code>PENDING</code> | <code>COMPLETED</code></li>
+                    <li><code>FAILED</code> | <code>REFUNDED</code></li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        let currentTheme = 'dark';
+
+        function toggleTheme() {
+            currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            const btn = document.getElementById('theme-toggle');
+            const title = document.getElementById('title-text');
+            
+            if (currentTheme === 'light') {
+                document.documentElement.style.setProperty('--bg-color', '#ffffff');
+                document.documentElement.style.setProperty('--card-bg', '#f8fafc');
+                document.documentElement.style.setProperty('--text-color', '#0f172a');
+                document.documentElement.style.setProperty('--text-muted', '#475569');
+                document.documentElement.style.setProperty('--border-color', '#cbd5e1');
+                document.documentElement.style.setProperty('--th-bg', '#e2e8f0');
+                
+                title.style.background = 'initial';
+                title.style.color = '#2e5e3e';
+                title.style.webkitTextFillColor = 'initial';
+                
+                btn.innerHTML = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg> Dark Theme`;
+                btn.style.backgroundColor = '#e2e8f0';
+                btn.style.color = '#0f172a';
+            } else {
+                document.documentElement.style.setProperty('--bg-color', '#0f172a');
+                document.documentElement.style.setProperty('--card-bg', '#1e293b');
+                document.documentElement.style.setProperty('--text-color', '#f8fafc');
+                document.documentElement.style.setProperty('--text-muted', '#94a3b8');
+                document.documentElement.style.setProperty('--border-color', '#334155');
+                document.documentElement.style.setProperty('--th-bg', '#0f172a');
+                
+                title.style.background = 'linear-gradient(135deg, #eaf3de 0%, #10b981 100%)';
+                title.style.webkitBackgroundClip = 'text';
+                title.style.webkitTextFillColor = 'transparent';
+                
+                btn.innerHTML = `<svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m12.728 12.728l.707-.707M12 8a4 4 0 100 8 4 4 0 000-8z"/></svg> Light Theme`;
+                btn.style.backgroundColor = '#334155';
+                btn.style.color = '#f8fafc';
+            }
+        }
+
+        function filterDomain(domain) {
+            const cards = document.querySelectorAll('.table-card');
+            const dividers = document.querySelectorAll('.section-divider');
+            const tabs = document.querySelectorAll('.tab-btn');
+            
+            // Update active tab style
+            tabs.forEach(tab => {
+                if (tab.innerText.toLowerCase().includes(domain) || (domain === 'all' && tab.innerText.toLowerCase().includes('all'))) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+
+            cards.forEach(card => {
+                if (domain === 'all' || card.getAttribute('data-domain') === domain) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            dividers.forEach(div => {
+                if (domain === 'all' || div.getAttribute('data-domain') === domain) {
+                    div.style.display = 'block';
+                } else {
+                    div.style.display = 'none';
+                }
+            });
+        }
+
+        function filterDictionary() {
+            const query = document.getElementById('search-box').value.toLowerCase();
+            const cards = document.querySelectorAll('.table-card');
+            const dividers = document.querySelectorAll('.section-divider');
+            
+            // If query is empty, reset filters using the active domain tab
+            if (!query) {
+                const activeTab = document.querySelector('.tab-btn.active');
+                const activeDomainText = activeTab.innerText.toLowerCase();
+                let activeDomain = 'all';
+                if (activeDomainText.includes('identity')) activeDomain = 'identity';
+                else if (activeDomainText.includes('clinical')) activeDomain = 'clinical';
+                else if (activeDomainText.includes('e-commerce') || activeDomainText.includes('commerce')) activeDomain = 'ecommerce';
+                else if (activeDomainText.includes('financial') || activeDomainText.includes('billing')) activeDomain = 'billing';
+                else if (activeDomainText.includes('engagement')) activeDomain = 'engagement';
+                
+                filterDomain(activeDomain);
+                return;
+            }
+
+            // Hide domain tab divider headers during active text search to clean up search results
+            dividers.forEach(div => div.style.display = 'none');
+
+            cards.forEach(card => {
+                const textContent = card.innerText.toLowerCase();
+                if (textContent.includes(query)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

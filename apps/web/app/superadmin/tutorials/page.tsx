@@ -17,8 +17,8 @@ export default function TutorialsPage() {
   const router = useRouter();
 
   const [videos, setVideos] = useState<Video[]>([]);
-
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [loading, setLoading] = useState(false);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -33,6 +33,34 @@ export default function TutorialsPage() {
   const [formDesc, setFormDesc] = useState('');
   const [formFile, setFormFile] = useState<File | null>(null);
   const [formCategory, setFormCategory] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const fetchVideos = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/tutorials');
+      const data = await res.json();
+      if (data.success) {
+        const mapped = data.tutorials.map((t: any) => ({
+          id: t.id,
+          title: t.title,
+          description: t.description || '',
+          url: t.videoLink,
+          isLocal: t.videoLink.startsWith('/') || t.videoLink.includes('uploads') || t.videoLink.includes('w3schools'),
+          category: t.category || 'Other'
+        }));
+        setVideos(mapped);
+      }
+    } catch (err) {
+      console.error('Failed to fetch tutorials:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  React.useEffect(() => {
+    fetchVideos();
+  }, []);
 
   const resetForm = () => {
     setFormTitle('');
@@ -52,54 +80,97 @@ export default function TutorialsPage() {
     resetForm();
   };
 
-  const handleAddSubmit = (e: React.FormEvent) => {
+  const handleAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle) return alert('Title is required');
     if (!formCategory) return alert('Category is required');
+    if (!formFile) return alert('Please upload a video file.');
 
-    let videoUrl = '';
-    let isLocal = false;
+    setIsSaving(true);
+    try {
+      // 1. Upload the file to /api/upload
+      const formData = new FormData();
+      formData.append('file', formFile);
+      const upRes = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const upData = await upRes.json();
+      if (!upData.success) {
+        throw new Error(upData.error || 'Failed to upload video');
+      }
 
-    if (formFile) {
-      videoUrl = URL.createObjectURL(formFile);
-      isLocal = true;
-    } else {
-      return alert('Please upload a video file.');
+      // 2. Post the video metadata to /api/tutorials
+      const res = await fetch('/api/tutorials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: formTitle,
+          description: formDesc,
+          videoLink: upData.url,
+          category: formCategory
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchVideos();
+        closeAddModal();
+      } else {
+        alert(data.error || 'Failed to save video tutorial');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error saving video tutorial');
+    } finally {
+      setIsSaving(false);
     }
-
-    const newVideo: Video = {
-      id: Date.now().toString(),
-      title: formTitle,
-      description: formDesc,
-      url: videoUrl,
-      isLocal,
-      category: formCategory
-    };
-
-    setVideos([...videos, newVideo]);
-    closeAddModal();
   };
 
-  const handleEditSubmit = (e: React.FormEvent) => {
+  const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTitle) return alert('Title is required');
     if (!formCategory) return alert('Category is required');
 
-    const currentVideo = videos.find(v => v.id === editingVideoId);
-    let videoUrl = currentVideo?.url || '';
-    let isLocal = currentVideo?.isLocal || false;
+    setIsSaving(true);
+    try {
+      const currentVideo = videos.find(v => v.id === editingVideoId);
+      let videoUrl = currentVideo?.url || '';
 
-    if (formFile) {
-      videoUrl = URL.createObjectURL(formFile);
-      isLocal = true;
+      if (formFile) {
+        const formData = new FormData();
+        formData.append('file', formFile);
+        const upRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        });
+        const upData = await upRes.json();
+        if (!upData.success) {
+          throw new Error(upData.error || 'Failed to upload video');
+        }
+        videoUrl = upData.url;
+      }
+
+      const res = await fetch(`/api/tutorials/${editingVideoId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: formTitle,
+          description: formDesc,
+          videoLink: videoUrl,
+          category: formCategory
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchVideos();
+        closeEditModal();
+      } else {
+        alert(data.error || 'Failed to update video tutorial');
+      }
+    } catch (err: any) {
+      alert(err.message || 'Error updating video tutorial');
+    } finally {
+      setIsSaving(false);
     }
-
-    setVideos(videos.map(v => 
-      v.id === editingVideoId 
-        ? { ...v, title: formTitle, description: formDesc, url: videoUrl, isLocal, category: formCategory } 
-        : v
-    ));
-    closeEditModal();
   };
 
   const openEditModal = (video: Video) => {
@@ -121,12 +192,24 @@ export default function TutorialsPage() {
     setIsDeleteModalOpen(true);
   };
 
-  const confirmDelete = () => {
-    if (activeVideo) {
-      setVideos(videos.filter(v => v.id !== activeVideo.id));
+  const confirmDelete = async () => {
+    if (!activeVideo) return;
+    try {
+      const res = await fetch(`/api/tutorials/${activeVideo.id}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchVideos();
+      } else {
+        alert(data.error || 'Failed to delete video tutorial');
+      }
+    } catch (err) {
+      alert('Error deleting video tutorial');
+    } finally {
+      setIsDeleteModalOpen(false);
+      setActiveVideo(null);
     }
-    setIsDeleteModalOpen(false);
-    setActiveVideo(null);
   };
 
   const filteredVideos = filterCategory === 'all' 
@@ -134,9 +217,18 @@ export default function TutorialsPage() {
     : videos.filter(v => v.category === filterCategory);
 
   const categories = [
-    'Getting Started', 'Appointment Management', 'Telemedicine', 
-    'Billing & Payments', 'Inventory', 'Pet Records', 
-    'User Management', 'Advanced Features'
+    'Dog Training',
+    'Cat Care',
+    'Grooming',
+    'Health & Diet',
+    'Getting Started',
+    'Appointment Management',
+    'Telemedicine',
+    'Billing & Payments',
+    'Inventory',
+    'Pet Records',
+    'User Management',
+    'Advanced Features'
   ];
 
   return (
@@ -173,11 +265,7 @@ export default function TutorialsPage() {
                     filteredVideos.map(video => (
                       <div className="video-card" key={video.id}>
                           <div className="video-thumbnail" onClick={() => openWatchModal(video)}>
-                              {video.isLocal ? (
-                                <video src={video.url} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
-                              ) : (
-                                <img src={`https://img.youtube.com/vi/${video.url.split('embed/')[1]?.split('?')[0]}/hqdefault.jpg`} alt={video.title} onError={(e) => (e.currentTarget.src = 'https://via.placeholder.com/640x360?text=Video')} />
-                              )}
+                              <video src={video.url} style={{width: '100%', height: '100%', objectFit: 'cover'}} />
                               <div className="play-button"><i className="fas fa-play"></i></div>
                           </div>
                           <div className="video-info">
@@ -305,11 +393,7 @@ export default function TutorialsPage() {
                 </div>
                 <div className="modal-body">
                     <div style={{position: 'relative', paddingBottom: '56.25%', height: '0', overflow: 'hidden', background: '#000'}}>
-                        {activeVideo.isLocal ? (
-                          <video src={activeVideo.url} style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%'}} controls autoPlay></video>
-                        ) : (
-                          <iframe style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%'}} src={activeVideo.url} frameBorder={0} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
-                        )}
+                        <video src={activeVideo.url} style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '100%'}} controls autoPlay></video>
                     </div>
                     <p style={{marginTop: '15px', color: '#4a5568'}}>{activeVideo.description}</p>
                 </div>

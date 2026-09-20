@@ -1,0 +1,148 @@
+%%{init: {
+  'theme': 'base',
+  'themeVariables': {
+    'primaryColor': '#2E5E3E',
+    'primaryTextColor': '#FFFFFF',
+    'primaryBorderColor': '#1E3E28',
+    'lineColor': '#00D2D2',
+    'secondaryColor': '#3B7A51',
+    'tertiaryColor': '#EAF3DE',
+    'actorBkg': '#2E5E3E',
+    'actorBorder': '#1E3E28',
+    'actorTextColor': '#FFFFFF',
+    'signalColor': '#00D2D2',
+    'signalTextColor': '#1E293B',
+    'activationBkgColor': '#00D2D2',
+    'activationBorderColor': '#00B8B8'
+  }
+}}%%
+sequenceDiagram
+    autonumber
+
+    actor PO as Pet Owner
+    participant MA as Mobile App
+    participant SV as Server / API
+    participant DB as Database
+    participant SMS as SMS Gateway
+    actor AD as Admin / Super Admin
+    participant WP as Web Portal
+
+    %% === 1. User Registration ===
+    rect rgb(234, 243, 222)
+    Note over PO,DB: 1. User Registration
+    PO->>+MA: Open App & Tap Register
+    MA->>+SV: POST /register (name, email, password)
+    SV->>+DB: INSERT INTO users
+    DB-->>-SV: Success Confirmation
+    SV-->>-MA: Registration Confirmed
+    MA-->>-PO: Show Success & Redirect to Login
+    end
+
+    %% === 2. User Login & Auth ===
+    rect rgb(232, 240, 254)
+    Note over PO,DB: 2. User Login & Authentication
+    PO->>+MA: Enter Credentials & Tap Login
+    MA->>+SV: POST /login (email, password)
+    SV->>+DB: SELECT FROM users WHERE email & password
+    DB-->>-SV: User Record Found
+    SV->>SV: Generate JWT Session Token
+    SV-->>-MA: Return Token & User Role
+    MA-->>-PO: Redirect to Dashboard
+    end
+
+    %% === 3. Appointment Booking ===
+    rect rgb(255, 242, 204)
+    Note over PO,SMS: 3. Appointment Booking
+    PO->>+MA: Select Date, Time, Pet & Reason
+    MA->>+SV: POST /appointments (details)
+    SV->>+DB: Check Slot Availability
+    DB-->>-SV: Slot Available
+    SV->>+DB: INSERT INTO appointments (status: pending)
+    DB-->>-SV: Booking Created
+    SV->>+SMS: Send Booking Confirmation SMS
+    SMS-->>-PO: SMS Received
+    SV-->>-MA: Show Booking Success
+    MA-->>-PO: Display Confirmation Receipt
+    end
+
+    %% === 4. Admin Approves Appointment ===
+    rect rgb(245, 245, 245)
+    Note over AD,SMS: 4. Admin Approves Appointment
+    AD->>+WP: View Pending Appointments
+    WP->>+SV: GET /appointments?status=pending
+    SV->>+DB: SELECT FROM appointments
+    DB-->>-SV: Return Pending List
+    SV-->>-WP: Display Appointments
+    WP-->>-AD: Show Appointments List
+
+    AD->>+WP: Click Approve on Booking
+    WP->>+SV: PUT /appointments/:id (status: approved)
+    SV->>+DB: UPDATE appointment SET status=approved
+    DB-->>-SV: Updated
+    SV->>+SMS: Send Approval SMS to Pet Owner
+    SMS-->>-PO: SMS Received
+    SV-->>-WP: Show Success
+    WP-->>-AD: Display Approval Confirmed
+    end
+
+    %% === 5. Shop Checkout ===
+    rect rgb(234, 243, 222)
+    Note over PO,DB: 5. Product Purchase & Checkout
+    PO->>+MA: Browse & Add Products to Cart
+    MA->>+SV: POST /orders (cart items)
+    SV->>+DB: Check Stock Availability
+    DB-->>-SV: Stock Confirmed
+    SV->>+DB: INSERT INTO orders & UPDATE inventory
+    DB-->>-SV: Order Saved & Stock Deducted
+    SV-->>-MA: Show Order Confirmation
+    MA-->>-PO: Display Receipt
+    end
+
+    %% === 6. Telemedicine Session ===
+    rect rgb(232, 240, 254)
+    Note over PO,AD: 6. Telemedicine Consultation
+    PO->>+MA: Open Telemedicine & Enter Room Code
+    MA->>+SV: JOIN /telemed/room/:code
+    SV-->>-MA: Connected to Room
+    MA-->>-PO: Display Video Interface
+
+    AD->>+WP: Open Telemedicine & Start Session
+    WP->>+SV: JOIN /telemed/room/:code
+    SV-->>-WP: Connected to Room
+    WP-->>-AD: Display Video Interface
+
+    Note over MA,WP: Live Video Consultation
+
+    AD->>+WP: Write Prescription & End Session
+    WP->>+SV: POST /prescriptions
+    SV->>+DB: INSERT INTO prescriptions
+    DB-->>-SV: Saved
+    SV-->>-WP: Session Ended
+    WP-->>-AD: Redirect to Dashboard
+
+    SV->>+MA: Deliver Prescription to Pet Owner
+    MA-->>-PO: Display Prescription
+    end
+
+    %% === 7. Pet Health Monitoring ===
+    rect rgb(255, 242, 204)
+    Note over PO,SMS: 7. Pet Health Monitoring & Alerts
+    PO->>+MA: Log Pet Vitals (Temp, Weight, Activity)
+    MA->>+SV: POST /pet-vitals (readings)
+    SV->>+DB: INSERT INTO health_logs
+    DB-->>-SV: Log Saved
+    SV->>SV: Compare Against Normal Thresholds
+    alt Vitals Normal
+        SV-->>MA: Show Healthy Status
+        MA-->>PO: Display Reading
+    else Vitals Abnormal
+        SV->>+DB: INSERT INTO health_alerts
+        DB-->>-SV: Alert Logged
+        SV->>+SMS: Send Alert SMS to Owner & Clinic
+        SMS-->>-PO: Alert SMS Received
+        SV-->>MA: Show Warning Alert
+        MA-->>PO: Display Health Warning
+    end
+    deactivate SV
+    deactivate MA
+    end

@@ -1,0 +1,58 @@
+graph TD
+    %% Global Link Styling for Cyan Arrows
+    linkStyle default stroke:#00D2D2,stroke-width:3px;
+
+    %% Class Definitions
+    classDef greenShape fill:#2E5E3E,stroke:#1E3E28,color:#FFFFFF,stroke-width:2px;
+    classDef startStop fill:#3B7A51,stroke:#2E5E3E,color:#FFFFFF,stroke-width:2px;
+    classDef forkJoin fill:#000000,stroke:#000000,color:#FFFFFF,stroke-width:3px;
+
+    subgraph ClinicStaff [Clinic Admin Actions]
+        Start((●)) --> OpenPortal(Open Admin Web Portal)
+        OpenPortal --> InputCredentials(Input Staff Credentials)
+        
+        Dashboard(Access Admin Dashboard) --> ChooseAppt(Review Booking Requests)
+        ChooseAppt --> ActAppt(Select & Approve Appointment)
+        
+        Dashboard --> ChooseInventory(Manage Product Inventory)
+        ChooseInventory --> ActInventory(Input Updated Stock Count)
+        
+        Dashboard --> ChooseReports(Request Diagnostic Report)
+        ChooseReports --> ActReport(Select Pet Record & Click Generate)
+        
+        Dashboard --> ClickLogout(Click Logout Button)
+    end
+
+    subgraph System [Web Portal Backend]
+        InputCredentials --> ValidateLogin{Verify Staff Session & JWT}
+        ValidateLogin -- Invalid --> AlertLogin(Show Login Error) --> InputCredentials
+        ValidateLogin -- Valid --> Dashboard
+        
+        ActAppt --> ForkAppt[ ]
+        class ForkAppt forkJoin;
+        
+        ForkAppt --> UpdateApptDB(Update Status in Appointments DB)
+        ForkAppt --> NotifyAppt(Trigger Automated Booking Log)
+        
+        UpdateApptDB --> JoinAppt[ ]
+        NotifyAppt --> JoinAppt
+        class JoinAppt forkJoin;
+        
+        JoinAppt --> SendClientSMS(Dispatch SMS Update to Owner) --> Dashboard
+        
+        ActInventory --> WriteStockDB(Update Counts in Inventory DB)
+        WriteStockDB --> CheckStockLevels{Stock Low?}
+        CheckStockLevels -- Yes --> AlertStaff(Trigger Dashboard Low-Stock Warning) --> Dashboard
+        CheckStockLevels -- No --> Dashboard
+        
+        ActReport --> FetchMedicalLogs(Query Database Health Timeline)
+        FetchMedicalLogs --> CompilePDF(Compile Diagnostics Report PDF)
+        CompilePDF --> OutputDocument(Print Document / Export PDF) --> Dashboard
+        
+        ClickLogout --> DestroySession(Clear Web Staff JWT Session)
+        DestroySession --> End(((◎)))
+    end
+
+    class Start,End startStop;
+    class OpenPortal,InputCredentials,ChooseAppt,ActAppt,ChooseInventory,ActInventory,ChooseReports,ActReport,ClickLogout greenShape;
+    class AlertLogin,UpdateApptDB,NotifyAppt,SendClientSMS,WriteStockDB,AlertStaff,FetchMedicalLogs,CompilePDF,OutputDocument,DestroySession greenShape;

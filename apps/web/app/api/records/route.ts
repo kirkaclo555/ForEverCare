@@ -1,14 +1,29 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../../../lib/prisma';
 
-const prisma = new PrismaClient();
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const showArchived = searchParams.get('archived') === 'true';
+
     const dbPets = await prisma.pet.findMany({
+      where: {
+        isArchived: showArchived
+      },
       include: {
         user: true,
+        monitoring: {
+          orderBy: {
+            createdAt: 'desc'
+          }
+        },
+        appointments: {
+          include: {
+            payments: true
+          }
+        }
       },
       orderBy: {
         createdAt: 'desc'
@@ -16,6 +31,11 @@ export async function GET() {
     });
 
     const formattedRecords = dbPets.map((pet) => {
+      const hasPaidAppointment = pet.appointments.some(app => 
+        app.status === 'PAID' || 
+        (app.payments && app.payments.some(p => p.paymentStatus === 'COMPLETED'))
+      );
+
       return {
         id: pet.id,
         petName: pet.petName,
@@ -25,6 +45,8 @@ export async function GET() {
         age: pet.age ? `${pet.age} years` : 'Unknown',
         color: pet.color || 'Unknown',
         weight: pet.weight ? `${pet.weight} kg` : 'Unknown',
+        environment: pet.environment || 'Indoor',
+        activity: pet.activity || 'Moderate',
         ownerName: pet.user?.fullName || 'Unknown Owner',
         contact: pet.user?.phoneNumber || 'No Contact',
         address: pet.user?.address || 'No Address',
@@ -32,7 +54,15 @@ export async function GET() {
         pastIllness: pet.pastIllness || 'None',
         previousSurgeries: pet.previousSurgeries || 'None',
         vaccine: pet.vaccinationRecord || 'Pending',
-        veterinarian: pet.veterinarian || 'Not Assigned'
+        veterinarian: pet.veterinarian || 'Not Assigned',
+        avatar: pet.avatar || '',
+        monitoring: pet.monitoring || [],
+        verificationStatus: (pet as any).verificationStatus || 'PENDING',
+        verifiedAt: (pet as any).verifiedAt,
+        verifiedBy: (pet as any).verifiedBy,
+        createdAt: pet.createdAt,
+        isArchived: pet.isArchived,
+        hasPaidAppointment
       };
     });
 
@@ -47,7 +77,7 @@ export async function POST(request: Request) {
   try {
     const data = await request.json();
     
-    // data contains { ownerId, petName, species, breed, gender, age, color, weight, vaccine, veterinarian, pastIllness, previousSurgeries }
+    // data contains { ownerId, petName, species, breed, gender, age, color, weight, environment, activity, vaccine, veterinarian, pastIllness, previousSurgeries, avatar }
     const {
       ownerId,
       petName,
@@ -57,10 +87,13 @@ export async function POST(request: Request) {
       age,
       color,
       weight,
+      environment,
+      activity,
       vaccine,
       veterinarian,
       pastIllness,
-      previousSurgeries
+      previousSurgeries,
+      avatar
     } = data;
 
     if (!ownerId || !petName || !species) {
@@ -80,10 +113,13 @@ export async function POST(request: Request) {
         age: ageNum === null || isNaN(ageNum) ? null : ageNum,
         color: color || null,
         weight: weightNum === null || isNaN(weightNum) ? null : weightNum,
+        environment: environment || 'Indoor',
+        activity: activity || 'Moderate',
         vaccinationRecord: vaccine || 'Pending',
         veterinarian: veterinarian || null,
         pastIllness: pastIllness || 'None',
         previousSurgeries: previousSurgeries || 'None',
+        avatar: avatar || null,
       },
       include: {
         user: true
@@ -99,6 +135,8 @@ export async function POST(request: Request) {
         age: newPet.age ? `${newPet.age} years` : 'Unknown',
         color: newPet.color || 'Unknown',
         weight: newPet.weight ? `${newPet.weight} kg` : 'Unknown',
+        environment: newPet.environment || 'Indoor',
+        activity: newPet.activity || 'Moderate',
         ownerName: newPet.user?.fullName || 'Unknown Owner',
         contact: newPet.user?.phoneNumber || 'No Contact',
         address: newPet.user?.address || 'No Address',
@@ -106,7 +144,10 @@ export async function POST(request: Request) {
         pastIllness: newPet.pastIllness || 'None',
         previousSurgeries: newPet.previousSurgeries || 'None',
         vaccine: newPet.vaccinationRecord || 'Pending',
-        veterinarian: newPet.veterinarian || 'Not Assigned'
+        veterinarian: newPet.veterinarian || 'Not Assigned',
+        avatar: newPet.avatar || '',
+        createdAt: newPet.createdAt,
+        isArchived: newPet.isArchived
     };
 
     return NextResponse.json({ success: true, record: formattedRecord });

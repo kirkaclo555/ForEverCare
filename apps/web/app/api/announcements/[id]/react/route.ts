@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient, ReactionType } from '@prisma/client';
+import prisma from '../../../../../lib/prisma';
+import { ReactionType } from '@prisma/client';
 
-const prisma = new PrismaClient();
 
 export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
   try {

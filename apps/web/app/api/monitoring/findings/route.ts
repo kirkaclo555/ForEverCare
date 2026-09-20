@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../../../../lib/prisma';
 import nodemailer from 'nodemailer';
+import { sendSMS } from '../../../../lib/twilio';
 
-const prisma = new PrismaClient();
 
 export async function POST(req: Request) {
   try {
@@ -44,50 +44,61 @@ export async function POST(req: Request) {
       }
     });
 
-    // 2. SMS Notification (Queued in database)
-    if (user.phoneNumber) {
-      await prisma.smsNotification.create({
-        data: {
-          userId: user.id,
-          message: `FurEverPawCare: The ${roleName} has reviewed ${updatedReport.pet.petName}'s report. Please check your app for findings.`,
-          notificationType: 'REPORT_UPDATE'
+    // Dispatch SMS and Email Notifications in background
+    (async () => {
+      // 2. SMS Notification (Queued in database)
+      if (user.phoneNumber) {
+        try {
+          const smsMsg = `FurEverPawCare: The ${roleName} has reviewed ${updatedReport.pet.petName}'s report. Please check your app for findings.`;
+          const resSMS = await sendSMS(user.phoneNumber, smsMsg);
+          await prisma.smsNotification.create({
+            data: {
+              userId: user.id,
+              message: smsMsg,
+              notificationType: 'REPORT_UPDATE',
+              status: resSMS.success ? 'SENT' : 'FAILED'
+            }
+          });
+        } catch (smsErr) {
+          console.error("Failed to send SMS notification in background:", smsErr);
         }
-      });
-    }
-
-    // 3. Email Notification
-    if (user.email) {
-      try {
-        const transporter = nodemailer.createTransport({
-          host: process.env.SMTP_HOST || 'smtp.gmail.com',
-          port: Number(process.env.SMTP_PORT) || 587,
-          secure: false,
-          auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS,
-          },
-        });
-
-        const mailOptions = {
-          from: `"FurEverPawCare" <${process.env.SMTP_USER || 'noreply@fureverpawcare.com'}>`,
-          to: user.email,
-          subject: `Health Report Update for ${updatedReport.pet.petName}`,
-          html: `
-            <div style="font-family: Arial, sans-serif; padding: 20px;">
-              <h2>Report Findings Updated</h2>
-              <p>The ${roleName} has added new findings to your recent health report for <strong>${updatedReport.pet.petName}</strong>.</p>
-              <p><strong>Findings:</strong><br/>${findings}</p>
-              <p>Please open the FurEver Paw Care app for more details.</p>
-            </div>
-          `,
-        };
-
-        await transporter.sendMail(mailOptions);
-      } catch (emailError) {
-        console.error("Failed to send email:", emailError);
-        // Do not fail the whole request if just email fails
       }
-    }
+
+      // 3. Email Notification
+      if (user.email) {
+        try {
+          const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST || 'smtp.gmail.com',
+            port: Number(process.env.SMTP_PORT) || 587,
+            secure: false,
+            auth: {
+              user: process.env.SMTP_USER,
+              pass: process.env.SMTP_PASS,
+            },
+          });
+
+          const mailOptions = {
+            from: `"FurEverPawCare" <${process.env.SMTP_USER || 'noreply@fureverpawcare.com'}>`,
+            to: user.email,
+            subject: `Health Report Update for ${updatedReport.pet.petName}`,
+            html: `
+              <div style="font-family: Arial, sans-serif; padding: 20px;">
+                <h2>Report Findings Updated</h2>
+                <p>The ${roleName} has added new findings to your recent health report for <strong>${updatedReport.pet.petName}</strong>.</p>
+                <p><strong>Findings:</strong><br/>${findings}</p>
+                <p>Please open the FurEver Paw Care app for more details.</p>
+              </div>
+            `,
+          };
+
+          await transporter.sendMail(mailOptions);
+        } catch (emailError) {
+          console.error("Failed to send email in background:", emailError);
+        }
+      }
+    })().catch((bgErr) => {
+      console.error("Failed executing findings background notification task:", bgErr);
+    });
 
     return NextResponse.json({ success: true, report: updatedReport }, { status: 200 });
   } catch (error: any) {
