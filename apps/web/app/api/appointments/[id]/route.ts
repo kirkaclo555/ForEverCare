@@ -379,9 +379,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     // Check if the appointment status is changing to PAID
     let isTransitioningToPaid = false;
     if (updateData.status === 'PAID') {
-      if (existingApp && existingApp.status !== 'PAID') {
-        isTransitioningToPaid = true;
-      }
+      isTransitioningToPaid = true;
     }
 
     // Generate session code if becoming PAID and it's a telemedicine appt
@@ -461,8 +459,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       fs.writeFileSync(dataFilePath, JSON.stringify(invoices, null, 2));
 
       // 2. Build the notification/SMS message first
-      const userEmail = updatedAppointment.user?.email;
-      const userPhone = updatedAppointment.user?.phoneNumber;
+      const userEmail = updatedAppointment.user?.email || existingApp.user?.email || (updatedAppointment as any).email || (existingApp as any).email;
+      const userPhone = updatedAppointment.user?.phoneNumber || existingApp.user?.phoneNumber || (updatedAppointment as any).contact || (existingApp as any).contact;
       const clientName = invoice.clientName;
       const invoiceId = invoice.id;
       const invoiceDate = invoice.date;
@@ -504,107 +502,105 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         });
       }
 
-      // ── STEP 5: Send email receipt — fire-and-forget (SMTP is slow, ~1-3s) ──
+      // ── STEP 5: Send email receipt synchronously with timeout protection ──
       if (userEmail) {
         const capturedEmail = userEmail;
-        (async () => {
-          try {
-            const transporter = nodemailer.createTransport({
-              host: process.env.SMTP_HOST || 'smtp.gmail.com',
-              port: Number(process.env.SMTP_PORT) || 587,
-              secure: false,
-              auth: {
-                user: process.env.SMTP_USER || 'fureverpawcareadmin@gmail.com',
-                pass: process.env.SMTP_PASS || 'xjxw svro yxan hgnj',
-              },
-            });
+        try {
+          const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST || 'smtp.gmail.com',
+            port: Number(process.env.SMTP_PORT) || 587,
+            secure: false,
+            auth: {
+              user: process.env.SMTP_USER || 'adminfureverpawcare@gmail.com',
+              pass: process.env.SMTP_PASS || 'ivsd ulrw dwmc alop',
+            },
+          });
 
-            const itemsHtml = itemsCopy.map((item: any) => `
-              <tr style="border-bottom: 1px solid #e2e8f0;">
-                <td style="padding: 12px; text-align: left; color: #2d3748;">${item.name}</td>
-                <td style="padding: 12px; text-align: center; color: #4a5568;">${item.quantity}</td>
-                <td style="padding: 12px; text-align: right; color: #4a5568;">₱${Number(item.price).toFixed(2)}</td>
-                <td style="padding: 12px; text-align: right; font-weight: bold; color: #2d3748;">₱${(item.quantity * item.price).toFixed(2)}</td>
-              </tr>
-            `).join('');
+          const itemsHtml = itemsCopy.map((item: any) => `
+            <tr style="border-bottom: 1px solid #e2e8f0;">
+              <td style="padding: 12px; text-align: left; color: #2d3748;">${item.name}</td>
+              <td style="padding: 12px; text-align: center; color: #4a5568;">${item.quantity}</td>
+              <td style="padding: 12px; text-align: right; color: #4a5568;">₱${Number(item.price).toFixed(2)}</td>
+              <td style="padding: 12px; text-align: right; font-weight: bold; color: #2d3748;">₱${(item.quantity * item.price).toFixed(2)}</td>
+            </tr>
+          `).join('');
 
-            const emailHtml = `
-              <!DOCTYPE html>
-              <html>
-                <head>
-                  <meta charset="utf-8">
-                  <title>Your FurEverPawCare Receipt</title>
-                  <style>
-                    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
-                    body { font-family: 'Outfit', 'Inter', sans-serif; background-color: #f7fafc; margin: 0; padding: 0; }
-                    .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #e2e8f0; }
-                    .header { background: linear-gradient(135deg, #2E5E3E 0%, #1c3d27 100%); padding: 32px; text-align: center; color: #ffffff; }
-                    .header h1 { margin: 0; font-size: 26px; font-weight: 700; }
-                    .header p { margin: 8px 0 0 0; font-size: 14px; opacity: 0.9; }
-                    .body { padding: 40px; }
-                    .greeting { font-size: 18px; color: #2d3748; margin-bottom: 24px; font-weight: 600; }
-                    .details-box { background-color: #f7fafc; border-radius: 12px; padding: 20px; margin-bottom: 30px; border: 1px solid #edf2f7; }
-                    .badge { background-color: #C6F6D5; color: #22543D; padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
-                    table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-                    th { background-color: #edf2f7; padding: 12px; font-size: 12px; text-transform: uppercase; color: #718096; font-weight: 700; }
-                    .total-section { border-top: 2px solid #edf2f7; padding-top: 20px; text-align: right; }
-                    .total-amount { font-size: 24px; font-weight: 700; color: #2E5E3E; }
-                    .footer { background-color: #edf2f7; padding: 24px; text-align: center; font-size: 12px; color: #718096; border-top: 1px solid #edf2f7; }
-                    .footer a { color: #2E5E3E; text-decoration: none; font-weight: 600; }
-                  </style>
-                </head>
-                <body>
-                  <div class="container">
-                    <div class="header">
-                      <h1>FurEverPawCare Clinic</h1>
-                      <p>Professional Care For Your Beloved Companions</p>
-                    </div>
-                    <div class="body">
-                      <div class="greeting">Hi ${clientName || 'Valued Customer'},</div>
-                      <p style="color: #4a5568; line-height: 1.6; margin-bottom: 24px;">Thank you for your trust at FurEverPawCare! Your payment has been successfully verified by our clinic.</p>
-                      <div class="details-box">
-                        <table style="width:100%; margin:0; border:none;" cellpadding="0" cellspacing="0">
-                          <tr><td style="color:#718096; font-size:14px; padding-bottom:8px;">Invoice Reference:</td><td style="color:#2d3748; font-size:14px; font-weight:600; text-align:right; padding-bottom:8px;">${invoiceId}</td></tr>
-                          <tr><td style="color:#718096; font-size:14px; padding-bottom:8px;">Date Generated:</td><td style="color:#2d3748; font-size:14px; font-weight:600; text-align:right; padding-bottom:8px;">${invoiceDate}</td></tr>
-                          <tr><td style="color:#718096; font-size:14px;">Status:</td><td style="text-align:right;"><span class="badge">PAID</span></td></tr>
-                        </table>
-                      </div>
-                      <table style="width:100%;">
-                        <thead><tr>
-                          <th style="text-align: left; padding: 12px;">Item / Service</th>
-                          <th style="text-align: center; padding: 12px;">Qty</th>
-                          <th style="text-align: right; padding: 12px;">Unit Price</th>
-                          <th style="text-align: right; padding: 12px;">Total</th>
-                        </tr></thead>
-                        <tbody>${itemsHtml}</tbody>
+          const emailHtml = `
+            <!DOCTYPE html>
+            <html>
+              <head>
+                <meta charset="utf-8">
+                <title>Your FurEverPawCare Receipt</title>
+                <style>
+                  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
+                  body { font-family: 'Outfit', 'Inter', sans-serif; background-color: #f7fafc; margin: 0; padding: 0; }
+                  .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); overflow: hidden; border: 1px solid #e2e8f0; }
+                  .header { background: linear-gradient(135deg, #0f6f5c 0%, #08473a 100%); padding: 32px; text-align: center; color: #ffffff; }
+                  .header h1 { margin: 0; font-size: 26px; font-weight: 700; }
+                  .header p { margin: 8px 0 0 0; font-size: 14px; opacity: 0.9; }
+                  .body { padding: 40px; }
+                  .greeting { font-size: 18px; color: #2d3748; margin-bottom: 24px; font-weight: 600; }
+                  .details-box { background-color: #f7fafc; border-radius: 12px; padding: 20px; margin-bottom: 30px; border: 1px solid #edf2f7; }
+                  .badge { background-color: #C6F6D5; color: #22543D; padding: 4px 12px; border-radius: 99px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+                  table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+                  th { background-color: #edf2f7; padding: 12px; font-size: 12px; text-transform: uppercase; color: #718096; font-weight: 700; }
+                  .total-section { border-top: 2px solid #edf2f7; padding-top: 20px; text-align: right; }
+                  .total-amount { font-size: 24px; font-weight: 700; color: #0f6f5c; }
+                  .footer { background-color: #edf2f7; padding: 24px; text-align: center; font-size: 12px; color: #718096; border-top: 1px solid #edf2f7; }
+                  .footer a { color: #0f6f5c; text-decoration: none; font-weight: 600; }
+                </style>
+              </head>
+              <body>
+                <div class="container">
+                  <div class="header">
+                    <h1>🐾 FurEverPawCare Clinic</h1>
+                    <p>Official Payment Verification & Receipt</p>
+                  </div>
+                  <div class="body">
+                    <div class="greeting">Hi ${clientName || 'Valued Customer'},</div>
+                    <p style="color: #4a5568; line-height: 1.6; margin-bottom: 24px;">Thank you for your trust at FurEverPawCare! Your appointment payment has been successfully verified by our clinic.</p>
+                    <div class="details-box">
+                      <table style="width:100%; margin:0; border:none;" cellpadding="0" cellspacing="0">
+                        <tr><td style="color:#718096; font-size:14px; padding-bottom:8px;">Invoice Reference:</td><td style="color:#2d3748; font-size:14px; font-weight:600; text-align:right; padding-bottom:8px;">${invoiceId}</td></tr>
+                        <tr><td style="color:#718096; font-size:14px; padding-bottom:8px;">Date Generated:</td><td style="color:#2d3748; font-size:14px; font-weight:600; text-align:right; padding-bottom:8px;">${invoiceDate}</td></tr>
+                        <tr><td style="color:#718096; font-size:14px;">Status:</td><td style="text-align:right;"><span class="badge">PAID</span></td></tr>
                       </table>
-                      <div class="total-section">
-                        <span style="font-size: 14px; color: #718096; font-weight: 600;">Total Paid Amount:</span>
-                        <div class="total-amount">₱${Number(invoiceTotal).toFixed(2)}</div>
-                      </div>
                     </div>
-                    <div class="footer">
-                      <p style="margin: 0 0 8px 0;">Questions? Contact us at <a href="mailto:support@fureverpawcare.com">support@fureverpawcare.com</a></p>
-                      <p style="margin: 0;">&copy; ${new Date().getFullYear()} FurEverPawCare. All rights reserved.</p>
+                    <table style="width:100%;">
+                      <thead><tr>
+                        <th style="text-align: left; padding: 12px;">Item / Service</th>
+                        <th style="text-align: center; padding: 12px;">Qty</th>
+                        <th style="text-align: right; padding: 12px;">Unit Price</th>
+                        <th style="text-align: right; padding: 12px;">Total</th>
+                      </tr></thead>
+                      <tbody>${itemsHtml}</tbody>
+                    </table>
+                    <div class="total-section">
+                      <span style="font-size: 14px; color: #718096; font-weight: 600;">Total Paid Amount:</span>
+                      <div class="total-amount">₱${Number(invoiceTotal).toFixed(2)}</div>
                     </div>
                   </div>
-                </body>
-              </html>
-            `;
+                  <div class="footer">
+                    <p style="margin: 0 0 8px 0;">Questions? Contact us at <a href="mailto:adminfureverpawcare@gmail.com">adminfureverpawcare@gmail.com</a></p>
+                    <p style="margin: 0;">&copy; ${new Date().getFullYear()} FurEverPawCare. All rights reserved.</p>
+                  </div>
+                </div>
+              </body>
+            </html>
+          `;
 
-            await transporter.sendMail({
-              from: `"FurEverPawCare Clinic" <${process.env.SMTP_USER || 'fureverpawcareadmin@gmail.com'}>`,
-              to: capturedEmail,
-              subject: `Official Receipt - Invoice ${invoiceId} - FurEverPawCare`,
-              html: emailHtml,
-            });
-            console.log(`[Nodemailer] Receipt sent to ${capturedEmail} for invoice ${invoiceId}`);
-          } catch (err) {
-            console.error('[Nodemailer] Receipt dispatch failed:', err);
-          }
-        })().catch((bgErr) => {
-          console.error('[Background Email] Unhandled error:', bgErr);
-        });
+          const adminEmail = process.env.SMTP_USER || 'adminfureverpawcare@gmail.com';
+          await transporter.sendMail({
+            from: `"FurEverPawCare Clinic" <${adminEmail}>`,
+            to: capturedEmail,
+            bcc: adminEmail, // Ensures admin also gets a copy!
+            subject: `Official Receipt - Invoice ${invoiceId} - FurEverPawCare`,
+            html: emailHtml,
+          });
+          console.log(`[Nodemailer] Official receipt successfully sent to user ${capturedEmail} (BCC: ${adminEmail}) for invoice ${invoiceId}`);
+        } catch (emailErr) {
+          console.error('[Nodemailer] Receipt dispatch failed:', emailErr);
+        }
       }
 
 
