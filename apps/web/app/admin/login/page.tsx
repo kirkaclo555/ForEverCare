@@ -228,14 +228,14 @@ export default function LoginPage() {
                 <div className="form-group">
                     <label>Email Address</label>
                     <div className="input-group">
-                        <input type="email" id="email" defaultValue="admin@furcare.com" placeholder="Enter your email" required />
+                        <input type="email" id="email" placeholder="Enter your email" required />
                     </div>
                 </div>
 
                 <div className="form-group">
                     <label>Password</label>
                     <div className="input-group">
-                        <input type="password" id="password" defaultValue="admin123" placeholder="Enter your password" required />
+                        <input type="password" id="password" placeholder="Enter your password" required />
                     </div>
                 </div>
 

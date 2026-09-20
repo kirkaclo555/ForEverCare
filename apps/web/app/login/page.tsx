@@ -20,9 +20,8 @@ export default function LoginPage() {
       setPassword(savedPassword || "");
       setRememberMe(true);
     } else {
-      // prefill defaults if not remembered
-      setEmail("fureverpawcaresuperadmin@gmail.com");
-      setPassword("superadmin123");
+      setEmail("");
+      setPassword("");
     }
   }, []);
 
