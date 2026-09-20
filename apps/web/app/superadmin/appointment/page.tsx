@@ -2108,62 +2108,181 @@ export default function AppointmentPage() {
         );
     })()}
 
-    {appointmentToMarkCompleted && (
-        <div className="modal" style={{display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', zIndex: 10000}}>
-            <div className="modal-content" style={{background: '#FFFFFF', padding: '30px', borderRadius: '16px', width: '90%', maxWidth: '450px', boxShadow: '0 10px 25px rgba(0,0,0,0.12)'}}>
-                <div style={{ width: '64px', height: '64px', borderRadius: '50%', background: '#DCFCE7', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto' }}>
-                    <i className="fas fa-check-circle" style={{ color: '#2E7D32', fontSize: '2rem' }}></i>
+    {appointmentToMarkCompleted && (() => {
+      const completingApp = appointments.find((a: any) => a.id === appointmentToMarkCompleted);
+      const petInitials = (completingApp?.pet || completingApp?.owner || 'P').slice(0, 2).toUpperCase();
+      const shortId = completingApp?.id ? completingApp.id.slice(0, 8).toUpperCase() : '—';
+      return (
+        <div
+          onClick={(e) => { if (e.target === e.currentTarget && !isProcessingStatus) setAppointmentToMarkCompleted(null); }}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            position: 'fixed', inset: 0,
+            background: 'rgba(10,30,20,0.55)',
+            backdropFilter: 'blur(3px)',
+            zIndex: 10000,
+            padding: '16px',
+          }}
+        >
+          <style>{`
+            @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+            @keyframes cmpl-fade-in { from { opacity: 0; transform: scale(0.97); } to { opacity: 1; transform: scale(1); } }
+            @media (prefers-reduced-motion: reduce) { .cmpl-modal-card { animation: none !important; } }
+            .cmpl-modal-card { animation: cmpl-fade-in 0.2s cubic-bezier(0.22,1,0.36,1); }
+            .cmpl-btn-cancel:hover:not(:disabled) { background: #e9e8e4 !important; }
+            .cmpl-btn-confirm:hover:not(:disabled) { background: #134d30 !important; }
+            .cmpl-btn-cancel:focus-visible, .cmpl-btn-confirm:focus-visible { outline: 3px solid #1f7a4d; outline-offset: 2px; }
+            @media (max-width: 480px) {
+              .cmpl-btn-row { flex-direction: column-reverse !important; }
+              .cmpl-btn-cancel, .cmpl-btn-confirm { width: 100% !important; }
+            }
+          `}</style>
+          <div
+            className="cmpl-modal-card"
+            style={{
+              background: '#ffffff',
+              borderRadius: '20px',
+              width: '100%',
+              maxWidth: '460px',
+              boxShadow: '0 24px 60px rgba(10,30,20,0.22), 0 4px 16px rgba(10,30,20,0.1)',
+              fontFamily: "'Inter', system-ui, sans-serif",
+              overflow: 'hidden',
+            }}
+          >
+            {/* ── Top cream band ── */}
+            <div style={{ background: '#f6f5f1', padding: '28px 28px 20px 28px' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', marginBottom: '6px' }}>
+                <div style={{
+                  width: '44px', height: '44px', borderRadius: '10px',
+                  background: '#e6f3ec', border: '1.5px solid #b2dcc4',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  flexShrink: 0,
+                }}>
+                  <i className="fas fa-check" style={{ color: '#1f7a4d', fontSize: '1.1rem' }}></i>
                 </div>
-                <h3 style={{ margin: '0 0 10px 0', color: '#1F2937', fontSize: '1.4rem', textAlign: 'center', fontWeight: 700 }}>Mark as Completed</h3>
-                <p style={{ color: '#6B7280', marginBottom: '25px', lineHeight: '1.6', textAlign: 'center' }}>Are you sure you want to mark this appointment as completed? This action confirms that the visit has been fulfilled.</p>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                    <button 
-                        disabled={isProcessingStatus} 
-                        onClick={() => !isProcessingStatus && setAppointmentToMarkCompleted(null)} 
-                        style={{ flex: 1, padding: '12px', background: '#F3F4F6', color: isProcessingStatus ? '#9CA3AF' : '#374151', border: 'none', borderRadius: '8px', fontWeight: 600, cursor: isProcessingStatus ? 'not-allowed' : 'pointer', transition: 'background 0.2s' }}
-                    >
-                        Cancel
-                    </button>
-                    <button 
-                        disabled={isProcessingStatus} 
-                        onClick={async () => { 
-                            if (isProcessingStatus || !appointmentToMarkCompleted) return;
-                            setIsProcessingStatus(true);
-                            try {
-                                await handleStatusChange(appointmentToMarkCompleted, 'completed'); 
-                            } finally {
-                                setIsProcessingStatus(false);
-                                setAppointmentToMarkCompleted(null); 
-                            }
-                        }} 
-                        style={{ 
-                            flex: 1, 
-                            padding: '12px', 
-                            background: isProcessingStatus ? '#86efac' : '#2E7D32', 
-                            color: 'white', 
-                            border: 'none', 
-                            borderRadius: '8px', 
-                            fontWeight: 700, 
-                            cursor: isProcessingStatus ? 'not-allowed' : 'pointer', 
-                            transition: 'background 0.2s',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            gap: '8px'
-                        }}
-                    >
-                        {isProcessingStatus ? (
-                            <>
-                                <i className="fas fa-spinner fa-spin"></i> Completing...
-                            </>
-                        ) : (
-                            'Yes, Complete'
-                        )}
-                    </button>
+                <div>
+                  <h3 style={{
+                    margin: 0, fontFamily: 'Georgia, "Times New Roman", serif',
+                    fontSize: '1.25rem', fontWeight: 700, color: '#1a2e22', lineHeight: 1.25,
+                  }}>Mark this visit as completed?</h3>
+                  <p style={{ margin: '5px 0 0 0', fontSize: '0.875rem', color: '#5a6b5e', lineHeight: 1.45 }}>
+                    Confirming closes out the appointment and updates the patient&apos;s record.
+                  </p>
                 </div>
+              </div>
             </div>
+
+            {/* ── White body ── */}
+            <div style={{ padding: '20px 28px 28px 28px' }}>
+              <p style={{ margin: '0 0 8px 0', fontSize: '0.72rem', fontWeight: 700, color: '#8a9e8f', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Appointment</p>
+              <div style={{
+                border: '1.5px solid #d8ead2', borderRadius: '12px', background: '#f8fbf8',
+                padding: '14px 16px', display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '20px',
+              }}>
+                <div style={{
+                  width: '42px', height: '42px', borderRadius: '50%',
+                  background: '#c8e6d4', color: '#175c3a',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 700, fontSize: '0.9rem', flexShrink: 0,
+                }}>{petInitials}</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 700, color: '#1a2e22', fontSize: '0.95rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {completingApp?.pet || 'Unknown Pet'}
+                  </div>
+                  <div style={{ fontSize: '0.8rem', color: '#5a6b5e', marginTop: '2px' }}>
+                    {completingApp?.owner || 'Unknown Owner'}
+                  </div>
+                  <div style={{ fontSize: '0.78rem', color: '#7a8e7f', marginTop: '3px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <i className="fas fa-calendar-alt" style={{ fontSize: '0.72rem', color: '#1f7a4d' }}></i>
+                    {completingApp?.date ? formatDateDisplay(completingApp.date) : 'N/A'}
+                    {completingApp?.time && (
+                      <><span style={{ color: '#c8d8cc' }}>&middot;</span>
+                      <i className="fas fa-clock" style={{ fontSize: '0.72rem', color: '#1f7a4d' }}></i>
+                      {completingApp.time}</>
+                    )}
+                  </div>
+                </div>
+                <div style={{
+                  background: '#e6f3ec', color: '#175c3a', borderRadius: '99px', padding: '3px 10px',
+                  fontSize: '0.72rem', fontWeight: 700, flexShrink: 0, border: '1px solid #b2dcc4',
+                }}>#{shortId}</div>
+              </div>
+
+              <p style={{ margin: '0 0 8px 0', fontSize: '0.72rem', fontWeight: 700, color: '#8a9e8f', letterSpacing: '0.06em', textTransform: 'uppercase' }}>What happens next</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '18px' }}>
+                {[
+                  'Appointment status changes to Completed.',
+                  'Visit summary becomes available on the patient record.',
+                  'Owner is notified that the visit is done.',
+                ].map((text, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px' }}>
+                    <div style={{
+                      width: '22px', height: '22px', borderRadius: '6px',
+                      background: '#e6f3ec', border: '1px solid #b2dcc4',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: '1px',
+                    }}>
+                      <i className="fas fa-check" style={{ color: '#1f7a4d', fontSize: '0.65rem' }}></i>
+                    </div>
+                    <span style={{ fontSize: '0.875rem', color: '#374151', lineHeight: 1.5 }}>{text}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{
+                background: '#fdf6ec', border: '1.5px solid #f1e0bd', borderRadius: '10px',
+                padding: '11px 14px', display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '24px',
+              }}>
+                <span style={{ fontSize: '0.55rem', color: '#c49a38', marginTop: '5px', flexShrink: 0 }}>●</span>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: '#7a5a1f', lineHeight: 1.5 }}>
+                  This can&apos;t be reversed from here. If the visit isn&apos;t actually finished, cancel and update it later.
+                </p>
+              </div>
+
+              <div className="cmpl-btn-row" style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  className="cmpl-btn-cancel"
+                  disabled={isProcessingStatus}
+                  onClick={() => !isProcessingStatus && setAppointmentToMarkCompleted(null)}
+                  style={{
+                    flex: 1, padding: '12px 20px', background: '#f0eeea',
+                    color: isProcessingStatus ? '#9CA3AF' : '#374151',
+                    border: '1.5px solid #dddad3', borderRadius: '10px', fontWeight: 600, fontSize: '0.9rem',
+                    cursor: isProcessingStatus ? 'not-allowed' : 'pointer', transition: 'background 0.15s', fontFamily: 'inherit',
+                  }}
+                >Cancel</button>
+                <button
+                  className="cmpl-btn-confirm"
+                  disabled={isProcessingStatus}
+                  onClick={async () => {
+                    if (isProcessingStatus || !appointmentToMarkCompleted) return;
+                    setIsProcessingStatus(true);
+                    try {
+                      await handleStatusChange(appointmentToMarkCompleted, 'completed');
+                    } finally {
+                      setIsProcessingStatus(false);
+                      setAppointmentToMarkCompleted(null);
+                    }
+                  }}
+                  style={{
+                    flex: 1, padding: '12px 20px',
+                    background: isProcessingStatus ? '#5aaa7a' : '#175c3a',
+                    color: '#ffffff', border: 'none', borderRadius: '10px', fontWeight: 700, fontSize: '0.9rem',
+                    cursor: isProcessingStatus ? 'not-allowed' : 'pointer', transition: 'background 0.15s',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontFamily: 'inherit',
+                  }}
+                >
+                  {isProcessingStatus ? (
+                    <><i className="fas fa-spinner fa-spin"></i> Completing&hellip;</>
+                  ) : (
+                    <><i className="fas fa-flag-checkered" style={{ fontSize: '0.85rem' }}></i> Yes, mark completed</>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-    )}
+      );
+    })()}
 
     {isPricingModalOpen && (
     <div className="appointment-modal" style={{display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
