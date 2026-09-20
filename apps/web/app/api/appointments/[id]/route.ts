@@ -464,6 +464,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
       // 2. Build the notification/SMS message first
       const userEmail = updatedAppointment.user?.email || existingApp.user?.email || (updatedAppointment as any).email || (existingApp as any).email;
+      console.log(`[Email Debug] updatedAppointment.user?.email = "${updatedAppointment.user?.email}"`);
+      console.log(`[Email Debug] existingApp.user?.email = "${existingApp.user?.email}"`);
+      console.log(`[Email Debug] Resolved userEmail = "${userEmail}"`);
       const userPhone = updatedAppointment.user?.phoneNumber || existingApp.user?.phoneNumber || (updatedAppointment as any).contact || (existingApp as any).contact;
       const clientName = invoice.clientName;
       const invoiceId = invoice.id;
@@ -507,8 +510,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       }
 
       // ── STEP 5: Send email receipt synchronously with timeout protection ──
+      console.log(`[Email Debug] About to send receipt. userEmail = "${userEmail}"`);
       if (userEmail) {
-        const capturedEmail = userEmail;
+        const capturedEmail = String(userEmail).trim();
+        console.log(`[Email Debug] capturedEmail after trim = "${capturedEmail}"`);
         try {
           const transporter = nodemailer.createTransport({
             host: process.env.SMTP_HOST || 'smtp.gmail.com',
@@ -594,14 +599,15 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
           `;
 
           const adminEmail = process.env.SMTP_USER || 'adminfureverpawcare@gmail.com';
-          await transporter.sendMail({
+          console.log(`[Nodemailer] Attempting to send receipt TO: "${capturedEmail}" | FROM: "${adminEmail}" | BCC: "${adminEmail}"`);
+          const info = await transporter.sendMail({
             from: `"FurEverPawCare Clinic" <${adminEmail}>`,
             to: capturedEmail,
-            bcc: adminEmail, // Ensures admin also gets a copy!
+            bcc: adminEmail !== capturedEmail ? adminEmail : undefined,
             subject: `Official Receipt - Invoice ${invoiceId} - FurEverPawCare`,
             html: emailHtml,
           });
-          console.log(`[Nodemailer] Official receipt successfully sent to user ${capturedEmail} (BCC: ${adminEmail}) for invoice ${invoiceId}`);
+          console.log(`[Nodemailer] Receipt sent! MessageId: ${info.messageId} | Accepted: ${JSON.stringify(info.accepted)} | Rejected: ${JSON.stringify(info.rejected)} | To: "${capturedEmail}"`);
         } catch (emailErr) {
           console.error('[Nodemailer] Receipt dispatch failed:', emailErr);
         }
