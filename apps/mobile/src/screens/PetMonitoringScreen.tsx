@@ -851,12 +851,15 @@ export default function PetMonitoringScreen({ navigation }: Props) {
         animationType="slide"
         transparent={false}
         onRequestClose={() => setIsChatOpen(false)}
+        statusBarTranslucent={Platform.OS === 'android'}
       >
-        <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-          <KeyboardAvoidingView
-            style={{ flex: 1 }}
-            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-          >
+        {/* KeyboardAvoidingView must wrap SafeAreaView for Modals on Android */}
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        >
+          <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background, flex: 1 }]} edges={['top', 'left', 'right']}>
             {/* Chat Modal Header */}
             <View style={[styles.chatModalHeader, { backgroundColor: theme.headerBackground }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
@@ -883,6 +886,8 @@ export default function PetMonitoringScreen({ navigation }: Props) {
               style={{ flex: 1, backgroundColor: theme.background }}
               contentContainerStyle={{ padding: 16, paddingBottom: 20 }}
               keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="interactive"
+              automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
             >
               {activeSession?.chatMessages?.map((msg: any) => {
                 const isOwner = msg.sender === 'owner';
@@ -940,7 +945,7 @@ export default function PetMonitoringScreen({ navigation }: Props) {
               )}
             </ScrollView>
 
-            {/* Chat Input Bar */}
+            {/* Chat Input Bar — sits above keyboard */}
             <View style={[styles.chatInputBar, { backgroundColor: theme.card, borderTopColor: theme.border }]}>
               <TextInput
                 ref={chatInputRef}
@@ -949,6 +954,9 @@ export default function PetMonitoringScreen({ navigation }: Props) {
                 placeholderTextColor={theme.subtext}
                 value={chatInputText}
                 onChangeText={setChatInputText}
+                returnKeyType="send"
+                onSubmitEditing={() => chatInputText.trim() && handleSendChatMessage()}
+                blurOnSubmit={false}
               />
               <TouchableOpacity 
                 style={[styles.chatSendBtn, (!chatInputText.trim() || isSendingMessage) && { opacity: 0.5 }]}
@@ -962,8 +970,8 @@ export default function PetMonitoringScreen({ navigation }: Props) {
                 )}
               </TouchableOpacity>
             </View>
-          </KeyboardAvoidingView>
-        </SafeAreaView>
+          </SafeAreaView>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* 7. START TRIAGE & MONITORING MODAL */}
