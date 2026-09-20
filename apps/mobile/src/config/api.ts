@@ -5,7 +5,7 @@ import Constants from 'expo-constants';
 export const IS_PRODUCTION = true;
 
 // The URL for your production Vercel backend
-export const PROD_API_URL = 'https://fur-ever-paw-care-web-web.vercel.app';
+export const PROD_API_URL = 'https://fur-ever-paw-care.vercel.app';
 
 // Fallback IP for standalone APK builds when running on the local Wi-Fi network
 // (In APK builds, Constants.expoConfig?.hostUri is undefined, so localhost would fail)
