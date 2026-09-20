@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Payment Verification Modal — FurEverPawCare</title>
+  
+  <!-- Google Fonts: Manrope (Headings) & Inter (Body/Labels) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      /* Palette Tokens */
+      --color-teal-primary: #0f6f5c;
+      --color-teal-hover: #0b5a4a;
+      --color-teal-active: #08473a;
+      --color-teal-tint: #e6f3f0;
+      --color-teal-border: #b8ded6;
+      
+      --color-sage-dark: #3f5a34;
+      --color-sage-tint: #f1f7ef;
+      --color-sage-border: #d4e5d1;
+
+      --color-backdrop-bg: #f6f5f1;
+      --color-card-bg: #ffffff;
+      
+      --color-text-title: #19231f;
+      --color-text-body: #495752;
+      --color-text-muted: #6b7a74;
+      --color-text-caution: #605139;
+      --color-caution-bg: #faf6ee;
+      --color-caution-border: #eee4cc;
+      
+      --color-border-subtle: #e6e8e5;
+      --color-row-hover: #f9faf8;
+
+      --font-heading: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+      --shadow-modal: 
+        0 24px 48px -12px rgba(15, 45, 35, 0.18),
+        0 12px 24px -8px rgba(15, 30, 25, 0.08),
+        0 1px 3px rgba(0, 0, 0, 0.04);
+      
+      --radius-modal: 20px;
+      --radius-card: 14px;
+      --radius-badge: 12px;
+      --radius-btn: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--color-backdrop-bg);
+      color: var(--color-text-body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* ─── FAKE CLINIC APP SCREEN (BACKDROP MOCKUP) ─── */
+    .app-screen {
+      padding: 32px 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+      filter: blur(4px) opacity(0.35);
+      pointer-events: none;
+      user-select: none;
+      transition: filter 0.3s ease, opacity 0.3s ease;
+    }
+
+    .mock-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+
+    .mock-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mock-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background: #0f6f5c;
+      display: grid;
+      place-items: center;
+      color: white;
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .mock-title {
+      font-family: var(--font-heading);
+      font-size: 20px;
+      color: #19231f;
+      font-weight: 700;
+    }
+
+    .mock-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+    }
+
+    .mock-table th, .mock-table td {
+      padding: 16px 20px;
+      text-align: left;
+      border-bottom: 1px solid #edf0ed;
+      font-size: 14px;
+    }
+
+    .mock-table th {
+      background: #fafbfa;
+      font-weight: 600;
+      color: #55625d;
+    }
+
+    .mock-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .mock-badge.pending {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .mock-badge.paid {
+      background: #def7ec;
+      color: #03543f;
+    }
+
+    /* ─── MODAL OVERLAY & BACKDROP ─── */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(18, 28, 24, 0.45);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 9999;
+      opacity: 1;
+      transition: opacity 0.25s ease-out;
+    }
+
+    .modal-backdrop.closing {
+      opacity: 0;
+    }
+
+    /* ─── MODAL CARD CONTAINER ─── */
+    .modal-card {
+      background: var(--color-card-bg);
+      border-radius: var(--radius-modal);
+      box-shadow: var(--shadow-modal);
+      width: 100%;
+      max-width: 470px;
+      padding: 28px 30px 26px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      position: relative;
+      animation: modalFadeIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      transform-origin: center center;
+    }
+
+    @keyframes modalFadeIn {
+      0% {
+        opacity: 0;
+        transform: scale(0.96) translateY(8px);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    /* ─── HEADER ROW (LEFT-ALIGNED) ─── */
+    .modal-header-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    /* Checkmark in rounded square badge */
+    .badge-icon-sq {
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
+      border-radius: var(--radius-badge);
+      background-color: var(--color-teal-tint);
+      border: 1px solid var(--color-teal-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-teal-primary);
+    }
+
+    .badge-icon-sq svg {
+      width: 22px;
+      height: 22px;
+      stroke-width: 2.4;
+    }
+
+    .header-text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .modal-heading {
+      font-family: var(--font-heading);
+      font-size: 1.28rem;
+      font-weight: 700;
+      color: var(--color-text-title);
+      letter-spacing: -0.02em;
+      line-height: 1.25;
+      margin-bottom: 6px;
+    }
+
+    .modal-subtext {
+      font-size: 0.88rem;
+      line-height: 1.45;
+      color: var(--color-text-body);
+    }
+
+    /* ─── DETAILS CARD BLOCK ─── */
+    .details-card {
+      background: #fafafa;
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 18px;
+      font-size: 0.88rem;
+      border-bottom: 1px solid var(--color-border-subtle);
+      transition: background-color 0.15s ease;
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .detail-label {
+      color: var(--color-text-muted);
+      font-weight: 500;
+    }
+
+    .detail-value {
+      color: var(--color-text-title);
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+
+    .detail-value.code-font {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.86rem;
+      color: #2c3833;
+      background: #edf1ee;
+      padding: 2px 7px;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+
+    /* ─── HIGHLIGHTED AMOUNT RECEIVED ROW ─── */
+    .detail-row.amount-highlight {
+      background-color: var(--color-sage-tint);
+      border-top: 1px solid var(--color-sage-border);
+      border-bottom: 1px solid var(--color-sage-border);
+      padding: 14px 18px;
+    }
+
+    .detail-row.amount-highlight .detail-label {
+      color: #273e20;
+      font-weight: 600;
+    }
+
+    .detail-row.amount-highlight .detail-value {
+      color: var(--color-sage-dark);
+      font-family: var(--font-heading);
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: -0.01em;
+    }
+
+    /* ─── CAUTION ADVISORY LINE ─── */
+    .caution-box {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 14px;
+      background-color: var(--color-caution-bg);
+      border: 1px solid var(--color-caution-border);
+      border-radius: 10px;
+      margin-bottom: 24px;
+    }
+
+    .caution-icon {
+      flex-shrink: 0;
+      color: #8c6d31;
+      margin-top: 1px;
+    }
+
+    .caution-icon svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .caution-text {
+      font-size: 0.81rem;
+      line-height: 1.45;
+      color: var(--color-text-caution);
+    }
+
+    /* ─── ACTION BUTTONS ─── */
+    .modal-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      padding-bottom: env(safe-area-inset-bottom, 0);
+    }
+
+    .btn {
+      font-family: var(--font-body);
+      font-size: 0.92rem;
+      font-weight: 600;
+      padding: 11px 20px;
+      border-radius: var(--radius-btn);
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      user-select: none;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn:focus-visible {
+      outline: 2px solid var(--color-teal-primary);
+      outline-offset: 2px;
+    }
+
+    /* Secondary / Outlined Cancel Button */
+    .btn-secondary {
+      background: #ffffff;
+      border-color: #d1d8d4;
+      color: #37433e;
+      flex: 1;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: #f4f6f4;
+      border-color: #b9c4be;
+      color: #1a221f;
+    }
+
+    .btn-secondary:active:not(:disabled) {
+      background: #eaecea;
+    }
+
+    /* Primary Filled Verify Payment Button */
+    .btn-primary {
+      background-color: var(--color-teal-primary);
+      color: #ffffff;
+      flex: 1.35;
+      box-shadow: 0 2px 6px rgba(15, 111, 92, 0.25);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background-color: var(--color-teal-hover);
+      box-shadow: 0 4px 12px rgba(15, 111, 92, 0.32);
+      transform: translateY(-0.5px);
+    }
+
+    .btn-primary:active:not(:disabled) {
+      background-color: var(--color-teal-active);
+      transform: translateY(0);
+      box-shadow: 0 1px 3px rgba(15, 111, 92, 0.2);
+    }
+
+    .btn:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    /* Loading Spinner */
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.35);
+      border-top-color: #ffffff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ─── TOAST NOTIFICATION ─── */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #19231f;
+      color: #ffffff;
+      padding: 12px 22px;
+      border-radius: 30px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+      z-index: 10001;
+      opacity: 0;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast-icon {
+      color: #34d399;
+    }
+
+    /* ─── REOPEN DEMO BUTTON (FOR INTERACTIVE TESTING) ─── */
+    .demo-reopen-btn {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 1000;
+      background: #0f6f5c;
+      color: white;
+      padding: 10px 18px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      display: none;
+    }
+
+    /* ─── RESPONSIVE BEHAVIOR (MOBILE / NARROW SCREENS) ─── */
+    @media (max-width: 480px) {
+      .modal-card {
+        padding: 24px 20px 20px;
+        border-radius: 18px;
+      }
+
+      .modal-heading {
+        font-size: 1.18rem;
+      }
+
+      .modal-subtext {
+        font-size: 0.84rem;
+      }
+
+      /* Stack buttons on narrow viewports: primary on top, secondary on bottom */
+      .modal-actions {
+        flex-direction: column-reverse;
+        gap: 10px;
+      }
+
+      .btn {
+        width: 100%;
+        padding: 13px;
+      }
+
+      .btn-secondary {
+        order: 1;
+      }
+
+      .btn-primary {
+        order: 2;
+      }
+    }
+
+    /* ─── ACCESSIBILITY: REDUCED MOTION ─── */
+    @media (prefers-reduced-motion: reduce) {
+      .modal-card,
+      .modal-backdrop,
+      .btn,
+      .toast {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Mock Clinic Application Screen (Visible underneath dimmed/blurred backdrop) -->
+  <main class="app-screen" aria-hidden="true">
+    <div class="mock-header">
+      <div class="mock-brand">
+        <div class="mock-logo">🐾</div>
+        <div>
+          <div class="mock-title">FurEverPawCare Clinic</div>
+          <div style="font-size: 13px; color: #6b7a74;">Appointments Management · Admin Panel</div>
+        </div>
+      </div>
+      <div style="font-size: 13px; color: #495752; font-weight: 500;">Signed in as Dr. Halim (Admin)</div>
+    </div>
+
+    <table class="mock-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Patient & Owner</th>
+          <th>Service</th>
+          <th>Date & Time</th>
+          <th>Payment Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="background: #fdfbf7;">
+          <td><strong>#APT-2026-0842</strong></td>
+          <td>Mochi (Golden Retriever) · Jealene Mae</td>
+          <td>In-Person Consultation & Vaccine</td>
+          <td>Sep 21, 2026 · 10:30 AM</td>
+          <td><span class="mock-badge pending">Pending Verification</span></td>
+          <td><span style="color: #0f6f5c; font-weight: 600;">Verifying...</span></td>
+        </tr>
+        <tr>
+          <td>#APT-2026-0841</td>
+          <td>Luna (Persian Cat) · Michael Chen</td>
+          <td>Telemedicine Consultation</td>
+          <td>Sep 21, 2026 · 09:00 AM</td>
+          <td><span class="mock-badge paid">Verified & Paid</span></td>
+          <td><span style="color: #6b7a74;">Completed</span></td>
+        </tr>
+        <tr>
+          <td>#APT-2026-0840</td>
+          <td>Brownie (Shih Tzu) · Sarah Santos</td>
+          <td>Routine Dental Cleaning</td>
+          <td>Sep 20, 2026 · 03:00 PM</td>
+          <td><span class="mock-badge paid">Verified & Paid</span></td>
+          <td><span style="color: #6b7a74;">Completed</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+
+  <!-- Button to re-open modal if closed during testing -->
+  <button id="reopenBtn" class="demo-reopen-btn" onclick="openModal()">
+    Open Verification Modal
+  </button>
+
+  <!-- ─── REDESIGNED PAYMENT VERIFICATION MODAL ─── -->
+  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalHeading" aria-describedby="modalSubtext">
+    <div class="modal-card">
+      
+      <!-- 1. Header Row (Left-aligned icon + heading pairing) -->
+      <div class="modal-header-row">
+        <!-- Rounded square checkmark icon badge (not circle) -->
+        <div class="badge-icon-sq" aria-hidden="true">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </div>
+
+        <div class="header-text">
+          <h2 id="modalHeading" class="modal-heading">Verify this payment?</h2>
+          <p id="modalSubtext" class="modal-subtext">Confirming marks the appointment as paid and notifies the front desk.</p>
+        </div>
+      </div>
+
+      <!-- 2. Details Block (Bordered card with subtle background) -->
+      <div class="details-card">
+        <!-- Appointment ID -->
+        <div class="detail-row">
+          <span class="detail-label">Appointment ID</span>
+          <span class="detail-value code-font">#APT-2026-0842</span>
+        </div>
+
+        <!-- Date & Time -->
+        <div class="detail-row">
+          <span class="detail-label">Date & time</span>
+          <span class="detail-value">Mon, Sep 21, 2026 · 10:30 AM</span>
+        </div>
+
+        <!-- Distinctly Highlighted Amount Received Row -->
+        <div class="detail-row amount-highlight">
+          <span class="detail-label">Amount received</span>
+          <span class="detail-value">₱800.00</span>
+        </div>
+      </div>
+
+      <!-- 3. Short Caution Line -->
+      <div class="caution-box">
+        <div class="caution-icon" aria-hidden="true">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <p class="caution-text">
+          This action can't be undone from this screen. If the amount looks wrong, cancel and check with billing first.
+        </p>
+      </div>
+
+      <!-- 4. Action Buttons (Active verbs, responsive stacking) -->
+      <div class="modal-actions">
+        <button type="button" id="btnCancel" class="btn btn-secondary" onclick="closeModal()">
+          Cancel
+        </button>
+
+        <button type="button" id="btnVerify" class="btn btn-primary" onclick="handleVerifyPayment()">
+          <span id="btnVerifyText">Verify payment</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Toast Notification Feedback -->
+  <div id="toast" class="toast" role="status" aria-live="polite">
+    <svg class="toast-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+    <span>Payment verified! Appointment marked as paid.</span>
+  </div>
+
+  <script>
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const btnCancel = document.getElementById('btnCancel');
+    const btnVerify = document.getElementById('btnVerify');
+    const btnVerifyText = document.getElementById('btnVerifyText');
+    const reopenBtn = document.getElementById('reopenBtn');
+    const toast = document.getElementById('toast');
+
+    // Close Modal with smooth animation
+    function closeModal() {
+      modalBackdrop.classList.add('closing');
+      setTimeout(() => {
+        modalBackdrop.style.display = 'none';
+        modalBackdrop.classList.remove('closing');
+        reopenBtn.style.display = 'block';
+      }, 220);
+    }
+
+    // Open Modal
+    function openModal() {
+      modalBackdrop.style.display = 'flex';
+      reopenBtn.style.display = 'none';
+      btnVerify.disabled = false;
+      btnCancel.disabled = false;
+      btnVerifyText.textContent = 'Verify payment';
+    }
+
+    // Handle Verify Payment Action with Responsive Feedback
+    async function handleVerifyPayment() {
+      // 1. Immediately provide visual feedback
+      btnVerify.disabled = true;
+      btnCancel.disabled = true;
+      btnVerifyText.innerHTML = '<div class="spinner"></div> Verifying...';
+
+      // 2. Simulate fast API call (~450ms)
+      await new Promise(resolve => setTimeout(resolve, 450));
+
+      // 3. Close modal & show toast
+      closeModal();
+      showToast();
+    }
+
+    function showToast() {
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3500);
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modalBackdrop.style.display !== 'none' && !btnVerify.disabled) {
+        closeModal();
+      }
+    });
+
+    // Close on clicking backdrop outside card
+    modalBackdrop.addEventListener('click', (e) => {
+      if (e.target === modalBackdrop && !btnVerify.disabled) {
+        closeModal();
+      }
+    });
+  </script>
+</body>
+</html>

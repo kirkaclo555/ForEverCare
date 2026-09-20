@@ -1989,19 +1989,78 @@ export default function AppointmentPage() {
         </div>
     )}
 
-    {appointmentToMarkPaid && (
-        <div className="modal" style={{display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', zIndex: 10000}}>
-            <div className="modal-content" style={{background: 'white', padding: '30px', borderRadius: '16px', width: '90%', maxWidth: '450px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)'}}>
-                <div style={{ width: '60px', height: '60px', borderRadius: '50%', background: '#EBF8FF', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px auto' }}>
-                    <i className="fas fa-check-double" style={{ color: '#2B6CB0', fontSize: '2rem' }}></i>
+    {appointmentToMarkPaid && (() => {
+        const targetApp = appointments.find(a => a.id === appointmentToMarkPaid);
+        const apptDateRaw = targetApp?.date;
+        const apptDateStr = apptDateRaw
+            ? new Date(apptDateRaw).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })
+            : 'Scheduled Date';
+        const apptTimeStr = targetApp?.time || '';
+        const displayDateTime = apptTimeStr ? `${apptDateStr} · ${apptTimeStr}` : apptDateStr;
+        const apptAmount = targetApp?.amountPaid || (targetApp?.type === 'telemedicine' ? telemedicinePrice : inpersonPrice);
+        const displayId = targetApp?.id ? `#APT-${targetApp.id.slice(-6).toUpperCase()}` : `#${appointmentToMarkPaid.slice(0, 8)}`;
+
+        return (
+        <div className="modal" style={{display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(18, 28, 24, 0.45)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)', zIndex: 10000, padding: '20px'}}>
+            <div className="modal-content" style={{background: '#ffffff', padding: '28px 30px 26px', borderRadius: '20px', width: '100%', maxWidth: '470px', boxShadow: '0 24px 48px -12px rgba(15, 45, 35, 0.18), 0 12px 24px -8px rgba(15, 30, 25, 0.08)', border: '1px solid rgba(255, 255, 255, 0.8)'}}>
+                
+                {/* Header Row: Left-aligned icon + heading pairing */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px', marginBottom: '22px' }}>
+                    <div style={{ width: '44px', height: '44px', flexShrink: 0, borderRadius: '12px', background: '#e6f3f0', border: '1px solid #b8ded6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0f6f5c' }}>
+                        <i className="fas fa-check" style={{ fontSize: '1.2rem', fontWeight: 900 }}></i>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <h3 style={{ margin: '0 0 6px 0', color: '#19231f', fontSize: '1.28rem', fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.25 }}>
+                            Verify this payment?
+                        </h3>
+                        <p style={{ margin: 0, color: '#495752', fontSize: '0.88rem', lineHeight: 1.45 }}>
+                            Confirming marks the appointment as paid and notifies the front desk.
+                        </p>
+                    </div>
                 </div>
-                <h3 style={{ margin: '0 0 10px 0', color: '#2d3748', fontSize: '1.4rem', textAlign: 'center' }}>Confirm Payment Verification</h3>
-                <p style={{ color: '#718096', marginBottom: '25px', lineHeight: '1.6', textAlign: 'center' }}>Are you sure you want to approve this appointment? This confirms that the payment has been received and verified by the clinic.</p>
-                <div style={{ display: 'flex', gap: '10px' }}>
+
+                {/* Details Block: Bordered card with subtle background */}
+                <div style={{ background: '#fafafa', border: '1px solid #e6e8e5', borderRadius: '14px', overflow: 'hidden', marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px', fontSize: '0.88rem', borderBottom: '1px solid #e6e8e5' }}>
+                        <span style={{ color: '#6b7a74', fontWeight: 500 }}>Appointment ID</span>
+                        <span style={{ color: '#2c3833', fontFamily: 'monospace', background: '#edf1ee', padding: '2px 7px', borderRadius: '6px', fontSize: '0.86rem', fontWeight: 600 }}>{displayId}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px', fontSize: '0.88rem', borderBottom: '1px solid #e6e8e5' }}>
+                        <span style={{ color: '#6b7a74', fontWeight: 500 }}>Date & time</span>
+                        <span style={{ color: '#19231f', fontWeight: 600 }}>{displayDateTime}</span>
+                    </div>
+                    {/* Distinctly highlighted amount received row */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 18px', fontSize: '0.88rem', background: '#f1f7ef', borderTop: '1px solid #d4e5d1' }}>
+                        <span style={{ color: '#273e20', fontWeight: 600 }}>Amount received</span>
+                        <span style={{ color: '#3f5a34', fontSize: '1.2rem', fontWeight: 800, letterSpacing: '-0.01em' }}>₱{Number(apptAmount).toFixed(2)}</span>
+                    </div>
+                </div>
+
+                {/* Short Caution Line */}
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '10px 14px', background: '#faf6ee', border: '1px solid #eee4cc', borderRadius: '10px', marginBottom: '24px' }}>
+                    <i className="fas fa-exclamation-circle" style={{ color: '#8c6d31', marginTop: '2px', fontSize: '0.9rem', flexShrink: 0 }}></i>
+                    <p style={{ margin: 0, fontSize: '0.81rem', lineHeight: 1.45, color: '#605139' }}>
+                        This action can't be undone from this screen. If the amount looks wrong, cancel and check with billing first.
+                    </p>
+                </div>
+
+                {/* Action buttons */}
+                <div style={{ display: 'flex', gap: '12px' }}>
                     <button 
                         disabled={isProcessingStatus} 
                         onClick={() => !isProcessingStatus && setAppointmentToMarkPaid(null)} 
-                        style={{ flex: 1, padding: '12px', background: '#edf2f7', color: isProcessingStatus ? '#a0aec0' : '#4a5568', border: 'none', borderRadius: '8px', fontWeight: 'bold', cursor: isProcessingStatus ? 'not-allowed' : 'pointer', transition: 'all 0.2s' }}
+                        style={{ 
+                            flex: 1, 
+                            padding: '11px 20px', 
+                            background: '#ffffff', 
+                            color: isProcessingStatus ? '#a0aec0' : '#37433e', 
+                            border: '1px solid #d1d8d4', 
+                            borderRadius: '10px', 
+                            fontWeight: 600, 
+                            fontSize: '0.92rem',
+                            cursor: isProcessingStatus ? 'not-allowed' : 'pointer', 
+                            transition: 'all 0.18s' 
+                        }}
                     >
                         Cancel
                     </button>
@@ -2018,19 +2077,21 @@ export default function AppointmentPage() {
                             }
                         }} 
                         style={{ 
-                            flex: 1, 
-                            padding: '12px', 
-                            background: isProcessingStatus ? '#63b3ed' : '#2B6CB0', 
-                            color: 'white', 
+                            flex: 1.35, 
+                            padding: '11px 20px', 
+                            background: isProcessingStatus ? '#63b3ed' : '#0f6f5c', 
+                            color: '#ffffff', 
                             border: 'none', 
-                            borderRadius: '8px', 
-                            fontWeight: 'bold', 
+                            borderRadius: '10px', 
+                            fontWeight: 600, 
+                            fontSize: '0.92rem',
                             cursor: isProcessingStatus ? 'not-allowed' : 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             gap: '8px',
-                            transition: 'all 0.2s'
+                            boxShadow: '0 2px 6px rgba(15, 111, 92, 0.25)',
+                            transition: 'all 0.18s'
                         }}
                     >
                         {isProcessingStatus ? (
@@ -2038,13 +2099,14 @@ export default function AppointmentPage() {
                                 <i className="fas fa-spinner fa-spin"></i> Verifying...
                             </>
                         ) : (
-                            'Yes, Verify Payment'
+                            'Verify payment'
                         )}
                     </button>
                 </div>
             </div>
         </div>
-    )}
+        );
+    })()}
 
     {appointmentToMarkCompleted && (
         <div className="modal" style={{display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(0,0,0,0.5)', zIndex: 10000}}>
