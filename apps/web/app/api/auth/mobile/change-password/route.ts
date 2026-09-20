@@ -201,7 +201,7 @@ export async function POST(req: Request) {
       `;
 
         await transporter.sendMail({
-          from: `"FurEverPawCare Security" <${process.env.SMTP_USER || 'fureverpawcareadmin@gmail.com'}>`,
+          from: `"FurEverPawCare Security" <${process.env.SMTP_USER || 'adminfureverpawcare@gmail.com'}>`,
           to: user.email,
           subject: 'Security Alert: Your password was changed - FurEverPawCare',
           html: emailHtml

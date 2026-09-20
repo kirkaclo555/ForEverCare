@@ -166,8 +166,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
               port: Number(process.env.SMTP_PORT) || 587,
               secure: false,
               auth: {
-                user: process.env.SMTP_USER || 'fureverpawcareadmin@gmail.com',
-                pass: process.env.SMTP_PASS || 'xjxw svro yxan hgnj',
+                user: process.env.SMTP_USER || 'adminfureverpawcare@gmail.com',
+                pass: process.env.SMTP_PASS || 'ivsd ulrw dwmc alop',
               },
             });
             
@@ -316,7 +316,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
             `;
             
             await transporter.sendMail({
-              from: `"FurEverPawCare Clinic" <${process.env.SMTP_USER || 'fureverpawcareadmin@gmail.com'}>`,
+              from: `"FurEverPawCare Clinic" <${process.env.SMTP_USER || 'adminfureverpawcare@gmail.com'}>`,
               to: updated.user.email,
               subject: wasPaymentVerified 
                 ? 'Appointment Cancellation & Refund Approved - FurEverPawCare'
@@ -455,8 +455,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         invoices.unshift(invoice);
       }
 
-      // Save billing
-      fs.writeFileSync(dataFilePath, JSON.stringify(invoices, null, 2));
+      // Save billing (safely handle read-only environments like Vercel serverless)
+      try {
+        fs.writeFileSync(dataFilePath, JSON.stringify(invoices, null, 2));
+      } catch (saveErr) {
+        console.warn('[Billing] Note: Could not write billing.json to disk (serverless runtime):', saveErr);
+      }
 
       // 2. Build the notification/SMS message first
       const userEmail = updatedAppointment.user?.email || existingApp.user?.email || (updatedAppointment as any).email || (existingApp as any).email;
@@ -634,8 +638,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
                  port: Number(process.env.SMTP_PORT) || 587,
                  secure: false,
                  auth: {
-                   user: process.env.SMTP_USER || 'fureverpawcareadmin@gmail.com',
-                   pass: process.env.SMTP_PASS || 'xjxw svro yxan hgnj',
+                   user: process.env.SMTP_USER || 'adminfureverpawcare@gmail.com',
+                   pass: process.env.SMTP_PASS || 'ivsd ulrw dwmc alop',
                  },
                });
 
@@ -741,7 +745,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
                `;
 
                await transporter.sendMail({
-                 from: `"FurEverPawCare Clinic" <${process.env.SMTP_USER || 'fureverpawcareadmin@gmail.com'}>`,
+                 from: `"FurEverPawCare Clinic" <${process.env.SMTP_USER || 'adminfureverpawcare@gmail.com'}>`,
                  to: userEmail,
                  subject: 'Appointment Declined - FurEverPawCare',
                  html: emailHtml

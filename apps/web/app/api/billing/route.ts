@@ -43,8 +43,8 @@ async function sendInvoiceEmail(invoice: any) {
       port: Number(process.env.SMTP_PORT) || 587,
       secure: false,
       auth: {
-        user: process.env.SMTP_USER || 'fureverpawcareadmin@gmail.com',
-        pass: process.env.SMTP_PASS || 'xjxw svro yxan hgnj',
+        user: process.env.SMTP_USER || 'adminfureverpawcare@gmail.com',
+        pass: process.env.SMTP_PASS || 'ivsd ulrw dwmc alop',
       },
     });
 
@@ -238,7 +238,7 @@ async function sendInvoiceEmail(invoice: any) {
     `;
 
     const mailOptions = {
-      from: `"FurEverPawCare Clinic" <${process.env.SMTP_USER || 'fureverpawcareadmin@gmail.com'}>`,
+      from: `"FurEverPawCare Clinic" <${process.env.SMTP_USER || 'adminfureverpawcare@gmail.com'}>`,
       to: invoice.userEmail,
       subject: `Official Receipt - Invoice ${invoice.id} - FurEverPawCare`,
       html: emailHtml,

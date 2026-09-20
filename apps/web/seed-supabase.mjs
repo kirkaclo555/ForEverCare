@@ -41,7 +41,7 @@ async function main() {
 
   console.log('\n🎉 Seeding complete! You can now log in with:');
   console.log('   Super Admin → fureverpawcare@gmail.com / superadmin123');
-  console.log('   Admin       → fureverpawcareadmin@gmail.com / admin123');
+  console.log('   Admin       → adminfureverpawcare@gmail.com / admin123');
 }
 
 main()

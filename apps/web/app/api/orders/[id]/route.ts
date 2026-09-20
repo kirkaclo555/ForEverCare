@@ -57,8 +57,8 @@ function sendOrderProcessingEmail(order: any) {
 
     if (!userEmail || userEmail === 'guest@furevercare.com') return;
 
-    const smtpUser = process.env.SMTP_USER || 'fureverpawcareadmin@gmail.com';
-    const smtpPass = process.env.SMTP_PASS || 'xjxw svro yxan hgnj';
+    const smtpUser = process.env.SMTP_USER || 'adminfureverpawcare@gmail.com';
+    const smtpPass = process.env.SMTP_PASS || 'ivsd ulrw dwmc alop';
 
     const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',

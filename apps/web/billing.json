@@ -1,5 +1,24 @@
 [
   {
+    "id": "INV-8350",
+    "appointmentId": "898a95ec-11f2-410d-8698-1167bae78b43",
+    "clientName": "Jealene Mae Ranido",
+    "userEmail": "ranidojealenemae@gmail.com",
+    "date": "2026-09-20",
+    "items": [
+      {
+        "id": "1789929122233",
+        "name": "In-Person Consultation Fee",
+        "quantity": 1,
+        "price": 350
+      }
+    ],
+    "totalAmount": 350,
+    "status": "paid",
+    "source": "appointment",
+    "emailed": true
+  },
+  {
     "id": "INV-1559",
     "appointmentId": "4632d345-15ff-4de2-b972-564be4ee04f1",
     "clientName": "Alexis Pensona",
