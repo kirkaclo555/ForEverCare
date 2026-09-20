@@ -402,3 +402,31 @@ body {
     white-space: normal !important;
     max-width: 100% !important;
 }
+
+/* iPad & Tablet Responsive Sidebar Pinning */
+.sidebar {
+    position: fixed !important;
+    left: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    height: 100% !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    width: 280px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    z-index: 1000 !important;
+}
+
+.sidebar-menu {
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+.main-content {
+    min-height: 100vh;
+    min-height: 100dvh;
+}

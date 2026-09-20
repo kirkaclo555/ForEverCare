@@ -60,8 +60,33 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose:
   ];
 
   return (
-    <div className={`sidebar ${isOpen ? 'active' : ''}`} id="sidebar" style={{ display: 'flex', flexDirection: 'column' }}>
-      <div className="sidebar-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 20px', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '10px' }}>
+    <div 
+      className={`sidebar ${isOpen ? 'active' : ''}`} 
+      id="sidebar" 
+      style={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        bottom: 0,
+        height: '100%',
+        maxHeight: '100dvh',
+        overflow: 'hidden',
+        zIndex: 1000
+      }}
+    >
+      <div 
+        className="sidebar-header" 
+        style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between', 
+          padding: '18px 20px', 
+          borderBottom: '1px solid rgba(255,255,255,0.1)', 
+          flexShrink: 0 
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <img src="/logo.png" alt="Logo" style={{ width: '45px', height: 'auto', objectFit: 'contain' }} />
           <h2 style={{ margin: 0, textAlign: 'left', lineHeight: '1.2', fontSize: '1.15rem' }}>
@@ -74,7 +99,16 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose:
         </button>
       </div>
 
-      <div className="sidebar-menu" style={{ padding: '0 20px', flex: 1, overflowY: 'auto' }}>
+      <div 
+        className="sidebar-menu" 
+        style={{ 
+          padding: '10px 20px', 
+          flex: '1 1 0%', 
+          minHeight: 0, 
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch'
+        }}
+      >
         {sections.map((section, idx) => (
           <div key={idx} style={{ marginBottom: '20px' }}>
             <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem', textTransform: 'uppercase', fontWeight: 600, letterSpacing: '1px', marginBottom: '10px', paddingLeft: '15px' }}>
@@ -104,14 +138,15 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose:
           display: 'flex',
           alignItems: 'center',
           gap: '12px',
-          padding: '16px 20px',
-          borderTop: '1px solid rgba(255,255,255,0.1)',
+          padding: '14px 20px',
+          borderTop: '1px solid rgba(255,255,255,0.12)',
           cursor: 'pointer',
           transition: 'background 0.2s',
-          marginTop: 'auto'
+          flexShrink: 0,
+          background: 'rgba(0,0,0,0.12)'
         }}
         onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
-        onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+        onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.12)')}
       >
         <div style={{
           width: '40px',
