@@ -57,9 +57,16 @@ export const PetProvider = ({ children }: { children: ReactNode }) => {
   const [pets, setPets] = useState<PetProfile[]>([]);
   const { user } = useUser();
 
-  // 1. Immediately load cached pets from local storage on mount so pets never disappear
+  // 1. Immediately load cached pets from local storage on mount.
+  // Only do this for authenticated users — guests see an empty list.
   useEffect(() => {
     const loadCachedPets = async () => {
+      // Wait until user context has settled before touching the cache
+      if (!user?.id || user.id.trim() === '') {
+        // Guest: ensure pets list is empty
+        setPets([]);
+        return;
+      }
       try {
         const storedPets = await AsyncStorage.getItem('@pet_records');
         if (storedPets) {
@@ -73,20 +80,13 @@ export const PetProvider = ({ children }: { children: ReactNode }) => {
       }
     };
     loadCachedPets();
-  }, []);
+  }, [user?.id]);
 
   const fetchPets = async () => {
-    if (!user || !user.id) {
-      // If user isn't loaded yet, keep showing whatever is in local storage
-      const storedPets = await AsyncStorage.getItem('@pet_records');
-      if (storedPets) {
-        try {
-          const parsed = JSON.parse(storedPets);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setPets(parsed);
-          }
-        } catch (e) {}
-      }
+    if (!user || !user.id || user.id.trim() === '') {
+      // Guest user: show nothing — clear the list so no previous session's
+      // pets bleed through.
+      setPets([]);
       return;
     }
 

@@ -10,7 +10,8 @@ import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 import { useUser } from '../context/UserContext';
 import GuestRestriction from '../components/GuestRestriction';
-import { promptGuestAuth } from '../utils/auth';
+import GuestAuthModal from '../components/GuestAuthModal';
+import { useGuestAuth } from '../utils/auth';
 
 type Props = {
   navigation: NativeStackNavigationProp<MoreStackParamList, 'Tutorials'>;
@@ -79,6 +80,7 @@ const ActiveWatchPlayer = ({ uri }: { uri: string }) => {
 export default function TutorialsScreen({ navigation }: Props) {
   const { theme, isDarkMode } = useTheme();
   const { user } = useUser();
+  const { guestModalVisible, promptGuestAuth, closeGuestModal } = useGuestAuth();
 
   const { t, language } = useLanguage();
   const [tutorials, setTutorials] = useState<any[]>([]);
@@ -134,7 +136,7 @@ export default function TutorialsScreen({ navigation }: Props) {
 
   const handlePlayVideo = (tutorial: any) => {
     if (!user?.id || user.id.trim() === '') {
-      promptGuestAuth(navigation, language);
+      promptGuestAuth();
       return;
     }
     setSelectedVideo(tutorial);
@@ -150,6 +152,12 @@ export default function TutorialsScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+      <GuestAuthModal
+        visible={guestModalVisible}
+        onClose={closeGuestModal}
+        onLogin={() => { closeGuestModal(); (navigation as any).navigate('Login'); }}
+        onRegister={() => { closeGuestModal(); (navigation as any).navigate('Register'); }}
+      />
       {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.headerBackground }]}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>

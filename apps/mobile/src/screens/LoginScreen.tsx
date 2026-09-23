@@ -247,14 +247,21 @@ export default function LoginScreen({ navigation }: Props) {
                   </TouchableOpacity>
 
                   <View style={styles.brandingContainer}>
-                    <Image source={require('../../assets/logo.png')} style={{ width: 150, height: 150, resizeMode: 'contain', marginBottom: 0 }} />
+                    <Image source={require('../../assets/logo.png')} style={{ width: 130, height: 130, resizeMode: 'contain', marginBottom: 8 }} />
+                    <Text
+                      style={styles.brandText}
+                      numberOfLines={1}
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.85}
+                    >
+                      FurEver Paw Care
+                    </Text>
                   </View>
                 </View>
 
                 {/* Bottom Login Card */}
                 <Animated.View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border, transform: [{ translateY: slideAnim }] }]}>
                   <View style={styles.headerTextContainer}>
-                    <Text style={[styles.welcomeText, { color: isDarkMode ? theme.text : '#2E5E3E' }]}>FurEver Paw Care</Text>
                     <Text style={[styles.subtitleText, { color: theme.subtext }]}>Login to your account</Text>
                   </View>
 
@@ -409,9 +416,13 @@ const styles = StyleSheet.create({
   },
   brandText: {
     fontFamily: 'Catcut',
-    fontSize: fontSize(26),
+    fontSize: fontSize(24),
+    lineHeight: fontSize(32),
     color: '#ffffff',
-    letterSpacing: 0.5,
+    textAlign: 'center',
+    letterSpacing: 0.3,
+    paddingVertical: Platform.OS === 'android' ? 3 : 1,
+    ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
     textShadowColor: 'rgba(0, 0, 0, 0.1)',
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 4,
@@ -431,7 +442,8 @@ const styles = StyleSheet.create({
   },
   headerTextContainer: {
     alignItems: 'center',
-    marginBottom: verticalScale(20),
+    marginBottom: verticalScale(16),
+    marginTop: verticalScale(4),
   },
   welcomeText: {
     fontFamily: 'Catcut',

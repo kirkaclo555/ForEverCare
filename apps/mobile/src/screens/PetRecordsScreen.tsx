@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,16 +10,18 @@ import {
   Image,
   Alert,
   Modal,
-  FlatList
+  FlatList,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FontAwesome5 } from '@expo/vector-icons';
+import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import * as ImagePicker from 'expo-image-picker';
 
 // Match existing stack types
 type RootStackParamList = {
   Login: undefined;
+  Register: undefined;
   Home: undefined;
   Users: undefined;
   Appointments: undefined;
@@ -37,8 +39,9 @@ import { usePetContext, PetProfile } from '../context/PetContext';
 import { useTheme } from '../context/ThemeContext';
 import { useUser } from '../context/UserContext';
 import GuestRestriction from '../components/GuestRestriction';
+import GuestAuthModal from '../components/GuestAuthModal';
 import { useLanguage } from '../context/LanguageContext';
-import { promptGuestAuth } from '../utils/auth';
+import { useGuestAuth } from '../utils/auth';
 import {
   VaccinationRecord,
   getVaccineRecords,
@@ -46,6 +49,20 @@ import {
   deleteVaccineRecord,
   getVaccineStatus,
 } from '../utils/vaccineReminders';
+import PetRecordsHeader from '../components/pets/PetRecordsHeader';
+import PetCard from '../components/pets/PetCard';
+import PetPhoto from '../components/pets/PetPhoto';
+import StatusChip from '../components/pets/StatusChip';
+import PendingNotice from '../components/pets/PendingNotice';
+import PetCardSkeleton from '../components/pets/PetCardSkeleton';
+import EmptyState from '../components/pets/EmptyState';
+import PetDetailHeader from '../components/pets/PetDetailHeader';
+import PetProfileRow from '../components/pets/PetProfileRow';
+import StatTile from '../components/pets/StatTile';
+import VerificationNotice from '../components/pets/VerificationNotice';
+import NextVaccineSummary from '../components/pets/NextVaccineSummary';
+import SegmentedTabs, { PetDetailTab } from '../components/pets/SegmentedTabs';
+import RecordCard from '../components/pets/RecordCard';
 
 const DOG_BREEDS = ["Aspin", "Golden Retriever", "Labrador", "Poodle", "Bulldog", "Beagle", "Pug", "Chihuahua", "Shih Tzu", "Husky", "German Shepherd", "Rottweiler", "Dachshund", "Boxer", "Doberman", "Great Dane", "Pomeranian", "Corgi", "Shiba Inu", "Chow Chow", "Dalmatian", "Mixed"];
 const CAT_BREEDS = ["Puspin", "Persian", "Siamese", "Maine Coon", "Bengal", "Sphynx", "British Shorthair", "Scottish Fold", "Mixed"];
@@ -318,10 +335,12 @@ const VaccinesTabContent = ({
   petId,
   petName,
   vaccineString,
+  isUnverified = false,
 }: {
   petId: string;
   petName: string;
   vaccineString?: string;
+  isUnverified?: boolean;
 }) => {
   const { user } = useUser();
   const { isDarkMode } = useTheme();
@@ -430,25 +449,29 @@ const VaccinesTabContent = ({
       {/* Top action bar: Add Vaccine button */}
       <TouchableOpacity
         style={{
-          backgroundColor: '#2E5E3E',
+          backgroundColor: '#35501F',
           paddingVertical: 12,
           paddingHorizontal: 16,
           borderRadius: 12,
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
-          marginBottom: 16,
-          elevation: 2,
-          shadowColor: '#000',
+          marginBottom: 14,
+          minHeight: 44,
+          shadowColor: '#35501F',
           shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.1,
-          shadowRadius: 3,
+          shadowOpacity: 0.12,
+          shadowRadius: 2,
+          elevation: 2,
         }}
         onPress={handleOpenAddModal}
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel="Add vaccine record"
       >
-        <FontAwesome5 name="plus" size={14} color="white" style={{ marginRight: 8 }} />
+        <FontAwesome5 name="plus" size={13} color="white" style={{ marginRight: 8 }} />
         <Text style={{ fontFamily: 'Montserrat-Bold', fontSize: 13, color: 'white' }}>
-          + Add Vaccine Date / Record
+          Add Vaccine Record
         </Text>
       </TouchableOpacity>
 
@@ -459,132 +482,45 @@ const VaccinesTabContent = ({
       ) : (
         <>
           {/* App-registered vaccination records */}
-          {records.map(rec => {
-            const status = getVaccineStatus(rec.nextDueDate);
-            return (
-              <View
-                key={rec.id}
-                style={{
-                  backgroundColor: isDarkMode ? '#1a2a1a' : 'white',
-                  borderRadius: 14,
-                  padding: 16,
-                  marginBottom: 12,
-                  borderWidth: 1,
-                  borderColor: isDarkMode ? '#2d5016' : '#e2e8f0',
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 1 },
-                  shadowOpacity: 0.05,
-                  shadowRadius: 4,
-                  elevation: 2,
-                }}
-              >
-                {/* Header row */}
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-                    <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#EAF3DE', alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
-                      <FontAwesome5 name="syringe" size={16} color="#2E5E3E" />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontFamily: 'Montserrat-Bold', fontSize: 14, color: isDarkMode ? '#e2e8f0' : '#2d3748' }}>
-                        {rec.vaccineName}
-                      </Text>
-                      <Text style={{ fontFamily: 'Montserrat-Medium', fontSize: 11, color: isDarkMode ? '#a0aec0' : '#718096', marginTop: 1 }}>
-                        Type: {rec.vaccineType}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <View style={{ backgroundColor: status.bgColor, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                      <FontAwesome5 name={status.icon} size={10} color={status.color} />
-                      <Text style={{ fontFamily: 'Montserrat-Bold', fontSize: 10, color: status.color }}>{status.label}</Text>
-                    </View>
-
-                    {/* Edit button */}
-                    <TouchableOpacity
-                      onPress={() => handleOpenEditModal(rec)}
-                      style={{ padding: 6, backgroundColor: isDarkMode ? '#2d3748' : '#edf2f7', borderRadius: 8 }}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    >
-                      <FontAwesome5 name="pen" size={11} color={isDarkMode ? '#a0aec0' : '#4a5568'} />
-                    </TouchableOpacity>
-
-                    {/* Delete button */}
-                    <TouchableOpacity
-                      onPress={() => handleDeleteRecord(rec.id, rec.vaccineName)}
-                      style={{ padding: 6, backgroundColor: isDarkMode ? '#3b1d1d' : '#fff5f5', borderRadius: 8 }}
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    >
-                      <FontAwesome5 name="trash" size={11} color="#e53e3e" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
-                {/* Date info row */}
-                <View style={{ flexDirection: 'row', gap: 16 }}>
-                  <View style={{ flex: 1, backgroundColor: isDarkMode ? '#1f3320' : '#f7fafc', borderRadius: 8, padding: 10 }}>
-                    <Text style={{ fontFamily: 'Montserrat-Medium', fontSize: 10, color: isDarkMode ? '#718096' : '#a0aec0', marginBottom: 2 }}>DATE GIVEN</Text>
-                    <Text style={{ fontFamily: 'Montserrat-SemiBold', fontSize: 12, color: isDarkMode ? '#c6f6d5' : '#2d3748' }}>
-                      {rec.vaccinationDate
-                        ? new Date(rec.vaccinationDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
-                        : '—'}
-                    </Text>
-                  </View>
-                  <View style={{ flex: 1, backgroundColor: isDarkMode ? '#1f3320' : '#f7fafc', borderRadius: 8, padding: 10 }}>
-                    <Text style={{ fontFamily: 'Montserrat-Medium', fontSize: 10, color: isDarkMode ? '#718096' : '#a0aec0', marginBottom: 2 }}>NEXT DUE</Text>
-                    <Text style={{ fontFamily: 'Montserrat-SemiBold', fontSize: 12, color: status.color }}>
-                      {rec.nextDueDate
-                        ? new Date(rec.nextDueDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })
-                        : '—'}
-                    </Text>
-                  </View>
-                </View>
-
-                {rec.vetClinic && (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: isDarkMode ? '#2d5016' : '#edf2f7' }}>
-                    <FontAwesome5 name="clinic-medical" size={11} color="#718096" style={{ marginRight: 6 }} />
-                    <Text style={{ fontFamily: 'Montserrat-Medium', fontSize: 11, color: isDarkMode ? '#a0aec0' : '#718096' }}>
-                      {rec.vetClinic}
-                    </Text>
-                  </View>
-                )}
-              </View>
-            );
-          })}
+          {records.map(rec => (
+            <RecordCard
+              key={rec.id}
+              record={{
+                id: rec.id,
+                isVaccine: true,
+                vaccineName: rec.vaccineName,
+                vaccineType: rec.vaccineType,
+                vaccinationDate: rec.vaccinationDate,
+                nextDueDate: rec.nextDueDate,
+                clinic: rec.vetClinic,
+                onEdit: () => handleOpenEditModal(rec),
+                onDelete: () => handleDeleteRecord(rec.id, rec.vaccineName),
+              }}
+            />
+          ))}
 
           {/* Legacy clinic-sourced vaccines */}
           {legacyVaccines.map((v, i) => (
-            <View key={`legacy-${i}`} style={{
-              backgroundColor: isDarkMode ? '#1a2637' : '#ebf8ff',
-              borderRadius: 14, padding: 14, marginBottom: 10,
-              borderWidth: 1, borderColor: isDarkMode ? '#2b4a6f' : '#bee3f8',
-              flexDirection: 'row', alignItems: 'center', gap: 12,
-            }}>
-              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: '#3182ce', alignItems: 'center', justifyContent: 'center' }}>
-                <FontAwesome5 name="check-circle" size={16} color="white" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: 'Montserrat-Bold', fontSize: 13, color: isDarkMode ? '#90cdf4' : '#2b6cb0' }}>{v.name}</Text>
-                <Text style={{ fontFamily: 'Montserrat-Medium', fontSize: 11, color: isDarkMode ? '#718096' : '#4a5568', marginTop: 2 }}>
-                  Recorded by FurEverCare Clinic
-                </Text>
-              </View>
-            </View>
+            <RecordCard
+              key={`legacy-${i}`}
+              record={{
+                id: `legacy-${i}`,
+                isVaccine: true,
+                vaccineName: v.name,
+                summary: 'Recorded by FurEverCare Clinic',
+                clinic: 'FurEverCare Clinic',
+              }}
+            />
           ))}
 
           {/* Empty state */}
           {hasNoRecords && (
-            <View style={{ alignItems: 'center', padding: 28, backgroundColor: isDarkMode ? '#1a2a1a' : 'white', borderRadius: 14, borderWidth: 1, borderColor: isDarkMode ? '#2d5016' : '#e2e8f0' }}>
-              <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: '#EAF3DE', alignItems: 'center', justifyContent: 'center', marginBottom: 14 }}>
-                <FontAwesome5 name="syringe" size={26} color="#a0aec0" />
-              </View>
-              <Text style={{ fontFamily: 'Montserrat-Bold', fontSize: 14, color: isDarkMode ? '#a0aec0' : '#4a5568', marginBottom: 6 }}>
-                No Vaccination Records
-              </Text>
-              <Text style={{ fontFamily: 'Montserrat-Medium', fontSize: 12, color: '#a0aec0', textAlign: 'center', lineHeight: 18 }}>
-                Keep track of {petName}'s immunization history by adding a record above.
-              </Text>
-            </View>
+            <EmptyState
+              title="No vaccines recorded yet"
+              subtitle={`Keep track of ${petName}'s immunization history by adding a record above.`}
+              iconName="shield-checkmark-outline"
+              isUnverified={isUnverified}
+            />
           )}
         </>
       )}
@@ -750,6 +686,7 @@ const VaccinesTabContent = ({
 export default function PetRecordsScreen({ navigation }: Props) {
   const { theme, isDarkMode } = useTheme();
   const { user } = useUser();
+  const { guestModalVisible, promptGuestAuth, closeGuestModal } = useGuestAuth();
   const { language } = useLanguage();
 
   // Navigation states within the component
@@ -759,6 +696,70 @@ export default function PetRecordsScreen({ navigation }: Props) {
   // Data States
   const { pets, addPet, updatePet, refreshPets } = usePetContext();
   const [selectedPet, setSelectedPet] = useState<PetProfile | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadingPets, setLoadingPets] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setFetchError(null);
+    try {
+      await refreshPets();
+    } catch (err: any) {
+      setFetchError(err?.message || 'Failed to refresh pets. Please try again.');
+    } finally {
+      setRefreshing(false);
+    }
+  }, [refreshPets]);
+
+  // Sort verified pets first, then pending pets. Within each group, sort by name.
+  const sortedPets = useMemo(() => {
+    return [...pets].sort((a, b) => {
+      const aVerified = a.verificationStatus === 'VERIFIED';
+      const bVerified = b.verificationStatus === 'VERIFIED';
+      if (aVerified && !bVerified) return -1;
+      if (!aVerified && bVerified) return 1;
+      return (a.name || '').localeCompare(b.name || '');
+    });
+  }, [pets]);
+
+  // Duplicate name detection helper
+  const duplicateNames = useMemo(() => {
+    const counts = new Map<string, number>();
+    pets.forEach(p => {
+      const lower = (p.name || '').trim().toLowerCase();
+      if (lower) counts.set(lower, (counts.get(lower) || 0) + 1);
+    });
+    return counts;
+  }, [pets]);
+
+  const hasDuplicateName = useCallback(
+    (name: string) => {
+      const lower = (name || '').trim().toLowerCase();
+      return (duplicateNames.get(lower) || 0) > 1;
+    },
+    [duplicateNames]
+  );
+
+  useEffect(() => {
+    let isMounted = true;
+    const init = async () => {
+      if (pets.length === 0) {
+        setLoadingPets(true);
+      }
+      try {
+        await refreshPets();
+      } catch (err: any) {
+        if (isMounted) setFetchError(err?.message || 'Failed to load pets');
+      } finally {
+        if (isMounted) setLoadingPets(false);
+      }
+    };
+    init();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Form States (for Create/Edit)
   const [formName, setFormName] = useState('');
@@ -780,6 +781,34 @@ export default function PetRecordsScreen({ navigation }: Props) {
   const [vaccDueDate, setVaccDueDate] = useState('');
   const [vaccVet, setVaccVet] = useState('');
   const [petVaccineRecords, setPetVaccineRecords] = useState<VaccinationRecord[]>([]);
+
+  useEffect(() => {
+    if (selectedPet?.id) {
+      getVaccineRecords(selectedPet.id).then(setPetVaccineRecords);
+    }
+  }, [selectedPet?.id]);
+
+  const nextVaccineDueDate = useMemo(() => {
+    if (!selectedPet) return null;
+    if (selectedPet.vaccine) {
+      const match = selectedPet.vaccine.match(/Due:\s*([^\s)]+)/i);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+    if (petVaccineRecords && petVaccineRecords.length > 0) {
+      const futureRecords = petVaccineRecords
+        .filter(r => r.nextDueDate && r.nextDueDate.trim() !== '')
+        .map(r => ({ ...r, time: new Date(r.nextDueDate).getTime() }))
+        .filter(r => !isNaN(r.time))
+        .sort((a, b) => a.time - b.time);
+
+      if (futureRecords.length > 0) {
+        return futureRecords[0].nextDueDate;
+      }
+    }
+    return null;
+  }, [selectedPet, petVaccineRecords]);
 
   // --- Handlers ---
   const handlePickImage = async () => {
@@ -808,7 +837,7 @@ export default function PetRecordsScreen({ navigation }: Props) {
 
   const handleAddNewPet = () => {
     if (!user?.id || user.id.trim() === '') {
-      promptGuestAuth(navigation, language);
+      promptGuestAuth();
       return;
     }
     setSelectedPet(null);
@@ -1022,26 +1051,32 @@ export default function PetRecordsScreen({ navigation }: Props) {
 
       if (checkups.length === 0) {
         return (
-          <View style={{ alignItems: 'center', padding: 25, backgroundColor: 'white', borderRadius: 12, borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.07)' }}>
-            <FontAwesome5 name="folder-open" size={32} color="#a0aec0" style={{ marginBottom: 10 }} />
-            <Text style={{ fontFamily: 'Montserrat-SemiBold', color: '#718096', textAlign: 'center' }}>No clinic check-ups or medical records found.</Text>
-          </View>
+          <EmptyState
+            title="No check-ups yet"
+            subtitle="No clinic check-ups or medical records found."
+            iconName="folder-open-outline"
+            isUnverified={selectedPet.verificationStatus !== 'VERIFIED'}
+          />
         );
       }
 
       return (
-        <View style={styles.recordsList}>
+        <View style={{ gap: 8 }}>
           {checkups.map(item => (
-            <View key={item.id} style={styles.recordItem}>
-              <View style={styles.recordHeader}>
-                <Text style={styles.recordDate}>{formatDate(item.date)}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <FontAwesome5 name={item.icon} size={12} color={item.color} style={{ marginRight: 6 }} />
-                  <Text style={[styles.recordType, { color: item.color }]}>{item.type}</Text>
-                </View>
-              </View>
-              <Text style={styles.recordDesc}>{item.desc}</Text>
-            </View>
+            <RecordCard
+              key={item.id}
+              record={{
+                id: item.id,
+                date: item.date,
+                type: item.type,
+                summary: selectedPet.weight ? `Weight ${selectedPet.weight} · ${item.type}` : item.desc,
+                fullDesc: item.desc,
+                diagnosis: item.diagnosis,
+                treatment: item.treatment,
+                status: item.status,
+                clinic: 'FurEverCare Clinic',
+              }}
+            />
           ))}
         </View>
       );
@@ -1055,10 +1090,11 @@ export default function PetRecordsScreen({ navigation }: Props) {
             prescriptions.push({
               id: tele.id,
               date: tele.consultationDate || tele.createdAt,
-              type: `Prescription Detail`,
-              desc: `Directions / Meds: ${tele.prescription}\nConsultation concern: ${tele.concern}. Diagnosis: ${tele.diagnosis || 'Non-specified'}.`,
-              icon: 'prescription-bottle-alt',
-              color: '#3182ce',
+              type: `Prescription`,
+              summary: `Meds: ${tele.prescription}`,
+              fullDesc: `Directions / Meds: ${tele.prescription}\nConsultation concern: ${tele.concern || 'General'}. Diagnosis: ${tele.diagnosis || 'Non-specified'}.`,
+              diagnosis: tele.diagnosis,
+              treatment: tele.prescription,
               timestamp: new Date(tele.consultationDate || tele.createdAt).getTime()
             });
           }
@@ -1070,32 +1106,43 @@ export default function PetRecordsScreen({ navigation }: Props) {
 
       if (prescriptions.length === 0) {
         return (
-          <View style={{ alignItems: 'center', padding: 25, backgroundColor: 'white', borderRadius: 12, borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.07)' }}>
-            <FontAwesome5 name="file-prescription" size={32} color="#a0aec0" style={{ marginBottom: 10 }} />
-            <Text style={{ fontFamily: 'Montserrat-SemiBold', color: '#718096', textAlign: 'center' }}>No active prescriptions recorded for this pet.</Text>
-          </View>
+          <EmptyState
+            title="No prescriptions yet"
+            subtitle="No active prescriptions recorded for this pet."
+            iconName="receipt-outline"
+            isUnverified={selectedPet.verificationStatus !== 'VERIFIED'}
+          />
         );
       }
 
       return (
-        <View style={styles.recordsList}>
+        <View style={{ gap: 8 }}>
           {prescriptions.map(item => (
-            <View key={item.id} style={styles.recordItem}>
-              <View style={styles.recordHeader}>
-                <Text style={styles.recordDate}>{formatDate(item.date)}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <FontAwesome5 name={item.icon} size={12} color={item.color} style={{ marginRight: 6 }} />
-                  <Text style={[styles.recordType, { color: item.color }]}>{item.type}</Text>
-                </View>
-              </View>
-              <Text style={styles.recordDesc}>{item.desc}</Text>
-            </View>
+            <RecordCard
+              key={item.id}
+              record={{
+                id: item.id,
+                date: item.date,
+                type: item.type,
+                summary: item.summary,
+                fullDesc: item.fullDesc,
+                diagnosis: item.diagnosis,
+                treatment: item.treatment,
+              }}
+            />
           ))}
         </View>
       );
 
     } else if (activeTab === 'vaccines') {
-      return <VaccinesTabContent petId={selectedPet.id} petName={selectedPet.name} vaccineString={selectedPet.vaccine} />;
+      return (
+        <VaccinesTabContent
+          petId={selectedPet.id}
+          petName={selectedPet.name}
+          vaccineString={selectedPet.vaccine}
+          isUnverified={selectedPet.verificationStatus !== 'VERIFIED'}
+        />
+      );
 
     } else {
       const grooming: any[] = [];
@@ -1110,9 +1157,8 @@ export default function PetRecordsScreen({ navigation }: Props) {
               id: appt.id,
               date: appt.appointmentDate || appt.createdAt,
               type: appt.purpose || 'Grooming Visit',
-              desc: `Status: ${appt.status}. Scheduled on ${formatDate(appt.appointmentDate)} at ${appt.appointmentTime}. Service rendered at Balingasag Clinic.`,
-              icon: 'cut',
-              color: '#805ad5',
+              summary: `Status: ${appt.status} · Scheduled on ${formatDate(appt.appointmentDate)}`,
+              fullDesc: `Status: ${appt.status}. Scheduled on ${formatDate(appt.appointmentDate)} at ${appt.appointmentTime}. Service rendered at Balingasag Clinic.`,
               timestamp: new Date(appt.appointmentDate || appt.createdAt).getTime()
             });
           }
@@ -1124,26 +1170,28 @@ export default function PetRecordsScreen({ navigation }: Props) {
 
       if (grooming.length === 0) {
         return (
-          <View style={{ alignItems: 'center', padding: 25, backgroundColor: 'white', borderRadius: 12, borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.07)' }}>
-            <FontAwesome5 name="cut" size={32} color="#a0aec0" style={{ marginBottom: 10 }} />
-            <Text style={{ fontFamily: 'Montserrat-SemiBold', color: '#718096', textAlign: 'center' }}>No grooming session history found for this pet.</Text>
-          </View>
+          <EmptyState
+            title="No grooming records yet"
+            subtitle="No grooming session history found for this pet."
+            iconName="cut-outline"
+            isUnverified={selectedPet.verificationStatus !== 'VERIFIED'}
+          />
         );
       }
 
       return (
-        <View style={styles.recordsList}>
+        <View style={{ gap: 8 }}>
           {grooming.map(item => (
-            <View key={item.id} style={styles.recordItem}>
-              <View style={styles.recordHeader}>
-                <Text style={styles.recordDate}>{formatDate(item.date)}</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  <FontAwesome5 name={item.icon} size={12} color={item.color} style={{ marginRight: 6 }} />
-                  <Text style={[styles.recordType, { color: item.color }]}>{item.type}</Text>
-                </View>
-              </View>
-              <Text style={styles.recordDesc}>{item.desc}</Text>
-            </View>
+            <RecordCard
+              key={item.id}
+              record={{
+                id: item.id,
+                date: item.date,
+                type: item.type,
+                summary: item.summary,
+                fullDesc: item.fullDesc,
+              }}
+            />
           ))}
         </View>
       );
@@ -1152,79 +1200,130 @@ export default function PetRecordsScreen({ navigation }: Props) {
 
   // --- Renderers ---
 
-  const renderListView = () => (
-    <>
-      <View style={[styles.header, { backgroundColor: theme.headerBackground }]}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          {navigation?.canGoBack() && (
-            <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 15, padding: 5 }}>
-              <FontAwesome5 name="arrow-left" size={20} color="white" />
-            </TouchableOpacity>
-          )}
-          <View>
-            <Text style={styles.headerTitle}>Pet Records</Text>
-            <Text style={styles.headerSubtitle}>Manage your pets' profiles and history</Text>
+  const renderListView = () => {
+    const canGoBack = Boolean(navigation?.canGoBack && navigation.canGoBack());
+    const handleBack = () => {
+      if (navigation?.canGoBack && navigation.canGoBack()) {
+        navigation.goBack();
+      }
+    };
+
+    return (
+      <View style={[styles.listContainer, { backgroundColor: isDarkMode ? '#0F172A' : '#FAF8F5' }]}>
+        <PetRecordsHeader
+          onBack={canGoBack ? handleBack : undefined}
+          canGoBack={canGoBack}
+        />
+
+        {loadingPets ? (
+          <View style={styles.listContentContainer}>
+            <PetCardSkeleton />
           </View>
-        </View>
-      </View>
+        ) : fetchError ? (
+          <EmptyState
+            type="error"
+            errorMessage={fetchError}
+            onRetry={onRefresh}
+          />
+        ) : sortedPets.length === 0 ? (
+          <ScrollView
+            contentContainerStyle={styles.emptyScrollContent}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#35501F"
+                colors={['#35501F']}
+              />
+            }
+          >
+            <EmptyState
+              type="empty"
+              onAddPet={handleAddNewPet}
+            />
+          </ScrollView>
+        ) : (
+          <ScrollView
+            style={styles.mainScroll}
+            contentContainerStyle={styles.listContentContainer}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor="#35501F"
+                colors={['#35501F']}
+              />
+            }
+          >
+            {/* List header row */}
+            <View style={styles.listHeaderRow}>
+              <Text style={[styles.petCountText, { color: isDarkMode ? '#94A3B8' : '#6B7280' }]}>
+                {sortedPets.length} {sortedPets.length === 1 ? 'pet' : 'pets'}
+              </Text>
+              <TouchableOpacity
+                style={styles.headerAddBtn}
+                onPress={handleAddNewPet}
+                activeOpacity={0.7}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                accessibilityRole="button"
+                accessibilityLabel="Add pet"
+              >
+                <Ionicons name="add" size={16} color={isDarkMode ? '#86EFAC' : '#35501F'} style={{ marginRight: 2 }} />
+                <Text style={[styles.headerAddText, { color: isDarkMode ? '#86EFAC' : '#35501F' }]}>
+                  Add pet
+                </Text>
+              </TouchableOpacity>
+            </View>
 
-      <ScrollView style={styles.mainScroll} contentContainerStyle={{ paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
-        <View style={styles.petListGrid}>
-          {pets.map(pet => (
+            {/* Compact Pet Cards */}
+            {sortedPets.map(pet => (
+              <PetCard
+                key={pet.id}
+                pet={pet}
+                hasDuplicateName={hasDuplicateName(pet.name)}
+                onPress={() => {
+                  setSelectedPet(pet);
+                  setViewState('details');
+                }}
+                onPressRecords={() => {
+                  setSelectedPet(pet);
+                  setActiveTab('medical');
+                  setViewState('details');
+                }}
+                onPressBookVisit={() => {
+                  (navigation as any)?.navigate('Appointments', {
+                    openBooking: true,
+                    selectedPetId: pet.id,
+                  });
+                }}
+              />
+            ))}
+
+            {/* Dashed Add Another Pet Row */}
             <TouchableOpacity
-              key={pet.id}
-              style={[styles.petCardSquare, { backgroundColor: theme.card, borderColor: theme.border }]}
-              onPress={() => {
-                setSelectedPet(pet);
-                setViewState('details');
-              }}
+              style={[
+                styles.dashedAddRow,
+                {
+                  backgroundColor: isDarkMode ? '#1E293B' : '#FFFFFF',
+                  borderColor: isDarkMode ? '#475569' : '#D1D5DB',
+                },
+              ]}
+              onPress={handleAddNewPet}
+              activeOpacity={0.75}
+              accessibilityRole="button"
+              accessibilityLabel="Add another pet"
             >
-              <View style={styles.petCardContentSquare}>
-                <View style={[styles.avatarCircleSquare, { backgroundColor: pet.species.toLowerCase() === 'cat' ? '#38a169' : '#dd6b20' }]}>
-                  <PetAvatar avatar={pet.avatar} species={pet.species} size={30} style={{ width: '100%', height: '100%', borderRadius: 35 }} />
-                </View>
-                <View style={styles.petCardTextSquare}>
-                  <Text style={[styles.petCardNameSquare, { color: theme.text }]} numberOfLines={1}>{pet.name}</Text>
-                  <Text style={[styles.petCardBreedSquare, { color: theme.subtext }]} numberOfLines={1}>{pet.breed}</Text>
-                  <Text style={[styles.petCardBreedSquare, { color: theme.subtext }]}>{pet.age}</Text>
-                  <View style={{
-                    marginTop: 8,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    backgroundColor: pet.verificationStatus === 'VERIFIED' ? (isDarkMode ? '#1a3d28' : '#e6fffa') : (isDarkMode ? '#3b3014' : '#fefcbf'),
-                    paddingVertical: 3,
-                    paddingHorizontal: 10,
-                    borderRadius: 12,
-                    borderWidth: 0.5,
-                    borderColor: pet.verificationStatus === 'VERIFIED' ? '#38a169' : '#d69e2e',
-                    gap: 5
-                  }}>
-                    <FontAwesome5 
-                      name={pet.verificationStatus === 'VERIFIED' ? 'check-circle' : 'clock'} 
-                      size={10} 
-                      color={pet.verificationStatus === 'VERIFIED' ? '#38a169' : '#d69e2e'} 
-                    />
-                    <Text style={{
-                      fontSize: 11,
-                      fontFamily: 'Montserrat-Bold',
-                      color: pet.verificationStatus === 'VERIFIED' ? (isDarkMode ? '#9ae6b4' : '#22543d') : (isDarkMode ? '#faf089' : '#744210')
-                    }}>
-                      {pet.verificationStatus === 'VERIFIED' ? 'Verified Pet' : 'Pending Walk-in'}
-                    </Text>
-                  </View>
-                </View>
-              </View>
+              <Ionicons name="add" size={18} color={isDarkMode ? '#86EFAC' : '#35501F'} style={{ marginRight: 6 }} />
+              <Text style={[styles.dashedAddText, { color: isDarkMode ? '#86EFAC' : '#35501F' }]}>
+                Add another pet
+              </Text>
             </TouchableOpacity>
-          ))}
-        </View>
-
-        <TouchableOpacity style={[styles.addPetButton, { borderColor: theme.border }]} onPress={handleAddNewPet}>
-          <FontAwesome5 name="plus" size={16} color="#2E5E3E" style={{ marginRight: 10 }} />
-          <Text style={styles.addPetText}>Add New Pet Profile</Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </>
-  );
+          </ScrollView>
+        )}
+      </View>
+    );
+  };
 
   const renderCreateEditView = () => (
     <View style={[styles.fullScreenView, { backgroundColor: theme.background }]}>
@@ -1500,102 +1599,87 @@ export default function PetRecordsScreen({ navigation }: Props) {
 
   const renderDetailsView = () => {
     if (!selectedPet) return null;
+
+    const isVerified = selectedPet.verificationStatus === 'VERIFIED';
+
     return (
-      <View style={[styles.fullScreenView, { backgroundColor: theme.background }]}>
-        <View style={[styles.headerNoBorder, { backgroundColor: theme.headerBackground }]}>
-          <TouchableOpacity onPress={() => setViewState('list')} style={{ marginRight: 15, padding: 5 }}>
-            <FontAwesome5 name="arrow-left" size={20} color="white" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleEditPet(selectedPet)}>
-            <Text style={styles.editText}>Edit</Text>
-          </TouchableOpacity>
-        </View>
+      <View style={[styles.fullScreenView, { backgroundColor: '#FAF8F5' }]}>
+        {/* Fixed Header with pet's name & Edit */}
+        <PetDetailHeader
+          petName={selectedPet.name}
+          onBack={() => setViewState('list')}
+          onEdit={() => handleEditPet(selectedPet)}
+        />
 
-        <ScrollView style={styles.detailsScroll}>
-          {/* Profile Header */}
-          <View style={[styles.profileHeaderBox, { backgroundColor: theme.card }]}>
-            <View style={[styles.avatarHuge, { backgroundColor: selectedPet.species.toLowerCase() === 'cat' ? '#38a169' : '#dd6b20' }]}>
-              <PetAvatar avatar={selectedPet.avatar} species={selectedPet.species} size={50} style={{ width: '100%', height: '100%', borderRadius: 50 }} />
-            </View>
-            <Text style={[styles.profileNameHuge, { color: theme.text }]}>{selectedPet.name}</Text>
-            <Text style={[styles.profileBreedText, { color: theme.subtext }]}>{selectedPet.breed}</Text>
-
-            <View style={styles.profileStatsRow}>
-              <View style={[styles.statPill, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f7fafc' }]}><Text style={[styles.statPillLabel, { color: theme.subtext }]}>Age</Text><Text style={[styles.statPillValue, { color: theme.text }]}>{selectedPet.age}</Text></View>
-              <View style={[styles.statPill, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f7fafc' }]}><Text style={[styles.statPillLabel, { color: theme.subtext }]}>Weight</Text><Text style={[styles.statPillValue, { color: theme.text }]}>{selectedPet.weight}</Text></View>
-              <View style={[styles.statPill, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f7fafc' }]}><Text style={[styles.statPillLabel, { color: theme.subtext }]}>Sex</Text><Text style={[styles.statPillValue, { color: theme.text }]}>{selectedPet.gender}</Text></View>
-            </View>
-            <View style={[styles.profileStatsRow, { marginTop: 8 }]}>
-              <View style={[styles.statPill, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f7fafc' }]}><Text style={[styles.statPillLabel, { color: theme.subtext }]}>Environment</Text><Text style={[styles.statPillValue, { color: theme.text }]}>{selectedPet.environment || 'Indoor'}</Text></View>
-              <View style={[styles.statPill, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f7fafc' }]}><Text style={[styles.statPillLabel, { color: theme.subtext }]}>Activity</Text><Text style={[styles.statPillValue, { color: theme.text }]}>{selectedPet.activity || 'Moderate'}</Text></View>
-            </View>
-          </View>
-
-          {/* Verification Status Banner */}
-          <View style={{
-            marginHorizontal: 20,
-            marginTop: 14,
-            padding: 14,
-            borderRadius: 14,
-            backgroundColor: selectedPet.verificationStatus === 'VERIFIED' ? (isDarkMode ? '#1a3d28' : '#f0fff4') : (isDarkMode ? '#3b3014' : '#fffaf0'),
-            borderWidth: 1,
-            borderColor: selectedPet.verificationStatus === 'VERIFIED' ? '#38a169' : '#ecc94b',
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 12
-          }}>
-            <FontAwesome5 
-              name={selectedPet.verificationStatus === 'VERIFIED' ? 'check-circle' : 'exclamation-circle'} 
-              size={22} 
-              color={selectedPet.verificationStatus === 'VERIFIED' ? '#38a169' : '#d69e2e'} 
+        <ScrollView
+          style={styles.detailsScroll}
+          contentContainerStyle={styles.detailsContentContainer}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#35501F"
+              colors={['#35501F']}
             />
-            <View style={{ flex: 1 }}>
-              <Text style={{
-                fontSize: 13,
-                fontFamily: 'Montserrat-Bold',
-                color: selectedPet.verificationStatus === 'VERIFIED' ? (isDarkMode ? '#9ae6b4' : '#22543d') : (isDarkMode ? '#fbd38d' : '#744210'),
-                marginBottom: 2
-              }}>
-                {selectedPet.verificationStatus === 'VERIFIED' ? 'Clinic Verified Pet' : 'Pending In-Person Clinic Verification'}
-              </Text>
-              <Text style={{
-                fontSize: 11,
-                fontFamily: 'Montserrat-Regular',
-                color: selectedPet.verificationStatus === 'VERIFIED' ? (isDarkMode ? '#c6f6d5' : '#276749') : (isDarkMode ? '#faf089' : '#975a16'),
-                lineHeight: 16
-              }}>
-                {selectedPet.verificationStatus === 'VERIFIED' 
-                  ? 'Physical details verified by veterinary staff at FurEverCare Clinic. Pet health monitoring is unlocked.'
-                  : 'Please bring your pet to the clinic for an in-person walk-in appointment. The vet will verify your submitted details to unlock pet monitoring.'}
-              </Text>
-            </View>
+          }
+        >
+          {/* Profile Row: 72x72 photo, playful title font name, breed · species, status chip */}
+          <PetProfileRow
+            avatar={selectedPet.avatar}
+            name={selectedPet.name}
+            breed={selectedPet.breed}
+            species={selectedPet.species}
+            verificationStatus={selectedPet.verificationStatus}
+          />
+
+          {/* Info Stats: 5 evenly sized tiles wrapping flexWrap: 'wrap', flexGrow: 1, flexBasis: 96, gap: 8 */}
+          <View style={styles.statsWrappingGrid}>
+            <StatTile label="Age" value={selectedPet.age} />
+            <StatTile label="Weight" value={selectedPet.weight} />
+            <StatTile label="Sex" value={selectedPet.gender} />
+            <StatTile label="Environment" value={selectedPet.environment || 'Indoor'} />
+            <StatTile label="Activity" value={selectedPet.activity || 'Moderate'} />
           </View>
 
-          {/* Tab Navigation for Records */}
-          <View style={styles.recordsTabsBox}>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.recordsTabsContainer}>
-              {[
-                { id: 'medical', label: 'Check-ups' },
-                { id: 'prescriptions', label: 'Prescriptions' },
-                { id: 'vaccines', label: 'Vaccines' },
-                { id: 'grooming', label: 'Grooming' }
-              ].map(tab => (
-                <TouchableOpacity
-                  key={tab.id}
-                  style={[styles.recordTabBtn, activeTab === tab.id && styles.recordTabBtnActive]}
-                  onPress={() => setActiveTab(tab.id as any)}
-                >
-                  <Text style={[styles.recordTabText, activeTab === tab.id && styles.recordTabTextActive]}>{tab.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
+          {/* Pending Verification Notice (only for unverified pets) */}
+          <VerificationNotice
+            petName={selectedPet.name}
+            verificationStatus={selectedPet.verificationStatus}
+          />
 
-          {/* Content Area */}
+          {/* Optional Summary Line: Next vaccine due {date} */}
+          <NextVaccineSummary dueDate={nextVaccineDueDate} />
+
+          {/* Segmented Tabs: Check-ups, Prescriptions, Vaccines */}
+          <SegmentedTabs
+            activeTab={activeTab as any}
+            onTabChange={(tab) => setActiveTab(tab)}
+          />
+
+          {/* Book Visit Button: outlined green, full-width, only when verified */}
+          {isVerified && (
+            <TouchableOpacity
+              style={styles.bookVisitBtn}
+              onPress={() => {
+                (navigation as any)?.navigate('Appointments', {
+                  openBooking: true,
+                  selectedPetId: selectedPet.id,
+                });
+              }}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Book visit for pet"
+            >
+              <Ionicons name="calendar-outline" size={18} color="#35501F" style={{ marginRight: 8 }} />
+              <Text style={styles.bookVisitBtnText}>Book visit</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Tab Records Content */}
           <View style={styles.recordsContentArea}>
             {renderRecordsContent()}
           </View>
-
         </ScrollView>
       </View>
     );
@@ -1603,8 +1687,24 @@ export default function PetRecordsScreen({ navigation }: Props) {
 
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+    <SafeAreaView
+      edges={viewState === 'create_edit' ? ['top', 'bottom', 'left', 'right'] : ['bottom', 'left', 'right']}
+      style={[
+        styles.safeArea,
+        { backgroundColor: viewState === 'create_edit' ? theme.background : '#FAF8F5' },
+      ]}
+    >
+      <StatusBar
+        barStyle={(viewState === 'list' || viewState === 'details') ? 'light-content' : (isDarkMode ? 'light-content' : 'dark-content')}
+        backgroundColor={(viewState === 'list' || viewState === 'details') ? '#35501F' : theme.headerBackground}
+      />
+
+      <GuestAuthModal
+        visible={guestModalVisible}
+        onClose={closeGuestModal}
+        onLogin={() => { closeGuestModal(); navigation?.navigate('Login'); }}
+        onRegister={() => { closeGuestModal(); navigation?.navigate('Register'); }}
+      />
       {viewState === 'list' && renderListView()}
       {viewState === 'create_edit' && renderCreateEditView()}
       {viewState === 'details' && renderDetailsView()}
@@ -1613,7 +1713,8 @@ export default function PetRecordsScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#F4F1EC' },
+  safeArea: { flex: 1, backgroundColor: '#FAF8F5' },
+  listContainer: { flex: 1 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1633,52 +1734,59 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 18, fontFamily: 'Catcut', color: 'white' },
   headerSubtitle: { fontSize: 13, color: '#EAF3DE', marginTop: 2, fontFamily: 'Montserrat-Regular' },
-  mainScroll: { padding: 20 },
-  fullScreenView: { flex: 1 },
-
-  // List View
-  petListGrid: {
-    flexDirection: 'column',
+  mainScroll: { flex: 1 },
+  listContentContainer: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 100,
   },
-  petCardSquare: {
-    width: '100%',
-    aspectRatio: 1,
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 15,
-    marginBottom: 15,
-    borderWidth: 0.5,
-    borderColor: 'rgba(0,0,0,0.07)',
+  emptyScrollContent: {
+    flexGrow: 1,
+    paddingBottom: 60,
   },
-  petCardContentSquare: {
-    flex: 1,
+  listHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'center',
+    marginBottom: 10,
+    marginTop: 4,
+    paddingHorizontal: 2,
   },
-  avatarCircleSquare: {
-    width: 180, height: 180, borderRadius: 90,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: 15,
+  petCountText: {
+    fontSize: 13,
+    fontFamily: 'Montserrat-Regular',
+    color: '#6B7280',
   },
-  petCardTextSquare: {
+  headerAddBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
   },
-  petCardNameSquare: { fontSize: 24, fontFamily: 'Catcut', color: '#2d3748', marginBottom: 6, textAlign: 'center' },
-  petCardBreedSquare: { fontSize: 16, color: '#718096', textAlign: 'center', marginBottom: 2, fontFamily: 'Montserrat-Regular' },
-  addPetButton: {
+  headerAddText: {
+    fontSize: 13,
+    fontFamily: 'Montserrat-SemiBold',
+    color: '#35501F',
+  },
+  dashedAddRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    borderWidth: 2,
+    height: 48,
+    borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: '#cbd5e0',
-    borderRadius: 16,
-    backgroundColor: 'white',
-    marginTop: 10,
+    borderColor: '#D1D5DB',
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    marginTop: 6,
+    marginBottom: 24,
   },
-  addPetText: { fontSize: 16, fontFamily: 'Montserrat-SemiBold', color: '#2D5016' },
+  dashedAddText: {
+    fontSize: 14,
+    fontFamily: 'Montserrat-Medium',
+    color: '#35501F',
+  },
+  fullScreenView: { flex: 1 },
 
   // Create/Edit View
   formScroll: { padding: 20 },
@@ -1722,65 +1830,35 @@ const styles = StyleSheet.create({
   editText: { fontSize: 16, fontFamily: 'Montserrat-Bold', color: 'white' },
 
   // Details View
-  detailsScroll: { flex: 1 },
-  profileHeaderBox: {
-    backgroundColor: '#fff',
+  detailsScroll: { flex: 1, backgroundColor: '#FAF8F5' },
+  detailsContentContainer: { paddingBottom: 100 },
+  statsWrappingGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    paddingHorizontal: 16,
+    marginBottom: 14,
+  },
+  bookVisitBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 30,
-    borderBottomWidth: 1, borderBottomColor: '#edf2f7',
+    justifyContent: 'center',
+    height: 48,
+    borderWidth: 1.5,
+    borderColor: '#35501F',
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 16,
+    marginBottom: 14,
   },
-  avatarHuge: {
-    width: 100, height: 100, borderRadius: 50,
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: 15,
+  bookVisitBtnText: {
+    fontSize: 15,
+    fontFamily: 'Montserrat-SemiBold',
+    color: '#35501F',
   },
-  profileNameHuge: { fontSize: 26, fontFamily: 'Catcut', color: '#2d3748', marginBottom: 4 },
-  profileBreedText: { fontSize: 15, color: '#718096', marginBottom: 20, fontFamily: 'Montserrat-Regular' },
-  profileStatsRow: {
-    flexDirection: 'row', gap: 15,
-  },
-  statPill: {
-    alignItems: 'center',
-    backgroundColor: '#F4F1EC',
-    paddingHorizontal: 15, paddingVertical: 10,
-    borderRadius: 12, minWidth: 80,
-  },
-  statPillLabel: { fontSize: 11, color: '#718096', textTransform: 'uppercase', marginBottom: 4, fontFamily: 'Montserrat-SemiBold' },
-  statPillValue: { fontSize: 16, fontFamily: 'Montserrat-Bold', color: '#2d3748' },
-
-  recordsTabsBox: {
-    backgroundColor: 'white',
-    paddingVertical: 15,
-  },
-  recordsTabsContainer: { paddingHorizontal: 20, gap: 10 },
-  recordTabBtn: {
-    paddingHorizontal: 18, paddingVertical: 8,
-    borderRadius: 20, backgroundColor: '#F4F1EC',
-    borderWidth: 1, borderColor: '#edf2f7',
-  },
-  recordTabBtnActive: { backgroundColor: '#2D5016', borderColor: '#2D5016' },
-  recordTabText: { fontSize: 14, fontFamily: 'Montserrat-SemiBold', color: '#718096' },
-  recordTabTextActive: { color: 'white' },
-
   recordsContentArea: {
-    padding: 20,
+    paddingHorizontal: 16,
   },
-  recordsList: { gap: 15 },
-  recordItem: {
-    backgroundColor: 'white',
-    padding: 16, borderRadius: 12,
-    borderWidth: 0.5, borderColor: 'rgba(0,0,0,0.07)',
-  },
-  recordHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-  recordDate: { fontSize: 13, fontFamily: 'Montserrat-SemiBold', color: '#718096' },
-  recordType: { fontSize: 14, fontFamily: 'Montserrat-Bold', color: '#2d3748' },
-  recordDesc: { fontSize: 14, color: '#4a5568', lineHeight: 20, fontFamily: 'Montserrat-Regular' },
-  addRecordBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    marginTop: 20, paddingVertical: 15,
-    backgroundColor: '#EAF3DE', borderRadius: 12,
-  },
-  addRecordBtnText: { fontSize: 14, fontFamily: 'Montserrat-SemiBold', color: '#2D5016' },
 
   // Floating Dropdown styles
   floatingDropdown: {

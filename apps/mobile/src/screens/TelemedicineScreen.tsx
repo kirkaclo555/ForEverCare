@@ -12,10 +12,12 @@ import {
   Alert,
   ScrollView,
   RefreshControl,
-  PermissionsAndroid
+  PermissionsAndroid,
+  TouchableWithoutFeedback,
+  Keyboard
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { FontAwesome5 } from '@expo/vector-icons';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../App';
 import { useUser } from '../context/UserContext';
@@ -58,8 +60,15 @@ const CAMERA_MIC_INJECTED_JS = `
 `;
 
 import GuestRestriction from '../components/GuestRestriction';
+import GuestAuthModal from '../components/GuestAuthModal';
 import { useLanguage } from '../context/LanguageContext';
-import { promptGuestAuth } from '../utils/auth';
+import { useGuestAuth } from '../utils/auth';
+
+import TelemedHeader from '../components/telemed/TelemedHeader';
+import JoinSessionCard from '../components/telemed/JoinSessionCard';
+import SessionCard from '../components/telemed/SessionCard';
+import SectionLabel from '../components/telemed/SectionLabel';
+import EmptyState from '../components/telemed/EmptyState';
 
 type Props = {
   navigation: any;
@@ -69,12 +78,17 @@ export default function TelemedicineScreen({ navigation }: Props) {
   const { theme, isDarkMode } = useTheme();
   const { user } = useUser();
   const { language } = useLanguage();
+  const { guestModalVisible, promptGuestAuth, closeGuestModal } = useGuestAuth();
+  const insets = useSafeAreaInsets();
 
   // sessionState: 'join' | 'waiting' | 'active' | 'prescription'
   const [sessionState, setSessionState] = useState<'join' | 'waiting' | 'active' | 'prescription'>('join');
   const [sessionCode, setSessionCode] = useState('');
   const [callDuration, setCallDuration] = useState(0);
   const [appointments, setAppointments] = useState<any[]>([]);
+  const [inputError, setInputError] = useState<string | null>(null);
+  const [isJoining, setIsJoining] = useState(false);
+  const [loadingInitial, setLoadingInitial] = useState(true);
 
   const [refreshing, setRefreshing] = useState(false);
 
@@ -86,7 +100,8 @@ export default function TelemedicineScreen({ navigation }: Props) {
           setAppointments(data);
         }
       })
-      .catch(err => console.error('Failed to fetch appointments:', err));
+      .catch(err => console.error('Failed to fetch appointments:', err))
+      .finally(() => setLoadingInitial(false));
   };
 
   useEffect(() => {
@@ -117,7 +132,7 @@ export default function TelemedicineScreen({ navigation }: Props) {
 
   const handleJoin = (directCode?: string) => {
     if (!user?.id || user.id.trim() === '') {
-      promptGuestAuth(navigation, language);
+      promptGuestAuth();
       return;
     }
     const codeToUse = directCode || sessionCode;
@@ -253,97 +268,210 @@ export default function TelemedicineScreen({ navigation }: Props) {
     return `${m}:${s}`;
   };
 
+  const parseApptMs = (date: string, time: string): number => {
+    try {
+      const [y, m, d] = date.split('-').map(Number);
+      const match = time?.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
+      if (!match) return new Date(y, m - 1, d).getTime();
+      let h = parseInt(match[1], 10);
+      const min = parseInt(match[2], 10);
+      const ampm = match[3].toUpperCase();
+      if (ampm === 'PM' && h < 12) h += 12;
+      if (ampm === 'AM' && h === 12) h = 0;
+      return new Date(y, m - 1, d, h, min).getTime();
+    } catch {
+      return 0;
+    }
+  };
+
+  const handleCardSubmit = () => {
+    if (!user?.id || user.id.trim() === '') {
+      promptGuestAuth();
+      return;
+    }
+    const trimmed = sessionCode.trim().toUpperCase();
+    if (!trimmed) {
+      setInputError('Enter a session code');
+      return;
+    }
+
+    setIsJoining(true);
+
+    const sessionByCode = appointments.find(
+      app => app.sessionCode?.toUpperCase() === trimmed
+    );
+
+    if (!sessionByCode) {
+      setInputError('Code not found. Check it and try again.');
+      setIsJoining(false);
+      return;
+    }
+
+    if (sessionByCode.type !== 'telemedicine') {
+      setInputError('This code is not for a telemedicine appointment.');
+      setIsJoining(false);
+      return;
+    }
+
+    setInputError(null);
+    handleJoin(trimmed);
+    setIsJoining(false);
+  };
+
+  const handleChangeCode = (text: string) => {
+    setSessionCode(text);
+    if (inputError) {
+      setInputError(null);
+    }
+  };
+
+  const handleRebook = (app: any) => {
+    navigation.navigate('Appointments', {
+      openBooking: true,
+      selectedPet: app.pet || app.petName,
+    });
+  };
+
+  const handleBookNow = () => {
+    navigation.navigate('Appointments', { openBooking: true });
+  };
+
   const renderContent = () => {
     if (sessionState === 'join') {
-      return (
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flexContainer}>
-          <ScrollView 
-            contentContainerStyle={styles.scrollCenterContent} 
-            showsVerticalScrollIndicator={false}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3a7d55']} />
-            }
-          >
-            <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
-              <View style={styles.iconSquare}>
-                <FontAwesome5 name="phone-alt" size={24} color="white" />
-              </View>
-              <Text style={[styles.title, { color: theme.text }]}>Join Session</Text>
-              <Text style={[styles.subtitle, { color: theme.subtext }]}>Enter a session code to connect with your doctor</Text>
-              
-              <TextInput
-                style={styles.input}
-                placeholder="Enter session code"
-                placeholderTextColor="#a0aec0"
-                value={sessionCode}
-                onChangeText={setSessionCode}
-                autoCapitalize="none"
-              />
-              
-              <TouchableOpacity style={styles.primaryButton} onPress={() => handleJoin()}>
-                <Text style={styles.primaryButtonText}>Join Session</Text>
-              </TouchableOpacity>
-            </View>
+      const userTelemedAppointments = appointments.filter(
+        app =>
+          app.type === 'telemedicine' &&
+          (app.owner?.toLowerCase() === user?.fullName?.toLowerCase() ||
+            (user?.phoneNumber && app.contact === user.phoneNumber) ||
+            (user?.id && app.userId === user.id))
+      );
 
-            {/* Latest Activity Section */}
-            <View style={styles.activitySection}>
-              <View style={styles.activityHeader}>
-                <FontAwesome5 name="history" size={16} color={theme.subtext} />
-                <Text style={[styles.activityTitle, { color: theme.text }]}>Latest Activity</Text>
-              </View>
-              <View style={[styles.divider, { backgroundColor: theme.border }]} />
-              
-              {appointments
-                .filter(app => app.type === 'telemedicine' && (app.owner?.toLowerCase() === user?.fullName?.toLowerCase() || (user?.phoneNumber && app.contact === user.phoneNumber)))
-                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                .slice(0, 3)
-                .map((activity, index) => {
-                  const isActive = activity.sessionCode && (
-                    activity.status?.toLowerCase() === 'pending' || 
-                    activity.status?.toLowerCase() === 'confirmed' || 
-                    activity.status?.toLowerCase() === 'paid'
-                  );
-                  return (
-                    <TouchableOpacity 
-                      key={index} 
-                      style={[styles.historyRow, { marginBottom: 15, paddingVertical: 4 }]}
-                      onPress={() => {
-                        if (activity.sessionCode) {
-                          setSessionCode(activity.sessionCode);
-                          handleJoin(activity.sessionCode);
-                        } else {
-                          Alert.alert("No Session Code", "This telemedicine appointment does not have a session code.");
-                        }
-                      }}
-                      activeOpacity={activity.sessionCode ? 0.7 : 1}
-                    >
-                      <View style={[styles.historyIconBox, { backgroundColor: isDarkMode ? '#1c330e' : '#EAF3DE' }]}>
-                        <FontAwesome5 name="video" size={14} color={isDarkMode ? '#EAF3DE' : '#3a7d55'} />
-                      </View>
-                      <View style={styles.historyDetails}>
-                        <Text style={[styles.historySessionTitle, { color: theme.text }]}>Consultation for {activity.pet || 'Pet'}</Text>
-                        <Text style={[styles.historySessionDate, { color: theme.subtext }]}>{activity.date} at {activity.time}</Text>
-                        <Text style={[styles.historyMetaText, { color: theme.subtext }]}>
-                          Status: <Text style={{ textTransform: 'capitalize' }}>{activity.status || 'Completed'}</Text>
-                          {activity.sessionCode ? ` | Code: ${activity.sessionCode}` : ''}
-                        </Text>
-                      </View>
-                      {isActive && (
-                        <View style={styles.inlineJoinButton}>
-                          <Text style={styles.inlineJoinButtonText}>Join</Text>
-                          <FontAwesome5 name="chevron-right" size={10} color="white" style={{ marginLeft: 5 }} />
+      const now = Date.now();
+      const upcomingSessions: any[] = [];
+      const pastSessions: any[] = [];
+
+      userTelemedAppointments.forEach(app => {
+        const apptMs = parseApptMs(app.date, app.time);
+        const statusLower = (app.status || '').toLowerCase();
+        const isCompletedOrCancelled =
+          statusLower === 'completed' ||
+          statusLower === 'done' ||
+          statusLower === 'cancelled' ||
+          statusLower === 'declined';
+        const isPast = (apptMs > 0 && apptMs < now) || isCompletedOrCancelled;
+        const isMissed = apptMs > 0 && apptMs < now && !isCompletedOrCancelled;
+
+        if (isPast) {
+          pastSessions.push({ ...app, isMissed });
+        } else {
+          upcomingSessions.push(app);
+        }
+      });
+
+      // Upcoming: soonest first (ascending)
+      upcomingSessions.sort((a, b) => {
+        const dtA = parseApptMs(a.date, a.time) || new Date(a.date || 0).getTime();
+        const dtB = parseApptMs(b.date, b.time) || new Date(b.date || 0).getTime();
+        return dtA - dtB;
+      });
+
+      // Past: most recent first (descending)
+      pastSessions.sort((a, b) => {
+        const dtA = parseApptMs(a.date, a.time) || new Date(a.date || 0).getTime();
+        const dtB = parseApptMs(b.date, b.time) || new Date(b.date || 0).getTime();
+        return dtB - dtA;
+      });
+
+      return (
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.flexContainer}
+        >
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+            <ScrollView
+              style={styles.mainScroll}
+              contentContainerStyle={[
+                styles.scrollContent,
+                { paddingBottom: Math.max(insets.bottom + 70, 90) },
+              ]}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#35501F']} />
+              }
+            >
+              {/* 1. Compact Join Session Card with Circular Phone-Call Styling */}
+              <JoinSessionCard
+                sessionCode={sessionCode}
+                onChangeCode={handleChangeCode}
+                onSubmit={handleCardSubmit}
+                loading={isJoining}
+                errorMessage={inputError}
+              />
+
+              {/* 2. Latest Activity Section */}
+              <View style={styles.activitySection}>
+                <View style={styles.activityHeader}>
+                  <Ionicons name="time-outline" size={18} color="#35501F" style={{ marginRight: 6 }} />
+                  <Text style={[styles.activityTitle, { color: theme.text }]}>Latest activity</Text>
+                </View>
+
+                {/* Loading skeleton placeholders */}
+                {loadingInitial && appointments.length === 0 ? (
+                  <View style={{ gap: 10, marginTop: 4 }}>
+                    {[1, 2].map(k => (
+                      <View key={k} style={styles.skeletonCard}>
+                        <View style={styles.skeletonRow}>
+                          <View style={styles.skeletonTile} />
+                          <View style={{ flex: 1, gap: 8 }}>
+                            <View style={[styles.skeletonLine, { width: '60%' }]} />
+                            <View style={[styles.skeletonLine, { width: '40%' }]} />
+                          </View>
                         </View>
-                      )}
-                    </TouchableOpacity>
-                  );
-                })}
-              
-              {appointments.filter(app => app.type === 'telemedicine' && (app.owner?.toLowerCase() === user?.fullName?.toLowerCase() || (user?.phoneNumber && app.contact === user.phoneNumber))).length === 0 && (
-                 <Text style={{ textAlign: 'center', color: '#718096', paddingVertical: 20, fontFamily: 'Montserrat-Regular' }}>No recent telemedicine activity</Text>
-              )}
-            </View>
-            <View style={{height: 40}}/>
-          </ScrollView>
+                      </View>
+                    ))}
+                  </View>
+                ) : upcomingSessions.length === 0 && pastSessions.length === 0 ? (
+                  <EmptyState onBookNow={handleBookNow} />
+                ) : (
+                  <>
+                    {/* Upcoming Sessions */}
+                    {upcomingSessions.length > 0 && (
+                      <View style={styles.groupContainer}>
+                        <SectionLabel title="Upcoming" count={upcomingSessions.length} />
+                        {upcomingSessions.map((session, index) => (
+                          <SessionCard
+                            key={session.id ? `${session.id}-${index}` : String(index)}
+                            appointment={session}
+                            isPast={false}
+                            onJoin={code => handleJoin(code)}
+                            onRebook={handleRebook}
+                          />
+                        ))}
+                      </View>
+                    )}
+
+                    {/* Past Sessions */}
+                    {pastSessions.length > 0 && (
+                      <View style={styles.groupContainer}>
+                        <SectionLabel title="Past" count={pastSessions.length} />
+                        {pastSessions.map((session, index) => (
+                          <SessionCard
+                            key={session.id ? `${session.id}-${index}` : String(index)}
+                            appointment={session}
+                            isPast={true}
+                            isMissed={session.isMissed}
+                            onJoin={code => handleJoin(code)}
+                            onRebook={handleRebook}
+                          />
+                        ))}
+                      </View>
+                    )}
+                  </>
+                )}
+              </View>
+            </ScrollView>
+          </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
       );
     }
@@ -454,27 +582,89 @@ export default function TelemedicineScreen({ navigation }: Props) {
 
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-      <StatusBar barStyle={sessionState === 'active' ? "light-content" : (isDarkMode ? "light-content" : "dark-content")} />
-      {sessionState !== 'active' && (
-        <View style={[styles.header, { backgroundColor: theme.headerBackground }]}>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            {navigation?.canGoBack() && (
-              <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 15, padding: 5 }}>
-                <FontAwesome5 name="arrow-left" size={20} color="white" />
-              </TouchableOpacity>
-            )}
-            <Text style={styles.headerTitle}>Telemedicine</Text>
-          </View>
-        </View>
-      )}
-      {renderContent()}
-    </SafeAreaView>
+    <View style={styles.screenContainer}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor={sessionState === 'active' ? '#1a202c' : '#35501F'}
+      />
+      <SafeAreaView
+        style={[
+          styles.safeArea,
+          { backgroundColor: sessionState === 'active' ? '#1a202c' : '#35501F' },
+        ]}
+        edges={['top']}
+      >
+        <GuestAuthModal
+          visible={guestModalVisible}
+          onClose={closeGuestModal}
+          onLogin={() => { closeGuestModal(); navigation.navigate('Login'); }}
+          onRegister={() => { closeGuestModal(); navigation.navigate('Register'); }}
+        />
+        {sessionState !== 'active' && (
+          <TelemedHeader
+            canGoBack={navigation?.canGoBack() ?? false}
+            onBack={() => {
+              if (navigation?.canGoBack()) {
+                navigation.goBack();
+              } else {
+                navigation.navigate('Home');
+              }
+            }}
+          />
+        )}
+        {renderContent()}
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#F4F1EC' },
+  screenContainer: { flex: 1, backgroundColor: '#35501F' },
+  safeArea: { flex: 1, backgroundColor: '#35501F' },
+  mainScroll: { flex: 1, backgroundColor: '#F4F1EC' },
+  scrollContent: {
+    paddingHorizontal: 16,
+    paddingTop: 14,
+  },
+  activitySection: {
+    marginTop: 4,
+  },
+  activityHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  activityTitle: {
+    fontFamily: 'Catcut',
+    fontSize: 16,
+    color: '#1F2937',
+  },
+  groupContainer: {
+    marginBottom: 10,
+  },
+  skeletonCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 0.5,
+    borderColor: '#E5E7EB',
+    padding: 12,
+  },
+  skeletonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  skeletonTile: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    backgroundColor: '#E5E7EB',
+    marginRight: 10,
+  },
+  skeletonLine: {
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#E5E7EB',
+  },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
   flexContainer: { flex: 1 },
   scrollCenterContent: {
@@ -631,71 +821,4 @@ const styles = StyleSheet.create({
     borderColor: '#7CB342',
   },
   secondaryButtonText: { color: '#2D5016', fontSize: 15, fontFamily: 'Montserrat-Bold' },
-  
-  // Activity Styles
-  activitySection: {
-    width: '100%',
-    maxWidth: 360,
-    marginTop: 30,
-    paddingHorizontal: 10,
-  },
-  activityHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-    gap: 8,
-  },
-  activityTitle: { 
-    fontSize: 15, 
-    fontFamily: 'Montserrat-Bold', 
-    color: '#4a5568',
-  },
-  historyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-  },
-  historyIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#EAF3DE',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  historyDetails: {
-    flex: 1,
-  },
-  historySessionTitle: {
-    fontSize: 14,
-    fontFamily: 'Montserrat-Bold',
-    color: '#2d3748',
-    marginBottom: 2,
-  },
-  historySessionDate: {
-    fontSize: 12,
-    color: '#718096',
-    marginBottom: 4,
-    fontFamily: 'Montserrat-Regular',
-  },
-  historyMetaText: {
-    fontSize: 11,
-    color: '#4a5568',
-    fontFamily: 'Montserrat-SemiBold',
-  },
-  inlineJoinButton: {
-    backgroundColor: '#2D5016',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inlineJoinButtonText: {
-    color: 'white',
-    fontSize: 12,
-    fontFamily: 'Montserrat-Bold',
-  },
 });

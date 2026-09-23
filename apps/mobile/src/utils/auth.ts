@@ -1,24 +1,21 @@
-import { Alert } from 'react-native';
+import { useState } from 'react';
 
-export const promptGuestAuth = (navigation: any, language: string) => {
-  Alert.alert(
-    language === 'en' ? 'Authentication Required' : 'Kinakailangan ang Pautentikasyon',
-    language === 'en'
-      ? 'Please log in or sign up to access this feature.'
-      : 'Mangyaring mag-log in o mag-sign up upang ma-access ang tampok na ito.',
-    [
-      {
-        text: language === 'en' ? 'Log In' : 'Mag-log In',
-        onPress: () => navigation.navigate('Login'),
-      },
-      {
-        text: language === 'en' ? 'Sign Up' : 'Mag-sign Up',
-        onPress: () => navigation.navigate('Register'),
-      },
-      {
-        text: language === 'en' ? 'Cancel' : 'Kanselahin',
-        style: 'cancel',
-      },
-    ]
-  );
-};
+/**
+ * Hook that manages the guest auth modal state.
+ * Returns visibility state + open/close handlers.
+ * Wire up <GuestAuthModal> in your screen using these values.
+ */
+export function useGuestAuth() {
+  const [guestModalVisible, setGuestModalVisible] = useState(false);
+
+  const promptGuestAuth = () => {
+    setGuestModalVisible(true);
+  };
+
+  const closeGuestModal = () => {
+    setGuestModalVisible(false);
+  };
+
+  return { guestModalVisible, promptGuestAuth, closeGuestModal };
+}
+

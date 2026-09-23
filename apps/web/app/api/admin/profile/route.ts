@@ -12,12 +12,21 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const emailParam = searchParams.get('email');
+    const roleParam = searchParams.get('role');
 
-    // Query specific user by email if requested, otherwise fallback to ADMIN or SUPER_ADMIN
+    // Query specific user by email if requested, otherwise fallback to role param, then ADMIN or SUPER_ADMIN
     let adminUser = null;
     if (emailParam) {
       adminUser = await prisma.user.findFirst({
         where: { email: emailParam },
+        include: { adminProfile: true }
+      });
+    }
+
+    if (!adminUser && roleParam) {
+      const targetRole = (roleParam.toUpperCase() === 'SUPERADMIN' || roleParam.toUpperCase() === 'SUPER_ADMIN') ? 'SUPER_ADMIN' : 'ADMIN';
+      adminUser = await prisma.user.findFirst({
+        where: { role: targetRole },
         include: { adminProfile: true }
       });
     }
@@ -216,6 +225,14 @@ export async function PATCH(request: Request) {
     if (targetEmail) {
       adminUser = await prisma.user.findFirst({
         where: { email: targetEmail },
+        select: { id: true, password: true, adminProfile: true }
+      });
+    }
+
+    if (!adminUser && body.role) {
+      const targetRole = (body.role.toUpperCase() === 'SUPERADMIN' || body.role.toUpperCase() === 'SUPER_ADMIN') ? 'SUPER_ADMIN' : 'ADMIN';
+      adminUser = await prisma.user.findFirst({
+        where: { role: targetRole },
         select: { id: true, password: true, adminProfile: true }
       });
     }

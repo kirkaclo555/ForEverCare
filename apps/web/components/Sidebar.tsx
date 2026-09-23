@@ -4,12 +4,14 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useLanguage } from '../context/LanguageContext';
+import { useAdminProfile } from '../context/AdminProfileContext';
 
 export default function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const [profilePic, setProfilePic] = useState<string | null>(null);
   const { t } = useLanguage();
+  const { profile, profilePic: contextPic } = useAdminProfile();
 
   useEffect(() => {
     const loadProfilePic = () => {
@@ -23,8 +25,11 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose:
     return () => window.removeEventListener('profilePicUpdated', loadProfilePic);
   }, [pathname]);
 
+  const activePic = contextPic || profilePic;
   const safePathname = pathname || '';
   const basePath = safePathname.startsWith('/superadmin') ? '/superadmin' : '/admin';
+  const adminName = profile?.fullName || (basePath === '/superadmin' ? 'Superadmin' : 'Admin');
+  const adminRole = profile?.position || (basePath === '/superadmin' ? 'Super Administrator' : 'Clinic Administrator');
 
   const sections = [
     {
@@ -161,8 +166,8 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose:
           justifyContent: 'center',
           border: '2px solid rgba(255,255,255,0.25)'
         }}>
-          {profilePic ? (
-            <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          {activePic ? (
+            <img src={activePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
           ) : (
             <span style={{ color: 'white', fontWeight: 700, fontSize: '1rem' }}>
               {basePath === '/superadmin' ? 'SA' : 'A'}
@@ -171,10 +176,10 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose:
         </div>
         <div style={{ overflow: 'hidden' }}>
           <div style={{ color: 'white', fontWeight: 600, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {basePath === '/superadmin' ? 'Superadmin' : 'Admin'}
+            {adminName}
           </div>
           <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.75rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            View Profile
+            {adminRole}
           </div>
         </div>
         <i className="fas fa-chevron-right" style={{ marginLeft: 'auto', color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem' }}></i>

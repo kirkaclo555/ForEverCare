@@ -23,7 +23,8 @@ import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 
 import GuestRestriction from '../components/GuestRestriction';
-import { promptGuestAuth } from '../utils/auth';
+import GuestAuthModal from '../components/GuestAuthModal';
+import { useGuestAuth } from '../utils/auth';
 
 type Props = {
   navigation: NativeStackNavigationProp<MoreStackParamList, 'Feedback'>;
@@ -32,6 +33,7 @@ type Props = {
 export default function FeedbackScreen({ navigation }: Props) {
   const { theme, isDarkMode } = useTheme();
   const { user } = useUser();
+  const { guestModalVisible, promptGuestAuth, closeGuestModal } = useGuestAuth();
 
   const { t, language } = useLanguage();
   
@@ -128,7 +130,7 @@ export default function FeedbackScreen({ navigation }: Props) {
 
   const handleSubmit = async () => {
     if (!user?.id || user.id.trim() === '') {
-      promptGuestAuth(navigation, language);
+      promptGuestAuth();
       return;
     }
     if (rating === 0) {
@@ -192,6 +194,13 @@ export default function FeedbackScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <StatusBar barStyle={isDarkMode ? "light-content" : "light-content"} />
+
+      <GuestAuthModal
+        visible={guestModalVisible}
+        onClose={closeGuestModal}
+        onLogin={() => { closeGuestModal(); (navigation as any).navigate('Login'); }}
+        onRegister={() => { closeGuestModal(); (navigation as any).navigate('Register'); }}
+      />
 
       {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.headerBackground }]}>
@@ -262,7 +271,7 @@ export default function FeedbackScreen({ navigation }: Props) {
                     key={star} 
                     onPress={() => {
                       if (!user?.id || user.id.trim() === '') {
-                        promptGuestAuth(navigation, language);
+                        promptGuestAuth();
                       } else {
                         setRating(star);
                       }
@@ -289,7 +298,7 @@ export default function FeedbackScreen({ navigation }: Props) {
                     style={[styles.chip, { backgroundColor: theme.card, borderColor: theme.border }, category === cat ? styles.chipActive : {}]}
                     onPress={() => {
                       if (!user?.id || user.id.trim() === '') {
-                        promptGuestAuth(navigation, language);
+                        promptGuestAuth();
                       } else {
                         setCategory(cat);
                       }

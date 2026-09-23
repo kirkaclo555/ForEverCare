@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   StyleSheet,
   Text,
@@ -10,20 +10,52 @@ import {
   Image,
   RefreshControl,
   TextInput,
-  Animated
+  Animated,
+  FlatList,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { FontAwesome5 } from '@expo/vector-icons';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FontAwesome5, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useUser } from '../context/UserContext';
 import { API_URL } from '../config/api';
 import { ActivityIndicator } from 'react-native';
 import { useTheme } from '../context/ThemeContext';
 import { useLanguage } from '../context/LanguageContext';
-import { promptGuestAuth } from '../utils/auth';
+import GuestAuthModal from '../components/GuestAuthModal';
+import { useGuestAuth } from '../utils/auth';
+import ProductsHeader from '../components/products/ProductsHeader';
+import SearchBar from '../components/products/SearchBar';
+import CategoryChips from '../components/products/CategoryChips';
+import PickupBanner from '../components/products/PickupBanner';
+import ProductCard from '../components/products/ProductCard';
+import CartSummaryBar from '../components/products/CartSummaryBar';
+import ProductSkeleton from '../components/products/ProductSkeleton';
+import EmptyState from '../components/products/EmptyState';
+import CartToast from '../components/products/CartToast';
+import ProductDetailHeader from '../components/products/ProductDetailHeader';
+import ProductImageGallery from '../components/products/ProductImageGallery';
+import ProductInfo from '../components/products/ProductInfo';
+import StockChip from '../components/products/StockChip';
+import DetailRow from '../components/products/DetailRow';
+import StickyActionBar from '../components/products/StickyActionBar';
+import CartHeader from '../components/products/CartHeader';
+import SelectAllRow from '../components/products/SelectAllRow';
+import CartItemRow from '../components/products/CartItemRow';
+import CartSummaryPanel from '../components/products/CartSummaryPanel';
+import EmptyCart from '../components/products/EmptyCart';
+import PaymentHeader from '../components/products/PaymentHeader';
+import WalletTabs from '../components/products/WalletTabs';
+import AmountQrCard from '../components/products/AmountQrCard';
+import HowToPay from '../components/products/HowToPay';
+import OrderSummary from '../components/products/OrderSummary';
+import ReferenceInput from '../components/products/ReferenceInput';
+import ConfirmBar from '../components/products/ConfirmBar';
 
 type RootStackParamList = {
   Login: undefined;
+  Register: undefined;
   Home: undefined;
   Users: undefined;
   Appointments: undefined;
@@ -130,14 +162,34 @@ const AnimatedCheckmark = () => {
 import GuestRestriction from '../components/GuestRestriction';
 
 export default function ProductsScreen({ navigation }: Props) {
+  const insets = useSafeAreaInsets();
   const { theme, isDarkMode } = useTheme();
   const { language } = useLanguage();
+  const { guestModalVisible, promptGuestAuth, closeGuestModal } = useGuestAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<string[]>(['All']);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [productFetchError, setProductFetchError] = useState<string | null>(null);
+
+  // Search with 300ms debounce
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Toast feedback state
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('Added to cart');
 
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchProducts = () => {
+    setProductFetchError(null);
     const fetchCats = fetch(`${API_URL}/api/categories`)
       .then(res => res.json())
       .catch(err => {
@@ -149,75 +201,84 @@ export default function ProductsScreen({ navigation }: Props) {
       .then(res => res.json())
       .catch(err => {
         console.log('Error fetching products', err);
-        return [];
+        throw err;
       });
 
-    return Promise.all([fetchCats, fetchProds]).then(([catsData, prodsData]) => {
-      const formatCategoryName = (cat: string) => {
-        if (!cat) return 'Other';
-        // First, try to resolve the slug from the categories list
-        const found = Array.isArray(catsData)
-          ? catsData.find((c: any) =>
-              c.slug.toLowerCase() === cat.toLowerCase() ||
-              c.name.toLowerCase() === cat.toLowerCase()
-            )
-          : null;
-        // Use the slug for reliable mapping if found, otherwise use the raw value
-        const slug = found ? found.slug.toLowerCase().trim() : cat.toLowerCase().trim();
+    return Promise.all([fetchCats, fetchProds])
+      .then(([catsData, prodsData]) => {
+        const formatCategoryName = (cat: string) => {
+          if (!cat) return 'Other';
+          // First, try to resolve the slug from the categories list
+          const found = Array.isArray(catsData)
+            ? catsData.find((c: any) =>
+                c.slug.toLowerCase() === cat.toLowerCase() ||
+                c.name.toLowerCase() === cat.toLowerCase()
+              )
+            : null;
+          // Use the slug for reliable mapping if found, otherwise use the raw value
+          const slug = found ? found.slug.toLowerCase().trim() : cat.toLowerCase().trim();
 
-        // Map slugs/names to canonical display labels (matches web categoryUtils.ts)
-        if (slug === 'food' || slug === 'pet-food' || slug === 'pet food' ||
-            slug === 'food supplies' || slug === 'food-supplies') return 'Pet Food';
-        if (slug === 'dog' || slug === 'dog-supplies' || slug === 'dog supplies' ||
-            slug === 'dog-food' || slug === 'dog food') return 'Dog Supplies';
-        if (slug === 'cat' || slug === 'cat-supplies' || slug === 'cat supplies' ||
-            slug === 'cat-food' || slug === 'cat food') return 'Cat Supplies';
-        if (slug === 'medications' || slug === 'medicine' || slug === 'pharmacy') return 'Medications';
-        if (slug === 'vaccine') return 'Vaccine';
-        if (slug === 'grooming' || slug === 'grooming-supplies' || slug === 'grooming supplies') return 'Grooming';
-        if (slug === 'accessories' || slug === 'accessory') return 'Accessories';
+          // Map slugs/names to canonical display labels (matches web categoryUtils.ts)
+          if (slug === 'food' || slug === 'pet-food' || slug === 'pet food' ||
+              slug === 'food supplies' || slug === 'food-supplies') return 'Pet Food';
+          if (slug === 'dog' || slug === 'dog-supplies' || slug === 'dog supplies' ||
+              slug === 'dog-food' || slug === 'dog food') return 'Dog Supplies';
+          if (slug === 'cat' || slug === 'cat-supplies' || slug === 'cat supplies' ||
+              slug === 'cat-food' || slug === 'cat food') return 'Cat Supplies';
+          if (slug === 'medications' || slug === 'medicine' || slug === 'pharmacy') return 'Medications';
+          if (slug === 'vaccine') return 'Vaccine';
+          if (slug === 'grooming' || slug === 'grooming-supplies' || slug === 'grooming supplies') return 'Grooming';
+          if (slug === 'accessories' || slug === 'accessory') return 'Accessories';
 
-        // Fallback: title-case the raw category string
-        const rawName = found ? found.name : cat;
-        return rawName.split(/[ -]/).map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
-      };
+          // Fallback: title-case the raw category string
+          const rawName = found ? found.name : cat;
+          return rawName.split(/[ -]/).map((w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+        };
 
-      const dynamicCategoriesList = Array.isArray(catsData)
-        ? catsData.map((c: any) => formatCategoryName(c.name || c.slug))
-        : [];
+        const dynamicCategoriesList = Array.isArray(catsData)
+          ? catsData.map((c: any) => formatCategoryName(c.name || c.slug))
+          : [];
 
-      const mappedProducts = (Array.isArray(prodsData) ? prodsData : [])
-        .filter((item: any) => {
-          const cat = (item.category || '').toLowerCase().trim();
-          return cat !== 'equipment' && cat !== 'supplies';
-        })
-        .map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          price: parseFloat(item.price) || 0,
-          category: formatCategoryName(item.categoryLabel || item.category || 'Other'),
-          icon: (item.icon || 'box').replace('fa-', ''),
-          color: '#dd6b20',
-          desc: item.description || 'No description available.',
-          stock: item.stock || 0,
-          image: item.image || null
-        }));
+        const mappedProducts = (Array.isArray(prodsData) ? prodsData : [])
+          .filter((item: any) => {
+            const cat = (item.category || '').toLowerCase().trim();
+            return cat !== 'equipment' && cat !== 'supplies';
+          })
+          .map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            price: parseFloat(item.price) || 0,
+            category: formatCategoryName(item.categoryLabel || item.category || 'Other'),
+            icon: (item.icon || 'box').replace('fa-', ''),
+            color: '#dd6b20',
+            desc: item.description || 'No description available.',
+            stock: item.stock || 0,
+            image: item.image || null
+          }));
 
-      setProducts(mappedProducts);
+        setProducts(mappedProducts);
+        setProductFetchError(null);
 
-      const productCategories = mappedProducts.map((p: any) => p.category);
-      const combined = Array.from(new Set([
-        ...dynamicCategoriesList,
-        ...productCategories
-      ])) as string[];
+        const productCategories = mappedProducts.map((p: any) => p.category);
+        const combined = Array.from(new Set([
+          ...dynamicCategoriesList,
+          ...productCategories
+        ])) as string[];
 
-      const finalCats = combined.filter(c => {
-        const lower = c.toLowerCase();
-        return lower !== 'equipment' && lower !== 'supplies';
+        const finalCats = combined.filter(c => {
+          const lower = c.toLowerCase();
+          return lower !== 'equipment' && lower !== 'supplies';
+        });
+
+        setCategories(['All', ...finalCats]);
+      })
+      .catch(err => {
+        console.log('Failed to load products', err);
+        setProductFetchError('Failed to load products');
+      })
+      .finally(() => {
+        setLoadingProducts(false);
       });
-
-      setCategories(['All', ...finalCats]);
-    });
   };
 
   useEffect(() => {
@@ -243,11 +304,28 @@ export default function ProductsScreen({ navigation }: Props) {
   const [activeTab, setActiveTab] = useState<'gcash' | 'maya'>('gcash');
   const [referenceNumber, setReferenceNumber] = useState('');
   const [isConfirmingPayment, setIsConfirmingPayment] = useState(false);
+  const [referenceError, setReferenceError] = useState<string | null>(null);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const checkoutScrollRef = useRef<ScrollView>(null);
+
+  // Hide bottom tab bar while on checkout screen to prevent accidental exits
+  useEffect(() => {
+    if (viewState === 'checkout') {
+      (navigation as any)?.setOptions({ tabBarStyle: { display: 'none' } });
+    } else {
+      (navigation as any)?.setOptions({ tabBarStyle: undefined });
+    }
+  }, [viewState, navigation]);
 
   // Cart & Orders State
   const [cart, setCart] = useState<CartItem[]>([]);
   const [checkoutItems, setCheckoutItems] = useState<CartItem[]>([]);
   const [selectedCartItems, setSelectedCartItems] = useState<Set<string | number>>(new Set());
+  const [removedItemUndo, setRemovedItemUndo] = useState<{
+    item: CartItem;
+    wasSelected: boolean;
+  } | null>(null);
+  const [undoToastVisible, setUndoToastVisible] = useState(false);
 
   // Order History State
   const [userOrders, setUserOrders] = useState<UserOrder[]>([]);
@@ -263,18 +341,34 @@ export default function ProductsScreen({ navigation }: Props) {
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
   const [justCompletedOrderId, setJustCompletedOrderId] = useState<string | null>(null);
 
-  // Derived Values
-  const filteredProducts = selectedCategory === 'All'
-    ? products
-    : products.filter(p => p.category === selectedCategory);
+  // Derived Values: Filter products by category and debounced search query
+  const filteredProducts = useMemo(() => {
+    return products.filter(p => {
+      const matchesCategory =
+        selectedCategory === 'All' || p.category === selectedCategory;
+      const q = debouncedSearch.toLowerCase().trim();
+      const matchesSearch =
+        !q ||
+        p.name.toLowerCase().includes(q) ||
+        p.category.toLowerCase().includes(q);
+      return matchesCategory && matchesSearch;
+    });
+  }, [products, selectedCategory, debouncedSearch]);
 
   const cartTotalItems = cart.reduce((acc, item) => acc + item.quantity, 0);
+  const cartTotalPrice = cart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
 
-  const addToCart = (product: Product, quantityToAdd: number = 1) => {
+  const getCartQuantity = (productId: string | number) => {
+    const item = cart.find(i => i.product.id === productId);
+    return item ? item.quantity : 0;
+  };
+
+  const addToCart = (product: Product, quantityToAdd: number = 1, showToast: boolean = false) => {
     if (!user?.id || user.id.trim() === '') {
-      promptGuestAuth(navigation, language);
+      promptGuestAuth();
       return;
     }
+    let success = false;
     setCart(prevCart => {
       const existing = prevCart.find(item => item.product.id === product.id);
       const currentQtyInCart = existing ? existing.quantity : 0;
@@ -285,6 +379,7 @@ export default function ProductsScreen({ navigation }: Props) {
         return prevCart;
       }
       
+      success = true;
       if (existing) {
         return prevCart.map(item =>
           item.product.id === product.id ? { ...item, quantity: totalNewQty } : item
@@ -294,7 +389,12 @@ export default function ProductsScreen({ navigation }: Props) {
     });
     // Auto-select newly added items
     setSelectedCartItems(prev => new Set(prev).add(product.id));
-    Alert.alert("Added to Cart", `${quantityToAdd}x ${product.name} was added to your shopping cart.`);
+    if (showToast) {
+      setToastMessage('Added to cart');
+      setToastVisible(true);
+    } else {
+      Alert.alert("Added to Cart", `${quantityToAdd}x ${product.name} was added to your shopping cart.`);
+    }
   };
 
   const updateCartQuantity = (productId: string | number, delta: number) => {
@@ -327,7 +427,7 @@ export default function ProductsScreen({ navigation }: Props) {
 
   const handleBuyNow = (product: Product, quantityToBuy: number = 1) => {
     if (!user?.id || user.id.trim() === '') {
-      promptGuestAuth(navigation, language);
+      promptGuestAuth();
       return;
     }
     setCheckoutItems([{ product, quantity: quantityToBuy }]);
@@ -337,11 +437,43 @@ export default function ProductsScreen({ navigation }: Props) {
   const handleCheckoutCart = () => {
     const itemsToCheckout = cart.filter(item => selectedCartItems.has(item.product.id));
     if (itemsToCheckout.length === 0) {
-      Alert.alert('No Items Selected', 'Please select at least one item to proceed to checkout.');
+      setToastMessage('Select at least one item to check out');
+      setToastVisible(true);
       return;
     }
     setCheckoutItems([...itemsToCheckout]);
     setViewState('checkout');
+  };
+
+  const handleRemoveFromCart = (productId: string | number) => {
+    const itemToRemove = cart.find(item => item.product.id === productId);
+    if (!itemToRemove) return;
+
+    const wasSelected = selectedCartItems.has(productId);
+
+    setRemovedItemUndo({
+      item: itemToRemove,
+      wasSelected,
+    });
+    setUndoToastVisible(true);
+
+    setCart(prev => prev.filter(item => item.product.id !== productId));
+    setSelectedCartItems(prev => {
+      const next = new Set(prev);
+      next.delete(productId);
+      return next;
+    });
+  };
+
+  const handleUndoRemove = () => {
+    if (!removedItemUndo) return;
+    const { item, wasSelected } = removedItemUndo;
+    setCart(prev => [item, ...prev]);
+    if (wasSelected) {
+      setSelectedCartItems(prev => new Set(prev).add(item.product.id));
+    }
+    setRemovedItemUndo(null);
+    setUndoToastVisible(false);
   };
 
   const toggleCartItemSelection = (productId: string | number) => {
@@ -386,23 +518,23 @@ export default function ProductsScreen({ navigation }: Props) {
       });
 
       if (!res.ok) {
-        throw new Error('Failed to create order');
+        const errorJson = await res.json().catch(() => null);
+        throw new Error(errorJson?.error || errorJson?.message || 'Failed to create order. Please try again.');
       }
 
-    } catch (e) {
+      // Remove only checked-out items from cart; keep un-selected items
+      const checkedOutIds = new Set(checkoutItems.map(i => i.product.id));
+      setCart(prev => prev.filter(item => !checkedOutIds.has(item.product.id)));
+      setSelectedCartItems(prev => {
+        const next = new Set(prev);
+        for (const id of checkedOutIds) next.delete(id);
+        return next;
+      });
+      setViewState('active_order');
+    } catch (e: any) {
       console.log('Error during checkout', e);
-      Alert.alert('Checkout Error', 'There was an issue processing your order.');
+      throw e;
     }
-
-    // Remove only checked-out items from cart; keep un-selected items
-    const checkedOutIds = new Set(checkoutItems.map(i => i.product.id));
-    setCart(prev => prev.filter(item => !checkedOutIds.has(item.product.id)));
-    setSelectedCartItems(prev => {
-      const next = new Set(prev);
-      for (const id of checkedOutIds) next.delete(id);
-      return next;
-    });
-    setViewState('active_order');
   };
 
   const handleOrderReceived = () => {
@@ -483,335 +615,245 @@ export default function ProductsScreen({ navigation }: Props) {
   // ----- RENDERERS -----
 
   const renderBrowseView = () => (
-    <>
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: theme.headerBackground }]}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          {navigation?.canGoBack() && (
-            <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 15, padding: 5 }}>
-              <FontAwesome5 name="arrow-left" size={20} color="white" />
-            </TouchableOpacity>
-          )}
-          <View>
-            <Text style={styles.headerTitle}>Products</Text>
-            <Text style={styles.headerSubtitle}>Order supplies for pick-up</Text>
-          </View>
-        </View>
-        <TouchableOpacity 
-          style={styles.cartButton} 
-          onPress={() => {
-            if (!user?.id || user.id.trim() === '') {
-              promptGuestAuth(navigation, language);
-            } else {
-              setViewState('cart');
-            }
-          }}
-        >
-          <FontAwesome5 name="shopping-cart" size={16} color="white" />
-          {cartTotalItems > 0 && (
-            <View style={styles.cartBadge}>
-              <Text style={styles.cartBadgeText}>{cartTotalItems}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
-      </View>
+    <View style={styles.browseContainer}>
+      {/* 1. Header (Fixed top, single-line title/subtitle, cart button with 9+ count badge) */}
+      <ProductsHeader
+        canGoBack={navigation?.canGoBack() ?? false}
+        onBack={() => navigation?.goBack()}
+        cartCount={cartTotalItems}
+        onCartPress={() => {
+          if (!user?.id || user.id.trim() === '') {
+            promptGuestAuth();
+          } else {
+            setViewState('cart');
+          }
+        }}
+      />
 
-      <ScrollView 
-        style={styles.mainScroll} 
+      {/* 2. Products 2-Column Grid */}
+      <FlatList
+        data={loadingProducts || productFetchError ? [] : filteredProducts}
+        keyExtractor={item => String(item.id)}
+        numColumns={2}
+        columnWrapperStyle={styles.columnWrapper}
+        contentContainerStyle={[
+          styles.listContent,
+          {
+            paddingBottom:
+              Math.max(insets.bottom, 16) + (cartTotalItems > 0 ? 76 : 24),
+          },
+        ]}
         showsVerticalScrollIndicator={false}
-        scrollEnabled={!filterOpen}
+        keyboardShouldPersistTaps="handled"
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3a7d55']} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#35501F']}
+          />
         }
-      >
-        {filterOpen && (
-          <TouchableOpacity 
-            style={[StyleSheet.absoluteFillObject, { zIndex: 5, backgroundColor: 'transparent' }]} 
-            activeOpacity={1} 
-            onPress={() => setFilterOpen(false)} 
+        ListHeaderComponent={
+          <>
+            {/* Search Bar with Debounce, Clear (x), and Compact Orders Button */}
+            <SearchBar
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              onClear={() => setSearchQuery('')}
+              onOrdersPress={() => {
+                if (!user?.id || user.id.trim() === '') {
+                  promptGuestAuth();
+                  return;
+                }
+                fetchUserOrders();
+                setViewState('order_history');
+              }}
+            />
+
+            {/* Horizontal Category Chips */}
+            <CategoryChips
+              categories={categories}
+              selectedCategory={selectedCategory}
+              onSelectCategory={setSelectedCategory}
+            />
+
+            {/* Slim 64px In-Clinic Pick-Up Banner */}
+            <PickupBanner />
+
+            {/* Section Title & Item Count */}
+            <View style={styles.sectionHeaderRow}>
+              <Text style={styles.sectionTitle}>
+                {selectedCategory === 'All' ? 'Available items' : selectedCategory}
+              </Text>
+              {!loadingProducts && !productFetchError && (
+                <Text style={styles.itemCountText}>
+                  {filteredProducts.length}{' '}
+                  {filteredProducts.length === 1 ? 'item' : 'items'}
+                </Text>
+              )}
+            </View>
+
+            {/* Loading Skeleton */}
+            {loadingProducts && <ProductSkeleton count={4} />}
+
+            {/* Error State */}
+            {productFetchError && (
+              <EmptyState
+                type="error"
+                title="Unable to load products"
+                message="Something went wrong while fetching products. Please try again."
+                actionText="Try again"
+                onAction={fetchProducts}
+              />
+            )}
+          </>
+        }
+        renderItem={({ item }) => (
+          <ProductCard
+            product={item}
+            cartQuantity={getCartQuantity(item.id)}
+            onPress={() => {
+              setSelectedProduct(item);
+              setDetailQuantity(1);
+              setViewState('detail');
+            }}
+            onAddToCart={() => {
+              addToCart(item, 1, true);
+            }}
+            onIncrement={() => updateCartQuantity(item.id, 1)}
+            onDecrement={() => updateCartQuantity(item.id, -1)}
           />
         )}
-
-        {/* Categories / Filter Bar */}
-        <View style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 20,
-          paddingVertical: 12,
-          gap: 10,
-          position: 'relative',
-          zIndex: 10,
-        }}>
-          {/* Selected Category Dropdown Trigger */}
-          <TouchableOpacity
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingHorizontal: 16,
-              paddingVertical: 8,
-              backgroundColor: '#2D5016',
-              borderRadius: 20,
-              gap: 8,
-            }}
-            onPress={() => setFilterOpen(!filterOpen)}
-          >
-            <Text style={{ fontSize: 13, fontFamily: 'Montserrat-SemiBold', color: 'white' }}>
-              {selectedCategory === 'All' ? 'All Products' : selectedCategory}
-            </Text>
-            <FontAwesome5 name={filterOpen ? "chevron-up" : "chevron-down"} size={10} color="white" />
-          </TouchableOpacity>
-
-          {/* Order History Button */}
-          <TouchableOpacity
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingHorizontal: 14,
-              paddingVertical: 8,
-              backgroundColor: isDarkMode ? '#1c330e' : '#EAF3DE',
-              borderRadius: 20,
-              gap: 6,
-            }}
-            onPress={() => {
-              if (!user?.id || user.id.trim() === '') {
-                promptGuestAuth(navigation, language);
-                return;
-              }
-              fetchUserOrders();
-              setViewState('order_history');
-            }}
-          >
-            <FontAwesome5 name="receipt" size={11} color={isDarkMode ? '#EAF3DE' : '#2D5016'} />
-            <Text style={{ fontSize: 12, fontFamily: 'Montserrat-SemiBold', color: isDarkMode ? '#EAF3DE' : '#2D5016' }}>
-              My Orders
-            </Text>
-          </TouchableOpacity>
-
-          {/* Empty spacer for user's future plans */}
-          <View style={{ flex: 1 }} />
-        </View>
-
-        {/* Floating Category Dropdown */}
-        {filterOpen && (
-          <View style={{
-            position: 'absolute',
-            top: 55,
-            left: 20,
-            width: 200,
-            backgroundColor: theme.card,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor: theme.border,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.15,
-            shadowRadius: 8,
-            elevation: 10,
-            zIndex: 100,
-            overflow: 'hidden',
-          }}>
-            <ScrollView nestedScrollEnabled={true} keyboardShouldPersistTaps="handled" style={{ maxHeight: 250 }}>
-              {categories.map((cat, idx) => {
-                const isSelected = selectedCategory === cat;
-                return (
-                  <TouchableOpacity
-                    key={idx}
-                    style={{
-                      paddingVertical: 12,
-                      paddingHorizontal: 16,
-                      borderBottomWidth: idx === categories.length - 1 ? 0 : 1,
-                      borderBottomColor: theme.border,
-                      backgroundColor: isSelected ? (isDarkMode ? '#1c330e' : '#EAF3DE') : 'transparent',
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                    onPress={() => {
-                      setSelectedCategory(cat);
-                      setFilterOpen(false);
-                    }}
-                  >
-                    <Text style={{ 
-                      fontSize: 13, 
-                      fontFamily: isSelected ? 'Montserrat-Bold' : 'Montserrat-Medium', 
-                      color: isSelected ? (isDarkMode ? '#EAF3DE' : '#2D5016') : theme.text 
-                    }}>
-                      {cat === 'All' ? 'All Products' : cat}
-                    </Text>
-                    {isSelected && <FontAwesome5 name="check" size={10} color={isDarkMode ? '#EAF3DE' : '#2D5016'} />}
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-          </View>
-        )}
-
-        {/* Promo Banner */}
-        <View style={styles.promoBanner}>
-          <View style={styles.promoContent}>
-            <Text style={styles.promoTitle}>Easy In-Clinic{'\n'}Pick Up</Text>
-            <Text style={{ color: 'white', opacity: 0.8, fontSize: 13 }}>Order now, skip the line later.</Text>
-          </View>
-          <FontAwesome5 name="box-open" size={60} color="rgba(255,255,255,0.2)" style={{ position: 'absolute', right: -10, bottom: -10 }} />
-        </View>
-
-        {/* Products Grid */}
-        <View style={styles.productsHeaderRow}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>{selectedCategory === 'All' ? 'Available Items' : selectedCategory}</Text>
-        </View>
-
-        <View style={styles.productsGrid}>
-          {filteredProducts.map(product => (
-            <TouchableOpacity
-              key={product.id}
-              style={[styles.productCard, { backgroundColor: theme.card, borderColor: theme.border }, product.stock <= 0 && { opacity: 0.6 }]}
-              onPress={() => {
-                setSelectedProduct(product);
-                setDetailQuantity(1);
-                setViewState('detail');
+        ListEmptyComponent={
+          !loadingProducts && !productFetchError ? (
+            <EmptyState
+              type="empty"
+              title="No products found"
+              message="Try a different search or category."
+              actionText="Clear filters"
+              onAction={() => {
+                setSelectedCategory('All');
+                setSearchQuery('');
               }}
-            >
-              <View style={[styles.productImagePlaceholder, { backgroundColor: product.color + '15', overflow: 'hidden' }]}>
-                {product.image ? (
-                  <Image source={{ uri: product.image }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
-                ) : (
-                  <FontAwesome5 name={product.icon} size={35} color={product.color} />
-                )}
-                {product.stock <= 0 && (
-                  <View style={{ position: 'absolute', backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 }}>
-                    <Text style={{ color: 'white', fontSize: 10, fontFamily: 'Montserrat-Bold' }}>SOLD OUT</Text>
-                  </View>
-                )}
-              </View>
-              <Text style={[styles.productCategory, { color: theme.subtext }]}>{product.category}</Text>
-              <Text style={[styles.productName, { color: theme.text }]} numberOfLines={1}>{product.name}</Text>
-              <Text style={[styles.productDescCard, { color: theme.subtext }]} numberOfLines={2}>
-                {product.desc && product.desc !== 'No description available.' ? product.desc : 'No description provided'}
-              </Text>
-              <View style={styles.productFooter}>
-                <Text style={styles.productPrice}>₱{product.price.toFixed(2)}</Text>
-                <TouchableOpacity
-                  style={[styles.addButton, product.stock <= 0 && { backgroundColor: '#a0aec0' }]}
-                  onPress={() => {
-                    if (!user?.id || user.id.trim() === '') {
-                      promptGuestAuth(navigation, language);
-                      return;
-                    }
-                    if (product.stock > 0) {
-                      setQuickAddProduct(product);
-                      setQuickAddQty(1);
-                    }
-                  }}
-                  disabled={product.stock <= 0}
-                >
-                  <FontAwesome5 name="cart-plus" size={12} color="white" />
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
-        <View style={{ height: 40 }} />
-      </ScrollView>
-    </>
+            />
+          ) : null
+        }
+      />
+
+      {/* 3. Sticky Cart Summary Bar */}
+      <CartSummaryBar
+        totalItems={cartTotalItems}
+        totalPrice={cartTotalPrice}
+        onViewCart={() => {
+          if (!user?.id || user.id.trim() === '') {
+            promptGuestAuth();
+          } else {
+            setViewState('cart');
+          }
+        }}
+        bottomOffset={Math.max(insets.bottom, 12)}
+      />
+
+      {/* 4. Added to Cart Toast */}
+      <CartToast
+        visible={toastVisible}
+        message={toastMessage}
+        onHide={() => setToastVisible(false)}
+        bottomOffset={
+          cartTotalItems > 0
+            ? Math.max(insets.bottom, 12) + 60
+            : Math.max(insets.bottom, 12) + 12
+        }
+      />
+    </View>
   );
 
   const renderProductDetail = () => {
     if (!selectedProduct) return null;
     return (
-      <View style={[styles.fullScreenView, { backgroundColor: theme.background }]}>
-        <View style={[styles.detailHeader, { backgroundColor: theme.headerBackground }]}>
-          <TouchableOpacity onPress={() => setViewState('browse')} style={{ marginRight: 15, padding: 5 }}>
-            <FontAwesome5 name="arrow-left" size={20} color="white" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Product Detail</Text>
-          <TouchableOpacity style={styles.cartButtonDetail} onPress={() => setViewState('cart')}>
-            <FontAwesome5 name="shopping-cart" size={18} color="white" />
-            {cartTotalItems > 0 && (
-              <View style={styles.cartBadge}>
-                <Text style={styles.cartBadgeText}>{cartTotalItems}</Text>
-              </View>
-            )}
-          </TouchableOpacity>
-        </View>
+      <View style={styles.detailScreen}>
+        {/* Fixed Header */}
+        <ProductDetailHeader
+          onBack={() => setViewState('browse')}
+          cartCount={cartTotalItems}
+          onCartPress={() => {
+            if (!user?.id || user.id.trim() === '') {
+              promptGuestAuth();
+            } else {
+              setViewState('cart');
+            }
+          }}
+        />
 
-        <ScrollView style={styles.detailScroll} showsVerticalScrollIndicator={false}>
-          <View style={[styles.detailHeroImage, { backgroundColor: selectedProduct.color + '15', overflow: 'hidden' }]}>
-             {selectedProduct.image ? (
-                  <Image source={{ uri: selectedProduct.image }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
-                ) : (
-                  <FontAwesome5 name={selectedProduct.icon} size={80} color={selectedProduct.color} />
-             )}
+        {/* Scrollable Content */}
+        <ScrollView
+          style={styles.detailScroll}
+          contentContainerStyle={[
+            styles.detailScrollContent,
+            { paddingBottom: Math.max(insets.bottom, 16) + 130 },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* 4:3 Image Gallery with contain mode */}
+          <View style={styles.detailImageWrapper}>
+            <ProductImageGallery
+              image={selectedProduct.image}
+            />
           </View>
 
-          <View style={[styles.detailContentBox, { backgroundColor: theme.card }]}>
-            <View style={styles.detailTitleRow}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.detailCategory, { color: theme.subtext }]}>{selectedProduct.category}</Text>
-                <Text style={[styles.detailTitle, { color: theme.text }]}>{selectedProduct.name}</Text>
-              </View>
-              <Text style={styles.detailPriceHuge}>₱{selectedProduct.price.toFixed(2)}</Text>
-            </View>
+          {/* White card: Info, Stock, Description */}
+          <View style={styles.detailCard}>
+            {/* Category chip → Name → Price — stacked, never overlapping */}
+            <ProductInfo
+              category={selectedProduct.category}
+              name={selectedProduct.name}
+              price={selectedProduct.price}
+            />
 
-            <View style={[styles.divider, { backgroundColor: theme.border }]} />
+            <View style={styles.detailDivider} />
 
-            <Text style={[styles.descLabel, { color: theme.text }]}>About this item</Text>
-            <Text style={[styles.descText, { color: theme.subtext }]}>{selectedProduct.desc}</Text>
+            {/* Stock status chip + clinic pick-up row */}
+            <StockChip stock={selectedProduct.stock} />
 
-            <View style={[styles.stockBadge, selectedProduct.stock <= 0 && { backgroundColor: '#fed7d7' }]}>
-              {selectedProduct.stock > 0 ? (
-                 <>
-                   <FontAwesome5 name="check-circle" size={14} color="#38a169" />
-                   <Text style={styles.stockBadgeText}>In Stock at Clinic ({selectedProduct.stock})</Text>
-                 </>
-              ) : (
-                 <>
-                   <FontAwesome5 name="times-circle" size={14} color="#e53e3e" />
-                   <Text style={[styles.stockBadgeText, { color: '#e53e3e' }]}>Sold Out</Text>
-                 </>
-              )}
-            </View>
+            <View style={styles.detailDivider} />
 
-            {selectedProduct.stock > 0 && (
-              <View style={styles.detailQtyPickerBox}>
-                <Text style={styles.detailQtyPickerLabel}>Purchase Quantity</Text>
-                <View style={styles.detailQtyControls}>
-                  <TouchableOpacity 
-                    style={styles.detailQtyBtn} 
-                    onPress={() => setDetailQuantity(q => Math.max(1, q - 1))}
-                  >
-                    <FontAwesome5 name="minus" size={12} color="#2D5016" />
-                  </TouchableOpacity>
-                  <Text style={styles.detailQtyText}>{detailQuantity}</Text>
-                  <TouchableOpacity 
-                    style={styles.detailQtyBtn} 
-                    onPress={() => setDetailQuantity(q => Math.min(selectedProduct.stock, q + 1))}
-                  >
-                    <FontAwesome5 name="plus" size={12} color="#2D5016" />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            )}
+            {/* Expandable description + optional spec rows */}
+            <DetailRow
+              description={selectedProduct.desc && selectedProduct.desc !== 'No description available.' ? selectedProduct.desc : 'No description provided for this product.'}
+            />
           </View>
         </ScrollView>
 
-        {/* Action Buttons (Sticky Bottom) */}
-        <View style={styles.detailActionContainer}>
-          <TouchableOpacity
-            style={[styles.detailAddToCartBtn, selectedProduct.stock <= 0 && { borderColor: '#a0aec0', opacity: 0.5 }]}
-            onPress={() => selectedProduct.stock > 0 && addToCart(selectedProduct, detailQuantity)}
-            disabled={selectedProduct.stock <= 0}
-          >
-            <FontAwesome5 name="cart-plus" size={16} color={selectedProduct.stock <= 0 ? '#a0aec0' : '#2E5E3E'} style={{ marginRight: 8 }} />
-            <Text style={[styles.detailAddToCartText, selectedProduct.stock <= 0 && { color: '#a0aec0' }]}>Add to Cart</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.detailBuyNowBtn, selectedProduct.stock <= 0 && { backgroundColor: '#a0aec0' }]}
-            onPress={() => selectedProduct.stock > 0 && handleBuyNow(selectedProduct, detailQuantity)}
-            disabled={selectedProduct.stock <= 0}
-          >
-            <Text style={styles.detailBuyNowText}>{selectedProduct.stock <= 0 ? 'Sold Out' : 'Buy Now'}</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Sticky bottom bar: Quantity stepper + Add to Cart / Buy Now */}
+        <StickyActionBar
+          quantity={detailQuantity}
+          maxStock={selectedProduct.stock}
+          onQuantityChange={(qty) => setDetailQuantity(qty)}
+          onAddToCart={() => {
+            if (!user?.id || user.id.trim() === '') {
+              promptGuestAuth();
+              return;
+            }
+            if (selectedProduct.stock > 0) {
+              addToCart(selectedProduct, detailQuantity, true);
+            }
+          }}
+          onBuyNow={() => {
+            if (!user?.id || user.id.trim() === '') {
+              promptGuestAuth();
+              return;
+            }
+            selectedProduct.stock > 0 && handleBuyNow(selectedProduct, detailQuantity);
+          }}
+          bottomPadding={Math.max(insets.bottom, 12)}
+        />
+
+        {/* Added-to-cart toast */}
+        <CartToast
+          visible={toastVisible}
+          message={toastMessage}
+          onHide={() => setToastVisible(false)}
+          bottomOffset={Math.max(insets.bottom, 12) + 100}
+        />
       </View>
     );
   };
@@ -822,255 +864,184 @@ export default function ProductsScreen({ navigation }: Props) {
     const allSelected = cart.length > 0 && selectedCartItems.size === cart.length;
 
     return (
-      <View style={[styles.fullScreenView, { backgroundColor: theme.background }]}>
-        <View style={[styles.detailHeader, { backgroundColor: theme.headerBackground }]}>
-          <TouchableOpacity onPress={() => setViewState('browse')} style={{ marginRight: 15, padding: 5 }}>
-            <FontAwesome5 name="arrow-left" size={20} color="white" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Shopping Cart</Text>
-          <View style={{ width: 40 }} />
-        </View>
+      <View style={[styles.fullScreenView, { backgroundColor: '#FAF8F5' }]}>
+        <CartHeader onBack={() => setViewState('browse')} />
 
         {cart.length === 0 ? (
-          <View style={styles.emptyCartContainer}>
-            <FontAwesome5 name="shopping-basket" size={60} color="#cbd5e0" style={{ marginBottom: 20 }} />
-            <Text style={styles.emptyCartTitle}>Your cart is empty</Text>
-            <Text style={styles.emptyCartSub}>Looks like you haven't added any pet supplies yet.</Text>
-            <TouchableOpacity style={styles.shopNowBtn} onPress={() => setViewState('browse')}>
-              <Text style={{ color: 'white', fontFamily: 'Montserrat-SemiBold' }}>Start Shopping</Text>
-            </TouchableOpacity>
-          </View>
+          <EmptyCart onBrowse={() => setViewState('browse')} />
         ) : (
           <>
-            {/* Select All Row */}
-            <View style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              paddingHorizontal: 20,
-              paddingVertical: 12,
-              backgroundColor: isDarkMode ? theme.card : '#f7fafc',
-              borderBottomWidth: 1,
-              borderBottomColor: theme.border,
-            }}>
-              <TouchableOpacity
-                onPress={toggleSelectAllCart}
-                style={{
-                  width: 24,
-                  height: 24,
-                  borderRadius: 6,
-                  borderWidth: 2,
-                  borderColor: allSelected ? '#2D5016' : '#cbd5e0',
-                  backgroundColor: allSelected ? '#2D5016' : 'transparent',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  marginRight: 12,
-                }}
-              >
-                {allSelected && <FontAwesome5 name="check" size={12} color="white" />}
-              </TouchableOpacity>
-              <Text style={{ flex: 1, fontSize: 14, fontFamily: 'Montserrat-SemiBold', color: theme.text }}>
-                Select All
-              </Text>
-              <Text style={{ fontSize: 13, fontFamily: 'Montserrat-Medium', color: theme.subtext }}>
-                {selectedItems.length} of {cart.length} selected
-              </Text>
-            </View>
+            <SelectAllRow
+              allSelected={allSelected}
+              selectedCount={selectedItems.length}
+              totalCount={cart.length}
+              onToggle={toggleSelectAllCart}
+            />
 
-            <ScrollView style={styles.cartScroll} showsVerticalScrollIndicator={false}>
-              {cart.map((item, idx) => {
-                const isSelected = selectedCartItems.has(item.product.id);
-                return (
-                  <View key={idx} style={[styles.cartItem, { backgroundColor: theme.card, borderColor: isSelected ? '#2D5016' : theme.border, borderWidth: isSelected ? 1.5 : 0.5 }]}>
-                    {/* Checkbox */}
-                    <TouchableOpacity
-                      onPress={() => toggleCartItemSelection(item.product.id)}
-                      style={{
-                        width: 22,
-                        height: 22,
-                        borderRadius: 6,
-                        borderWidth: 2,
-                        borderColor: isSelected ? '#2D5016' : '#cbd5e0',
-                        backgroundColor: isSelected ? '#2D5016' : 'transparent',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginRight: 10,
-                      }}
-                    >
-                      {isSelected && <FontAwesome5 name="check" size={10} color="white" />}
-                    </TouchableOpacity>
-                    <View style={[styles.cartItemImage, { backgroundColor: item.product.color + '15', overflow: 'hidden' }]}>
-                      {item.product.image ? (
-                        <Image source={{ uri: item.product.image }} style={{ width: '100%', height: '100%', resizeMode: 'cover' }} />
-                      ) : (
-                        <FontAwesome5 name={item.product.icon} size={24} color={item.product.color} />
-                      )}
-                    </View>
-                    <View style={styles.cartItemDetails}>
-                      <Text style={[styles.cartItemName, { color: theme.text }]} numberOfLines={2}>{item.product.name}</Text>
-                      <Text style={styles.cartItemPrice}>₱{(item.product.price * item.quantity).toFixed(2)}</Text>
-                    </View>
-                    <View style={styles.cartQtyControls}>
-                      <TouchableOpacity style={styles.qtyBtn} onPress={() => updateCartQuantity(item.product.id, -1)}>
-                        <FontAwesome5 name="minus" size={10} color="#4a5568" />
-                      </TouchableOpacity>
-                      <Text style={styles.qtyText}>{item.quantity}</Text>
-                      <TouchableOpacity style={styles.qtyBtn} onPress={() => updateCartQuantity(item.product.id, 1)}>
-                        <FontAwesome5 name="plus" size={10} color="#4a5568" />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                );
-              })}
-              <View style={{ height: 100 }} />
-            </ScrollView>
+            <FlatList
+              data={cart}
+              keyExtractor={(item) => String(item.product.id)}
+              contentContainerStyle={styles.cartListContent}
+              showsVerticalScrollIndicator={false}
+              refreshControl={
+                <RefreshControl
+                  refreshing={refreshing}
+                  onRefresh={onRefresh}
+                  colors={['#35501F']}
+                  tintColor="#35501F"
+                />
+              }
+              renderItem={({ item }) => (
+                <CartItemRow
+                  item={item}
+                  isSelected={selectedCartItems.has(item.product.id)}
+                  onToggle={() => toggleCartItemSelection(item.product.id)}
+                  onRemove={() => handleRemoveFromCart(item.product.id)}
+                  onQuantityChange={(delta) => updateCartQuantity(item.product.id, delta)}
+                  onPress={() => {
+                    setSelectedProduct(item.product);
+                    setViewState('detail');
+                  }}
+                />
+              )}
+            />
 
-            <View style={styles.cartBottomContainer}>
-              <View style={styles.cartSummaryRow}>
-                <Text style={styles.cartSummaryLabel}>Subtotal ({selectedItems.length} item{selectedItems.length !== 1 ? 's' : ''})</Text>
-                <Text style={styles.cartSummaryValue}>₱{selectedCost.toFixed(2)}</Text>
-              </View>
-              <TouchableOpacity
-                style={[styles.checkoutBtn, selectedItems.length === 0 && { backgroundColor: '#a0aec0' }]}
-                onPress={handleCheckoutCart}
-                disabled={selectedItems.length === 0}
-              >
-                <Text style={styles.checkoutBtnText}>
-                  {selectedItems.length === 0 ? 'Select items to checkout' : `Proceed to Checkout (₱${selectedCost.toFixed(2)})`}
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <CartSummaryPanel
+              selectedCount={selectedItems.length}
+              selectedTotal={selectedCost}
+              onCheckout={handleCheckoutCart}
+            />
           </>
         )}
+
+        <CartToast
+          visible={undoToastVisible}
+          message="Item removed from cart"
+          undoLabel="Undo"
+          duration={4000}
+          onUndo={handleUndoRemove}
+          onHide={() => {
+            setUndoToastVisible(false);
+            setRemovedItemUndo(null);
+          }}
+          bottomOffset={cart.length > 0 ? 130 : 30}
+        />
       </View>
     );
   };
 
   const renderCheckout = () => {
     const totalCost = checkoutItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+    const walletName = activeTab === 'gcash' ? 'GCash' : 'Maya';
+    const qrSource =
+      activeTab === 'gcash'
+        ? require('../../assets/gcash-qr.jpg')
+        : require('../../assets/maya-qr.jpg');
 
     const handleConfirmPayment = () => {
-      if (!referenceNumber.trim()) {
-        Alert.alert("Reference Number Required", `Please enter the ${activeTab === 'gcash' ? 'GCash' : 'Maya'} transaction reference number to confirm your payment.`);
-        return;
-      }
-      if (referenceNumber.trim().length < 8) {
-        Alert.alert("Invalid Reference Number", "Please enter a valid reference number.");
+      const cleanRef = referenceNumber.trim();
+      if (cleanRef.length !== 13) {
+        setReferenceError('Enter all 13 digits');
         return;
       }
       setIsConfirmingPayment(true);
-      const ref = referenceNumber.trim();
-      setReferenceNumber('');
-      handlePaymentSuccess(ref).finally(() => {
-        setIsConfirmingPayment(false);
-      });
+      setPaymentError(null);
+      setReferenceError(null);
+
+      handlePaymentSuccess(cleanRef)
+        .catch((err: any) => {
+          const msg = err?.message || 'There was an issue processing your order.';
+          if (
+            msg.toLowerCase().includes('reference') ||
+            msg.toLowerCase().includes('digit') ||
+            msg.toLowerCase().includes('used') ||
+            msg.toLowerCase().includes('invalid')
+          ) {
+            setReferenceError(msg);
+          } else {
+            setPaymentError(msg);
+          }
+        })
+        .finally(() => {
+          setIsConfirmingPayment(false);
+        });
     };
 
     return (
-      <View style={[styles.fullScreenView, { backgroundColor: theme.background }]}>
-        <View style={[styles.detailHeader, { backgroundColor: theme.headerBackground }]}>
-          <TouchableOpacity onPress={() => setViewState('cart')} style={{ marginRight: 15, padding: 5 }}>
-            <FontAwesome5 name="arrow-left" size={20} color="white" />
-          </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: 'white' }]}>Payment Processing</Text>
-          <View style={{ width: 40 }} />
-        </View>
+      <View style={[styles.fullScreenView, { backgroundColor: '#FAF8F5' }]}>
+        <PaymentHeader onLeave={() => setViewState('cart')} />
 
-        <ScrollView contentContainerStyle={styles.checkoutScroll} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          <Text style={styles.checkoutSubtitle}>Choose Payment Method & Scan QR Code</Text>
-
-          <View style={styles.paymentTabsContainer}>
-            <TouchableOpacity 
-              style={[styles.paymentTab, activeTab === 'gcash' && styles.paymentTabActiveGCash]} 
-              onPress={() => setActiveTab('gcash')}
-            >
-              <FontAwesome5 name="wallet" size={16} color={activeTab === 'gcash' ? 'white' : '#007dfe'} style={{ marginRight: 8 }} />
-              <Text style={[styles.paymentTabText, activeTab === 'gcash' && styles.paymentTabTextActive]}>GCash</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.paymentTab, activeTab === 'maya' && styles.paymentTabActiveMaya]} 
-              onPress={() => setActiveTab('maya')}
-            >
-              <FontAwesome5 name="wallet" size={16} color={activeTab === 'maya' ? 'white' : '#5ebc16'} style={{ marginRight: 8 }} />
-              <Text style={[styles.paymentTabText, activeTab === 'maya' && styles.paymentTabTextActive]}>Maya</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.qrCodeContainer}>
-            <View style={{ padding: 15, alignItems: 'center', marginBottom: 15 }}>
-              {activeTab === 'gcash' ? (
-                <Image 
-                  source={require('../../assets/gcash-qr.jpg')} 
-                  style={{ width: 220, height: 220, borderRadius: 12 }} 
-                  resizeMode="contain" 
-                />
-              ) : (
-                <Image 
-                  source={require('../../assets/maya-qr.jpg')} 
-                  style={{ width: 220, height: 220, borderRadius: 12 }} 
-                  resizeMode="contain" 
-                />
-              )}
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
-              <FontAwesome5 
-                name="check-circle" 
-                size={16} 
-                color={activeTab === 'gcash' ? '#007dfe' : '#5ebc16'} 
-                style={{ marginRight: 6 }} 
-              />
-              <Text style={{ fontSize: 13, fontFamily: 'Montserrat-SemiBold', color: '#4a5568' }}>
-                {activeTab === 'gcash' ? '✓ Real GCash Merchant QR Loaded' : '✓ Real Maya Merchant QR Loaded'}
-              </Text>
-            </View>
-            <Text style={styles.qrAmountText}>Amount Due: <Text style={{ color: '#2E5E3E' }}>₱{totalCost.toFixed(2)}</Text></Text>
-          </View>
-
-          <View style={[styles.paymentInstructionsBox, { backgroundColor: activeTab === 'gcash' ? '#ebf8ff' : '#f0fff4', borderColor: activeTab === 'gcash' ? '#bef3fe' : '#c6f6d5', borderWidth: 1 }]}>
-            <FontAwesome5 
-              name="info-circle" 
-              size={16} 
-              color={activeTab === 'gcash' ? '#3182ce' : '#38a169'} 
-              style={{ marginTop: 2 }} 
-            />
-            <Text style={[styles.paymentInstructionsText, { color: activeTab === 'gcash' ? '#2b6cb0' : '#276749' }]}>
-              Please scan the QR code above or save it to your gallery, then pay exactly ₱{totalCost.toFixed(2)} using your mobile wallet app. Once completed, enter the reference number below to verify your payment.
-            </Text>
-          </View>
-
-          <View style={styles.refInputGroup}>
-            <Text style={styles.refInputLabel}>{activeTab === 'gcash' ? 'GCash' : 'Maya'} Reference Number</Text>
-            <TextInput
-              style={styles.refInput}
-              value={referenceNumber}
-              onChangeText={setReferenceNumber}
-              placeholder={activeTab === 'gcash' ? 'Enter 13-digit Reference Number' : 'Enter 13-digit Reference Number'}
-              keyboardType="number-pad"
-              maxLength={13}
-            />
-            <Text style={styles.refInputHint}>
-              Ensure the reference number matches the receipt exactly to avoid payment delay.
-            </Text>
-          </View>
-
-          <TouchableOpacity 
-            style={[
-              styles.confirmPaymentBtn, 
-              { backgroundColor: activeTab === 'gcash' ? '#007dfe' : '#5ebc16' }
-            ]} 
-            onPress={handleConfirmPayment}
-            disabled={isConfirmingPayment}
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          <ScrollView
+            ref={checkoutScrollRef}
+            contentContainerStyle={styles.checkoutScroll}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
           >
-            {isConfirmingPayment ? (
-              <ActivityIndicator size="small" color="white" style={{ marginRight: 8 }} />
-            ) : (
-              <FontAwesome5 name="lock" size={16} color="white" style={{ marginRight: 8 }} />
-            )}
-            <Text style={styles.confirmPaymentBtnText}>
-              {isConfirmingPayment ? 'Verifying Reference...' : 'Confirm Order Payment'}
-            </Text>
-          </TouchableOpacity>
+            <WalletTabs
+              activeTab={activeTab}
+              onSelectTab={(tab) => {
+                setActiveTab(tab);
+                setReferenceNumber('');
+                setReferenceError(null);
+                setPaymentError(null);
+              }}
+            />
 
-        </ScrollView>
+            <AmountQrCard
+              amount={totalCost}
+              qrSource={qrSource}
+              merchantName="Balingasag Dog and Cat Clinic"
+              onShowToast={(msg) => {
+                setToastMessage(msg);
+                setToastVisible(true);
+              }}
+            />
+
+            <OrderSummary items={checkoutItems} totalAmount={totalCost} />
+
+            <HowToPay amount={totalCost} />
+
+            <ReferenceInput
+              walletName={walletName}
+              value={referenceNumber}
+              onChangeText={(text) => {
+                setReferenceNumber(text);
+                if (referenceError) setReferenceError(null);
+                if (paymentError) setPaymentError(null);
+              }}
+              error={referenceError}
+              onClearError={() => setReferenceError(null)}
+              onShowToast={(msg) => {
+                setToastMessage(msg);
+                setToastVisible(true);
+              }}
+              onFocus={() => {
+                setTimeout(() => {
+                  checkoutScrollRef.current?.scrollToEnd({ animated: true });
+                }, 200);
+              }}
+            />
+          </ScrollView>
+
+          <ConfirmBar
+            onConfirm={handleConfirmPayment}
+            isConfirming={isConfirmingPayment}
+            disabled={referenceNumber.length !== 13}
+            errorMessage={paymentError}
+            onDismissError={() => setPaymentError(null)}
+          />
+        </KeyboardAvoidingView>
+
+        <CartToast
+          visible={toastVisible}
+          message={toastMessage}
+          onHide={() => setToastVisible(false)}
+          bottomOffset={100}
+        />
       </View>
     );
   };
@@ -1321,8 +1292,21 @@ export default function ProductsScreen({ navigation }: Props) {
 
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+    <View style={styles.screenContainer}>
+      <StatusBar
+        barStyle="light-content"
+        backgroundColor="#35501F"
+      />
+      <SafeAreaView
+        style={[styles.safeArea, { backgroundColor: '#35501F' }]}
+        edges={['top']}
+      >
+        <GuestAuthModal
+          visible={guestModalVisible}
+          onClose={closeGuestModal}
+          onLogin={() => { closeGuestModal(); navigation?.navigate('Login'); }}
+          onRegister={() => { closeGuestModal(); navigation?.navigate('Register'); }}
+        />
       {viewState === 'browse' && renderBrowseView()}
       {viewState === 'detail' && renderProductDetail()}
       {viewState === 'cart' && renderCart()}
@@ -1552,38 +1536,65 @@ export default function ProductsScreen({ navigation }: Props) {
           </View>
         </View>
       )}
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  screenContainer: {
+    flex: 1,
+    backgroundColor: '#35501F',
+  },
   safeArea: { flex: 1, backgroundColor: '#F4F1EC' },
-  // Browse View Styles
+  browseContainer: {
+    flex: 1,
+    backgroundColor: '#F4F1EC',
+    position: 'relative',
+  },
+  columnWrapper: {
+    gap: 10,
+    paddingHorizontal: 16,
+    marginBottom: 10,
+  },
+  listContent: {
+    flexGrow: 1,
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  sectionTitle: {
+    fontFamily: 'Catcut',
+    fontSize: 16,
+    color: '#1F2937',
+  },
+  itemCountText: {
+    fontFamily: 'PlusJakartaSans-Medium',
+    fontSize: 13,
+    color: '#6B7280',
+  },
+  // Common Headers for Sub-Views
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 15,
-    backgroundColor: '#2D5016',
+    backgroundColor: '#35501F',
     borderBottomWidth: 0,
   },
   headerTitle: { fontSize: 18, fontFamily: 'Catcut', color: 'white' },
-  headerSubtitle: { fontSize: 13, color: '#EAF3DE', marginTop: 2, fontFamily: 'Montserrat-Regular' },
-  cartButton: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-  },
+  headerSubtitle: { fontSize: 13, color: '#EAF3DE', marginTop: 2, fontFamily: 'PlusJakartaSans-Regular' },
   cartBadge: {
     position: 'absolute',
     top: -2,
     right: -2,
-    backgroundColor: '#7CB342',
+    backgroundColor: '#EF4444',
     width: 18,
     height: 18,
     borderRadius: 9,
@@ -1592,86 +1603,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: 'white',
   },
-  cartBadgeText: { color: 'white', fontSize: 10, fontFamily: 'Montserrat-Bold' },
-  mainScroll: { flex: 1 },
-  categoryScroll: {
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-    flexGrow: 0,
-    maxHeight: 70,
-  },
-  categoryChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    marginRight: 10,
-    borderWidth: 0.5,
-    borderColor: 'rgba(0,0,0,0.07)',
-    justifyContent: 'center',
-  },
-  categoryChipActive: { backgroundColor: '#2D5016', borderColor: '#2D5016' },
-  categoryChipText: { fontSize: 13, fontFamily: 'Montserrat-SemiBold', color: '#4a5568' },
-  categoryChipTextActive: { color: 'white' },
-  promoBanner: {
-    marginHorizontal: 15,
-    backgroundColor: '#2D5016',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 20,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  promoContent: { zIndex: 1 },
-  promoTitle: { fontSize: 18, fontFamily: 'Catcut', color: 'white', marginBottom: 6, lineHeight: 24 },
-  productsHeaderRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    marginBottom: 15,
-  },
-  sectionTitle: { fontSize: 18, fontFamily: 'Catcut', color: '#2d3748' },
-  productsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: 15,
-    justifyContent: 'space-between',
-  },
-  productCard: {
-    width: '48%',
-    backgroundColor: 'white',
-    borderRadius: 16,
-    padding: 12,
-    marginBottom: 15,
-    borderWidth: 0.5,
-    borderColor: 'rgba(0,0,0,0.07)',
-  },
-  productImagePlaceholder: {
-    height: 120,
-    backgroundColor: '#edf2f7',
-    borderRadius: 12,
-    marginBottom: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  productCategory: { fontSize: 11, color: '#718096', marginBottom: 3, fontFamily: 'Montserrat-Medium' },
-  productName: { fontSize: 13, fontFamily: 'Montserrat-SemiBold', color: '#2d3748', marginBottom: 3 },
-  productDescCard: { fontSize: 11, color: '#718096', fontFamily: 'Montserrat-Regular', lineHeight: 14, marginBottom: 8, height: 28 },
-  productFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  productPrice: { fontSize: 16, fontFamily: 'Montserrat-Bold', color: '#2D5016' },
-  addButton: {
-    backgroundColor: '#2D5016',
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  cartBadgeText: { color: 'white', fontSize: 10, fontFamily: 'PlusJakartaSans-Bold' },
 
   // Full Screen Views Common
   fullScreenView: { flex: 1, backgroundColor: '#F4F1EC' },
@@ -1694,8 +1626,39 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end', justifyContent: 'center',
   },
 
-  // Detail View
+  // Detail View (redesigned)
+  detailScreen: {
+    flex: 1,
+    backgroundColor: '#F4F1EC',
+  },
   detailScroll: { flex: 1 },
+  detailScrollContent: {
+    paddingBottom: 20,
+  },
+  detailImageWrapper: {
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 12,
+  },
+  detailCard: {
+    marginHorizontal: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 0.5,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  detailDivider: {
+    height: 0.5,
+    backgroundColor: '#E5E7EB',
+    marginVertical: 14,
+  },
+
   detailHeroImage: {
     height: 250,
     marginHorizontal: 20,
@@ -1723,7 +1686,6 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   stockBadgeText: { fontSize: 13, color: '#2D5016', fontFamily: 'Montserrat-SemiBold', marginLeft: 6 },
-
   detailActionContainer: {
     flexDirection: 'row',
     paddingHorizontal: 20,
@@ -1754,155 +1716,19 @@ const styles = StyleSheet.create({
   },
   detailBuyNowText: { fontSize: 15, fontFamily: 'Montserrat-Bold', color: 'white' },
 
-  // Cart View
-  emptyCartContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 40 },
-  emptyCartTitle: { fontSize: 20, fontFamily: 'Catcut', color: '#2d3748', marginBottom: 8 },
-  emptyCartSub: { fontSize: 15, color: '#718096', textAlign: 'center', marginBottom: 24, lineHeight: 22, fontFamily: 'Montserrat-Regular' },
-  shopNowBtn: { backgroundColor: '#2D5016', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 12 },
+  // Quantity picker (kept for detail view fallback)
 
-  cartScroll: { flex: 1, paddingHorizontal: 20 },
-  cartItem: {
-    flexDirection: 'row',
-    backgroundColor: 'white',
-    padding: 12,
-    borderRadius: 16,
-    marginBottom: 15,
-    borderWidth: 0.5,
-    borderColor: 'rgba(0,0,0,0.07)',
-    alignItems: 'center',
+  cartListContent: {
+    paddingTop: 12,
+    paddingBottom: 24,
   },
-  cartItemImage: { width: 60, height: 60, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginRight: 15 },
-  cartItemDetails: { flex: 1 },
-  cartItemName: { fontSize: 14, fontFamily: 'Montserrat-SemiBold', color: '#2d3748', marginBottom: 4 },
-  cartItemPrice: { fontSize: 15, fontFamily: 'Montserrat-Bold', color: '#2D5016' },
-  cartQtyControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f7fafc',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#edf2f7',
-  },
-  qtyBtn: { width: 28, height: 28, alignItems: 'center', justifyContent: 'center' },
-  qtyText: { fontSize: 14, fontFamily: 'Montserrat-Bold', color: '#2d3748', width: 20, textAlign: 'center' },
-
-  cartBottomContainer: {
-    padding: 20,
-    backgroundColor: 'white',
-    borderTopWidth: 1,
-    borderTopColor: '#edf2f7',
-  },
-  cartSummaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 15, alignItems: 'center' },
-  cartSummaryLabel: { fontSize: 16, color: '#4a5568', fontFamily: 'Montserrat-SemiBold' },
-  cartSummaryValue: { fontSize: 20, fontFamily: 'Montserrat-Bold', color: '#2d3748' },
-  checkoutBtn: {
-    backgroundColor: '#2D5016',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  checkoutBtnText: { color: 'white', fontSize: 16, fontFamily: 'Montserrat-Bold' },
 
   // Checkout View
-  checkoutScroll: { padding: 20, alignItems: 'center', width: '100%' },
-  checkoutSubtitle: { fontSize: 14, color: '#718096', marginBottom: 20, fontFamily: 'Montserrat-Medium', textAlign: 'center' },
-  paymentTabsContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#edf2f7',
-    borderRadius: 12,
-    padding: 4,
-    marginBottom: 20,
-    width: '100%',
-  },
-  paymentTab: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 10,
-  },
-  paymentTabActiveGCash: {
-    backgroundColor: '#007dfe',
-  },
-  paymentTabActiveMaya: {
-    backgroundColor: '#5ebc16',
-  },
-  paymentTabText: {
-    fontSize: 14,
-    fontFamily: 'Montserrat-SemiBold',
-    color: '#4a5568',
-  },
-  paymentTabTextActive: {
-    color: 'white',
-  },
-  qrCodeContainer: {
-    alignItems: 'center',
-    backgroundColor: 'white',
-    paddingVertical: 20,
-    paddingHorizontal: 15,
-    borderRadius: 24,
-    borderWidth: 0.5,
-    borderColor: 'rgba(0,0,0,0.07)',
-    width: '100%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  qrAmountText: { fontSize: 18, fontFamily: 'Montserrat-Bold', color: '#2d3748' },
-  paymentInstructionsBox: {
-    flexDirection: 'row',
-    padding: 15,
-    borderRadius: 12,
-    marginTop: 20,
-    gap: 10,
-    width: '100%',
-  },
-  paymentInstructionsText: { flex: 1, fontSize: 12.5, lineHeight: 18, fontFamily: 'Montserrat-Medium' },
-  refInputGroup: {
-    width: '100%',
-    marginTop: 25,
-  },
-  refInputLabel: {
-    fontSize: 14,
-    fontFamily: 'Montserrat-SemiBold',
-    color: '#2d3748',
-    marginBottom: 8,
-  },
-  refInput: {
-    backgroundColor: 'white',
-    borderWidth: 1.5,
-    borderColor: '#e2e8f0',
-    borderRadius: 12,
-    paddingVertical: 12,
+  checkoutScroll: {
     paddingHorizontal: 16,
-    fontSize: 16,
-    fontFamily: 'Montserrat-SemiBold',
-    color: '#2d3748',
+    paddingTop: 16,
+    paddingBottom: 24,
   },
-  refInputHint: {
-    fontSize: 11.5,
-    color: '#718096',
-    marginTop: 6,
-    fontFamily: 'Montserrat-Regular',
-  },
-  confirmPaymentBtn: {
-    flexDirection: 'row',
-    marginTop: 30,
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
-  },
-  confirmPaymentBtnText: { color: 'white', fontSize: 16, fontFamily: 'Montserrat-Bold' },
 
   // Active Order View
   activeOrderCenter: {

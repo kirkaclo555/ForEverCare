@@ -4,6 +4,7 @@ import {
   Text,
   View,
   ScrollView,
+  SectionList,
   TouchableOpacity,
   StatusBar,
   Modal,
@@ -14,8 +15,8 @@ import {
   Image,
   RefreshControl
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { FontAwesome5 } from '@expo/vector-icons';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -27,8 +28,15 @@ import { useTheme } from '../context/ThemeContext';
 import * as Clipboard from 'expo-clipboard';
 import * as ImagePicker from 'expo-image-picker';
 import GuestRestriction from '../components/GuestRestriction';
+import GuestAuthModal from '../components/GuestAuthModal';
 import { useLanguage } from '../context/LanguageContext';
-import { promptGuestAuth } from '../utils/auth';
+import { useGuestAuth } from '../utils/auth';
+import AppointmentsHeader from '../components/appointments/AppointmentsHeader';
+import StatsRow from '../components/appointments/StatsRow';
+import FilterChips from '../components/appointments/FilterChips';
+import SectionHeader from '../components/appointments/SectionHeader';
+import AppointmentCard from '../components/appointments/AppointmentCard';
+import EmptyState from '../components/appointments/EmptyState';
 
 const PetAvatar = ({ avatar, species, size = 16, color = 'white', style }: { avatar: string | null | undefined, species: string, size?: number, color?: string, style?: any }) => {
   const [hasError, setHasError] = useState(false);
@@ -64,10 +72,12 @@ const PetAvatar = ({ avatar, species, size = 16, color = 'white', style }: { ava
   );
 };
 
-export default function AppointmentsScreen() {
+export default function AppointmentsScreen({ route }: any) {
   const { theme, isDarkMode } = useTheme();
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { user } = useUser();
+  const { guestModalVisible, promptGuestAuth, closeGuestModal } = useGuestAuth();
   const { language } = useLanguage();
   const { pets, refreshPets } = usePetContext();
   const [filter, setFilter] = useState('All');
@@ -198,6 +208,113 @@ export default function AppointmentsScreen() {
     return app.status === filter;
   });
 
+  // ── Derived counts for filter chips ──
+  const filterCounts: Record<string, number> = {
+    All: appointments.length,
+    Upcoming: appointments.filter(a => a.status === 'Upcoming' || a.status === 'Cancel Pending').length,
+    Completed: appointments.filter(a => a.status === 'Completed').length,
+    Cancelled: appointments.filter(a => a.status === 'Cancelled' || a.status === 'Declined').length,
+  };
+
+  // ── Parse "09:00 AM" + "2026-09-23" → epoch ms ──
+  const parseApptMs = (date: string, time: string): number => {
+    try {
+      const [y, m, d] = date.split('-').map(Number);
+      const match = time.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
+      if (!match) return 0;
+      let h = parseInt(match[1], 10);
+      const min = parseInt(match[2], 10);
+      const ampm = match[3].toUpperCase();
+      if (ampm === 'PM' && h < 12) h += 12;
+      if (ampm === 'AM' && h === 12) h = 0;
+      return new Date(y, m - 1, d, h, min).getTime();
+    } catch { return 0; }
+  };
+
+  // ── Build SectionList sections ──
+  const nowMs = Date.now();
+  const nowDate = new Date();
+  const todayStart = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate()).getTime();
+  const tomorrowStart = todayStart + 86_400_000;
+  const yesterdayStart = todayStart - 86_400_000;
+
+  const isPastFilter = filter === 'Completed' || filter === 'Cancelled';
+
+  const sortedFiltered = [...filteredAppointments].sort((a, b) => {
+    const dtA = parseApptMs(a.date, a.time) || new Date(a.date || 0).getTime();
+    const dtB = parseApptMs(b.date, b.time) || new Date(b.date || 0).getTime();
+    return isPastFilter ? dtB - dtA : dtA - dtB;
+  });
+
+  const missedItems: any[] = [];
+  const dateGroups: Record<string, any[]> = {};
+
+  sortedFiltered.forEach((app) => {
+    const apptMs = parseApptMs(app.date, app.time);
+    const isMissed = apptMs > 0 && apptMs < nowMs && app.status === 'Upcoming';
+    if (isMissed) {
+      missedItems.push(app);
+    } else {
+      const key = app.date || 'unknown';
+      if (!dateGroups[key]) dateGroups[key] = [];
+      dateGroups[key].push(app);
+    }
+  });
+
+  type AppSection = { title: string; data: any[]; isMissed?: boolean };
+  const sections: AppSection[] = [];
+
+  const sortedDateKeys = Object.keys(dateGroups).sort();
+  if (isPastFilter) {
+    sortedDateKeys.reverse();
+  }
+
+  sortedDateKeys.forEach((dateKey) => {
+    const [y, m, d] = dateKey.split('-').map(Number);
+    const appDate = new Date(y, m - 1, d).getTime();
+    const diffDays = Math.round((appDate - todayStart) / 86_400_000);
+    let label: string;
+    if (appDate === todayStart) {
+      label = 'Today';
+    } else if (appDate === tomorrowStart) {
+      label = 'Tomorrow';
+    } else if (appDate === yesterdayStart) {
+      label = 'Yesterday';
+    } else {
+      const dateObj = new Date(y, m - 1, d);
+      const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+      const monthDay = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      label = diffDays > 1
+        ? `${dayName}, ${monthDay} · in ${diffDays} days`
+        : `${dayName}, ${monthDay}`;
+    }
+    sections.push({ title: label, data: dateGroups[dateKey] });
+  });
+
+  if (missedItems.length > 0) {
+    sections.push({ title: 'Earlier', data: missedItems, isMissed: true });
+  }
+
+  const handleCancelWithConfirm = (id: string) => {
+    Alert.alert(
+      'Cancel Appointment',
+      'Are you sure you want to cancel this appointment?',
+      [
+        { text: 'Keep Appointment', style: 'cancel' },
+        { text: 'Yes, Cancel', style: 'destructive', onPress: () => handleCancelClick(id) },
+      ]
+    );
+  };
+
+  const handleRebook = (app: any) => {
+    const matchingPet = pets.find(p => p.name?.toLowerCase() === app.petName?.toLowerCase());
+    if (matchingPet) {
+      setSelectedPetId(matchingPet.id);
+    }
+    setCurrentStep(1);
+    setModalVisible(true);
+  };
+
   // === BOOKING MODAL STATE ===
   const [isModalVisible, setModalVisible] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -211,6 +328,19 @@ export default function AppointmentsScreen() {
   const [paymentMethod, setPaymentMethod] = useState('');
   const [referenceNumber, setReferenceNumber] = useState('');
   const [receiptImage, setReceiptImage] = useState('');
+
+  useEffect(() => {
+    if (route?.params?.selectedDate) {
+      setSelectedDate(route.params.selectedDate);
+      setCurrentStep(1);
+      setModalVisible(true);
+    } else if (route?.params?.openBooking) {
+      setModalVisible(true);
+    }
+    if (route?.params?.selectedPetId) {
+      setSelectedPetId(route.params.selectedPetId);
+    }
+  }, [route?.params]);
 
   const handlePickReceiptImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -1095,155 +1225,93 @@ export default function AppointmentsScreen() {
 
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
-      <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+    <View style={styles.screenContainer}>
+      <StatusBar barStyle="light-content" backgroundColor="#35501F" />
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <GuestAuthModal
+          visible={guestModalVisible}
+          onClose={closeGuestModal}
+          onLogin={() => { closeGuestModal(); navigation.navigate('Login'); }}
+          onRegister={() => { closeGuestModal(); navigation.navigate('Register'); }}
+        />
 
-      {/* Header */}
-      <View style={[styles.header, { backgroundColor: theme.headerBackground }]}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          {navigation?.canGoBack() && (
-            <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginRight: 15, padding: 5 }}>
-              <FontAwesome5 name="arrow-left" size={20} color="white" />
-            </TouchableOpacity>
-          )}
-          <Text style={styles.headerTitle}>My Appointments</Text>
-        </View>
-        <TouchableOpacity 
-          style={styles.bookNowButton} 
-          onPress={() => {
+        {/* Header */}
+        <AppointmentsHeader
+          canGoBack={navigation?.canGoBack() ?? false}
+          onBack={() => {
+            if (navigation?.canGoBack()) {
+              navigation.goBack();
+            } else {
+              navigation.navigate('PetOwnerTabs');
+            }
+          }}
+          onBookNow={() => {
             if (!user?.id || user.id.trim() === '') {
-              promptGuestAuth(navigation, language);
+              promptGuestAuth();
             } else {
               setModalVisible(true);
             }
           }}
-        >
-          <Text style={styles.bookNowText}>Book Now</Text>
-        </TouchableOpacity>
-      </View>
+        />
 
-      <ScrollView
-        style={styles.mainScroll}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#3a7d55']} />
-        }
-      >
-
-        {/* Stats Grid */}
-        <View style={styles.statsContainer}>
-          {stats.map((stat, idx) => (
-            <View key={idx} style={[styles.statCard, { backgroundColor: theme.card, borderColor: theme.border }]}>
-              <View style={[styles.statIconBadge, { backgroundColor: stat.color + '15' }]}>
-                <FontAwesome5 name={stat.icon} size={16} color={stat.color} />
-              </View>
-              <Text style={[styles.statCount, { color: theme.text }]}>{stat.count}</Text>
-              <Text style={[styles.statLabel, { color: theme.subtext }]}>{stat.label}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* Filters */}
-        <View style={styles.filterRow}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {['All', 'Upcoming', 'Completed', 'Cancelled'].map((f) => (
-              <TouchableOpacity
-                key={f}
-                style={[styles.filterChip, { backgroundColor: theme.card, borderColor: theme.border }, filter === f && styles.filterChipActive]}
-                onPress={() => setFilter(f)}
-              >
-                <Text style={[styles.filterText, { color: theme.subtext }, filter === f && styles.filterTextActive]}>{f}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Appointment List */}
-        <View style={styles.listContainer}>
-          {filteredAppointments.length === 0 ? (
-            <View style={[styles.emptyState, { backgroundColor: theme.card, borderColor: theme.border }]}>
-              <Text style={[styles.emptyStateText, { color: theme.subtext }]}>No appointments yet. Book your first visit! 🐾</Text>
-            </View>
-          ) : (
-            filteredAppointments.map((app) => (
-              <View key={app.id} style={[styles.listItem, { backgroundColor: theme.card, borderColor: theme.border }]}>
-                <TouchableOpacity
-                  activeOpacity={0.7}
-                  onPress={() => {
-                    setSelectedAppointment(app);
-                    setIsDetailModalVisible(true);
-                  }}
-                >
-                  <View style={[styles.itemHeader, { borderBottomColor: theme.border }]}>
-                    <View style={styles.itemDateBadge}>
-                      <Text style={[styles.itemDateText, { color: theme.text }]}>{app.date}</Text>
-                      <Text style={[styles.itemTimeText, { color: theme.subtext }]}>{app.time}</Text>
-                    </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <View style={[styles.statusTag, { backgroundColor: app.statusColor.bg }]}>
-                        <Text style={[styles.statusTagText, { color: app.statusColor.text }]}>{app.status === 'Upcoming' ? app.statusLabel : app.status}</Text>
-                      </View>
-                      <FontAwesome5 name="chevron-right" size={12} color={isDarkMode ? '#718096' : '#a0aec0'} />
-                    </View>
-                  </View>
-
-                  <View style={styles.itemBody}>
-                    <View style={styles.clientSection}>
-                      <View style={[styles.petAvatar, { backgroundColor: isDarkMode ? '#1c330e' : '#e6f2eb' }]}>
-                        <FontAwesome5 name={app.petIcon} size={20} color={isDarkMode ? '#EAF3DE' : '#2E5E3E'} />
-                      </View>
-                      <View>
-                        <Text style={[styles.petNameHeader, { color: theme.text }]}>{app.petName}</Text>
-                        <Text style={[styles.petBreedText, { color: theme.subtext }]}>{app.breed}</Text>
-                      </View>
-                    </View>
-                    <View style={[styles.serviceSection, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f7fafc' }]}>
-                      <View>
-                        <Text style={[styles.serviceType, { color: theme.text }]}>{app.service}</Text>
-                        <Text style={[styles.serviceMode, { color: theme.subtext }]}>{app.mode}</Text>
-                        {app.sessionCode && (
-                          <Text style={{ fontSize: 13, fontFamily: 'Montserrat-Bold', color: '#2D5016', marginTop: 4 }}>
-                            🔑 Code: {app.sessionCode}
-                          </Text>
-                        )}
-                      </View>
-                    </View>
-                  </View>
-                </TouchableOpacity>
-
-                {/* Owner Actions for Upcoming or Cancel Pending Appointments */}
-                {(app.status === 'Upcoming' || app.status === 'Cancel Pending') && (() => {
-                  if (app.status === 'Cancel Pending') {
-                    return (
-                      <View style={styles.actionRowList}>
-                        <TouchableOpacity style={[styles.actionButtonList, styles.withdrawButtonList]} onPress={() => handleWithdrawCancelClick(app.id)}>
-                          <Text style={[styles.actionButtonTextList, styles.withdrawButtonTextList]}>Withdraw Cancellation</Text>
-                        </TouchableOpacity>
-                      </View>
-                    );
-                  }
-                  const createdTime = app.createdAt ? new Date(app.createdAt).getTime() : Date.now();
-                  const now = Date.now();
-                  const isWithin24Hours = (now - createdTime) < 24 * 60 * 60 * 1000;
-                  return (
-                    <View style={styles.actionRowList}>
-                      <TouchableOpacity style={styles.actionButtonList} onPress={() => handleRescheduleClick(app.id)}>
-                        <Text style={styles.actionButtonTextList}>Reschedule</Text>
-                      </TouchableOpacity>
-                      {isWithin24Hours && (
-                        <TouchableOpacity style={[styles.actionButtonList, styles.cancelButtonList]} onPress={() => handleCancelClick(app.id)}>
-                          <Text style={[styles.actionButtonTextList, styles.cancelButtonTextList]}>Cancel</Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  );
-                })()}
-              </View>
-            ))
+        {/* Appointments SectionList */}
+        <SectionList
+          sections={sections}
+          keyExtractor={(item, index) => item.id ? `${item.id}-${index}` : String(index)}
+          renderSectionHeader={({ section: { title, isMissed } }) => (
+            <SectionHeader title={title} isMissed={isMissed} />
           )}
-        </View>
-        <View style={{ height: 40 }} />
-      </ScrollView>
+          renderItem={({ item, section }) => (
+            <AppointmentCard
+              appointment={item}
+              isMissed={section.isMissed}
+              onPress={() => {
+                setSelectedAppointment(item);
+                setIsDetailModalVisible(true);
+              }}
+              onReschedule={(id) => handleRescheduleClick(id)}
+              onCancel={(id) => handleCancelWithConfirm(id)}
+              onWithdrawCancel={(id) => handleWithdrawCancelClick(id)}
+              onRebook={(app) => handleRebook(app)}
+            />
+          )}
+          ListHeaderComponent={
+            <View style={styles.listHeader}>
+              <StatsRow
+                total={appointments.length}
+                upcoming={filterCounts.Upcoming ?? 0}
+                completed={filterCounts.Completed ?? 0}
+              />
+              <FilterChips
+                active={filter}
+                counts={filterCounts}
+                onSelect={(f) => setFilter(f)}
+              />
+            </View>
+          }
+          ListEmptyComponent={
+            <EmptyState
+              filter={filter}
+              onBookNow={() => {
+                if (!user?.id || user.id.trim() === '') {
+                  promptGuestAuth();
+                } else {
+                  setModalVisible(true);
+                }
+              }}
+            />
+          }
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#35501F']} />
+          }
+          showsVerticalScrollIndicator={false}
+          stickySectionHeadersEnabled={false}
+          style={styles.mainList}
+          contentContainerStyle={[
+            styles.listContent,
+            { paddingBottom: Math.max(insets.bottom + 70, 90) },
+          ]}
+        />
 
       {/* Appointment Detail Modal */}
       <Modal
@@ -1556,12 +1624,31 @@ export default function AppointmentsScreen() {
         </SafeAreaView>
       </Modal>
 
-    </SafeAreaView>
+      </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#F4F1EC' },
+  screenContainer: {
+    flex: 1,
+    backgroundColor: '#35501F',
+  },
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#35501F',
+  },
+  mainList: {
+    flex: 1,
+    backgroundColor: '#F4F1EC',
+  },
+  listContent: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  listHeader: {
+    marginBottom: 4,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -2081,8 +2168,11 @@ const styles = StyleSheet.create({
   },
   detailHeaderTitle: {
     fontSize: 17,
+    lineHeight: 24,
+    paddingVertical: Platform.OS === 'android' ? 4 : 2,
     fontFamily: 'Catcut',
     color: '#1a202c',
+    ...(Platform.OS === 'android' ? { includeFontPadding: false } : {}),
   },
   detailStatusBanner: {
     flexDirection: 'row',
@@ -2096,7 +2186,7 @@ const styles = StyleSheet.create({
   },
   detailStatusText: {
     fontSize: 15,
-    fontFamily: 'Montserrat-Bold',
+    fontFamily: 'PlusJakartaSans-Bold',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -2110,7 +2200,7 @@ const styles = StyleSheet.create({
   },
   detailSectionTitle: {
     fontSize: 13,
-    fontFamily: 'Montserrat-Bold',
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#2D5016',
     marginBottom: 12,
     textTransform: 'uppercase',
@@ -2131,12 +2221,14 @@ const styles = StyleSheet.create({
   },
   detailPetName: {
     fontSize: 18,
-    fontFamily: 'Montserrat-Bold',
+    lineHeight: 24,
+    fontFamily: 'PlusJakartaSans-Bold',
     color: '#1a202c',
   },
   detailPetBreed: {
     fontSize: 13,
-    fontFamily: 'Montserrat-Regular',
+    lineHeight: 18,
+    fontFamily: 'PlusJakartaSans-Regular',
     color: '#718096',
     marginTop: 2,
   },
@@ -2156,14 +2248,14 @@ const styles = StyleSheet.create({
   },
   detailInfoLabel: {
     fontSize: 11,
-    fontFamily: 'Montserrat-Medium',
+    fontFamily: 'PlusJakartaSans-Medium',
     color: '#a0aec0',
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
   detailInfoValue: {
     fontSize: 15,
-    fontFamily: 'Montserrat-SemiBold',
+    fontFamily: 'PlusJakartaSans-SemiBold',
     color: '#2d3748',
     marginTop: 1,
   },

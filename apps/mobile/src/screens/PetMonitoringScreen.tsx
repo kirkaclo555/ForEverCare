@@ -25,10 +25,12 @@ import { useTheme } from '../context/ThemeContext';
 import { useUser } from '../context/UserContext';
 import { useLanguage } from '../context/LanguageContext';
 import { usePetContext, PetProfile } from '../context/PetContext';
-import { promptGuestAuth } from '../utils/auth';
+import GuestAuthModal from '../components/GuestAuthModal';
+import { useGuestAuth } from '../utils/auth';
 
 type RootStackParamList = {
   Login: undefined;
+  Register: undefined;
   Home: undefined;
   Users: undefined;
   Appointments: undefined;
@@ -53,6 +55,7 @@ const getAvatarUri = (avatar: string) => {
 export default function PetMonitoringScreen({ navigation }: Props) {
   const { theme, isDarkMode } = useTheme();
   const { user } = useUser();
+  const { guestModalVisible, promptGuestAuth, closeGuestModal } = useGuestAuth();
   const { language } = useLanguage();
   const { pets, refreshPets } = usePetContext();
 
@@ -255,7 +258,7 @@ export default function PetMonitoringScreen({ navigation }: Props) {
   // Start Monitoring Session
   const handleOpenStartMonitoring = () => {
     if (!user?.id || user.id.trim() === '') {
-      promptGuestAuth(navigation, language);
+      promptGuestAuth();
       return;
     }
     if (!selectedPet) return;
@@ -506,6 +509,13 @@ export default function PetMonitoringScreen({ navigation }: Props) {
   return (
     <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
       <StatusBar barStyle={isDarkMode ? "light-content" : "dark-content"} />
+
+      <GuestAuthModal
+        visible={guestModalVisible}
+        onClose={closeGuestModal}
+        onLogin={() => { closeGuestModal(); navigation.navigate('Login'); }}
+        onRegister={() => { closeGuestModal(); navigation.navigate('Register'); }}
+      />
 
       {/* Header */}
       <View style={[styles.header, { backgroundColor: theme.headerBackground }]}>

@@ -78,35 +78,16 @@ function MoreStackNavigator() {
   );
 }
 
+import CustomTabBar from './src/components/navigation/TabBar';
+
 function MainTabNavigator() {
-  const { theme, isDarkMode } = useTheme();
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarActiveTintColor: isDarkMode ? '#EAF3DE' : '#2E5E3E',
-        tabBarInactiveTintColor: isDarkMode ? '#718096' : '#a0aec0',
-        tabBarStyle: {
-          paddingBottom: 5,
-          paddingTop: 5,
-          height: 60,
-          backgroundColor: theme.tabBarBackground,
-          borderTopWidth: 1,
-          borderTopColor: theme.border,
-        },
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName: any = 'home';
-          if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline';
-          else if (route.name === 'Appointments') iconName = focused ? 'calendar' : 'calendar-outline';
-          else if (route.name === 'Telemed') iconName = focused ? 'videocam' : 'videocam-outline';
-          else if (route.name === 'Products') iconName = focused ? 'cart' : 'cart-outline';
-          else if (route.name === 'More') iconName = focused ? 'ellipsis-horizontal' : 'ellipsis-horizontal-outline';
-          return <Ionicons name={iconName} size={size} color={color} />;
-        },
-      })}
+      tabBar={(props) => <CustomTabBar {...props} />}
+      screenOptions={{ headerShown: false }}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Appointments" component={AppointmentsScreen} />
+      <Tab.Screen name="Appointments" component={AppointmentsScreen} options={{ tabBarLabel: 'Bookings' }} />
       <Tab.Screen name="Telemed" component={TelemedicineScreen} options={{ tabBarLabel: 'Telemed' }} />
       <Tab.Screen name="Products" component={ProductsScreen} />
       <Tab.Screen 
@@ -147,7 +128,7 @@ export default function App() {
           <LanguageProvider>
             <PetProvider>
               <NavigationContainer>
-                <Stack.Navigator initialRouteName="PetOwnerTabs" screenOptions={{ headerShown: false }}>
+                <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: false }}>
                   <Stack.Screen name="Welcome" component={WelcomeScreen} />
                   <Stack.Screen name="Login" component={LoginScreen} />
                   <Stack.Screen name="PetOwnerTabs" component={MainTabNavigator} />

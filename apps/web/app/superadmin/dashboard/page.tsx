@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppointments, DEFAULT_TIME_SLOTS } from '../../../hooks/useAppointments';
 import AppointmentDonutChart from '../../components/AppointmentDonutChart';
-import { QuickActionsRow, AlertsFeed, TelemedicineQueue, RevenueTrendChart, FeedbackCarousel } from '../../components/DashboardWidgets';
+import { QuickActionsRow, AlertsFeed, TelemedicineQueue, RevenueTrendChart, FeedbackCarousel, DashboardStats } from '../../components/DashboardWidgets';
 import './dashboard.css';
 
 export default function DashboardPage() {
@@ -75,43 +75,7 @@ export default function DashboardPage() {
             <QuickActionsRow />
         </div>
 
-        <div className="stats-grid">
-            <div className="stat-card" onClick={() => console.log('viewDetails(\'appointments\')')}>
-                <div className="stat-header">
-                    <i className="fas fa-calendar-check"></i>
-                    <h3 id="todayAppointmentsLabel">Today's Appointments</h3>
-                </div>
-                <div className="stat-value">3</div>
-                <div className="stat-trend positive">↑ 12% from yesterday</div>
-            </div>
-
-            <div className="stat-card" onClick={() => console.log('viewDetails(\'patients\')')}>
-                <div className="stat-header">
-                    <i className="fas fa-paw"></i>
-                    <h3 id="totalPatientsLabel">Total Pets</h3>
-                </div>
-                <div className="stat-value">1</div>
-                <div className="stat-trend positive">↑ 5% this month</div>
-            </div>
-
-            <div className="stat-card" onClick={() => console.log('viewDetails(\'consultations\')')}>
-                <div className="stat-header">
-                    <i className="fas fa-clock"></i>
-                    <h3 id="pendingConsultationsLabel">Pending Consultations</h3>
-                </div>
-                <div className="stat-value">3</div>
-                <div className="stat-trend negative">↓ 3 from yesterday</div>
-            </div>
-
-            <div className="stat-card" onClick={() => console.log('viewDetails(\'revenue\')')}>
-                <div className="stat-header">
-                    <i className="fas fa-peso-sign"></i>
-                    <h3 id="todayRevenueLabel">Revenue</h3>
-                </div>
-                <div className="stat-value">₱2,450</div>
-                <div className="stat-trend positive">↑ 1.5% from average</div>
-            </div>
-        </div>
+        <DashboardStats />
 
         <div className="dashboard-grid">
             <div className="left-column" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>

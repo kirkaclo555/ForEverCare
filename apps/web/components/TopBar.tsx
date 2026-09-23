@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useNotifications } from '../hooks/useNotifications';
 import { useAppointments } from '../hooks/useAppointments';
 import { useLanguage } from '../context/LanguageContext';
+import { useAdminProfile } from '../context/AdminProfileContext';
 
 export default function TopBar({ toggleSidebar }: { toggleSidebar: () => void }) {
   const router = useRouter();
@@ -22,6 +23,12 @@ export default function TopBar({ toggleSidebar }: { toggleSidebar: () => void })
 
   const [profilePic, setProfilePic] = useState<string | null>(null);
   const { language, changeLanguage, t } = useLanguage();
+  const { profile, profilePic: contextPic } = useAdminProfile();
+
+  const isSuperAdmin = pathname.includes('superadmin');
+  const activePic = contextPic || profilePic;
+  const adminName = profile?.fullName || (isSuperAdmin ? 'Superadmin' : 'Admin');
+  const adminEmail = profile?.email || (isSuperAdmin ? 'fureverpawcaresuperadmin@gmail.com' : 'adminfureverpawcare@gmail.com');
 
   useEffect(() => {
     const handleNewPopup = (e: any) => {
@@ -417,18 +424,18 @@ export default function TopBar({ toggleSidebar }: { toggleSidebar: () => void })
           </div>
 
           {/* User Profile */}
-          <div className="user-profile" onClick={() => router.push(pathname.includes('superadmin') ? '/superadmin/profile' : '/admin/profile')} style={{ cursor: 'pointer' }}>
+          <div className="user-profile" onClick={() => router.push(isSuperAdmin ? '/superadmin/profile' : '/admin/profile')} style={{ cursor: 'pointer' }}>
             <div className="avatar" style={{ overflow: 'hidden' }}>
-              {profilePic ? (
-                <img src={profilePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              {activePic ? (
+                <img src={activePic} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
-                <span>{pathname.includes('superadmin') ? 'S' : 'A'}</span>
+                <span>{isSuperAdmin ? 'S' : 'A'}</span>
               )}
             </div>
 
             <div>
-              <div style={{ fontWeight: 600, color: '#ffffff' }}>{pathname.includes('superadmin') ? 'Superadmin' : 'Admin'}</div>
-              <div style={{ fontSize: '0.65rem', color: '#ffffff', opacity: 0.9 }}>{pathname.includes('superadmin') ? 'fureverpawcaresuperadmin@gmail.com' : 'adminfureverpawcare@gmail.com'}</div>
+              <div style={{ fontWeight: 600, color: '#ffffff' }}>{adminName}</div>
+              <div style={{ fontSize: '0.65rem', color: '#ffffff', opacity: 0.9 }}>{adminEmail}</div>
             </div>
           </div>
         </div>
