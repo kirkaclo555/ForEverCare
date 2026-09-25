@@ -217,43 +217,113 @@ export function AlertsFeed() {
 // ─── Telemedicine Queue ───────────────────────────────────────────────────────
 
 export function TelemedicineQueue({ appointments }: { appointments: AppointmentItem[] }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const isAdmin = pathname?.startsWith('/admin');
+  const telemedPath = isAdmin ? '/admin/telemedicine' : '/superadmin/telemedicine';
+
   const today = new Date();
   const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
-  const upcomingTelemed = appointments
-    .filter(a => a.date === todayStr && a.type === 'telemedicine' && (a.status.toLowerCase() === 'paid' || a.status.toLowerCase() === 'confirmed'))
-    .sort((a, b) => a.time.localeCompare(b.time));
+  const upcomingTelemed = (appointments || [])
+    .filter(a => {
+      const isTelemed = a.type?.toLowerCase() === 'telemedicine';
+      const isToday = a.date && a.date.startsWith(todayStr);
+      const isActionable = ['paid', 'confirmed', 'pending'].includes(a.status?.toLowerCase() || '');
+      return isTelemed && isToday && isActionable;
+    })
+    .sort((a, b) => (a.time || '').localeCompare(b.time || ''));
 
   const upNext = upcomingTelemed.length > 0 ? upcomingTelemed[0] : null;
+  const remainingCount = upcomingTelemed.length - 1;
+
+  const handleStartSession = (app: AppointmentItem) => {
+    router.push(telemedPath);
+  };
 
   return (
     <div className="telemed-card">
-      <div className="section-header" style={{ marginBottom: '15px' }}>
-        <h2 style={{ fontSize: '1rem' }}>
-          <i className="fas fa-video" style={{ marginRight: '8px', color: '#319795' }}></i> Telemedicine Queue
+      <div className="telemed-header">
+        <h2>
+          <i className="fas fa-video" style={{ color: '#319795' }}></i> Telemedicine Queue
         </h2>
+        {upcomingTelemed.length > 0 ? (
+          <span className="telemed-badge">{upcomingTelemed.length} Queued Today</span>
+        ) : (
+          <button 
+            type="button" 
+            onClick={() => router.push(telemedPath)} 
+            className="telemed-view-link"
+          >
+            Hub <i className="fas fa-arrow-right"></i>
+          </button>
+        )}
       </div>
       <div className="telemed-content">
         {!upNext ? (
           <div className="empty-telemed">
             <i className="fas fa-laptop-medical"></i>
             <p>No telemedicine consultations queued for today</p>
+            <button 
+              type="button" 
+              className="empty-telemed-btn" 
+              onClick={() => router.push(telemedPath)}
+            >
+              <i className="fas fa-external-link-alt" style={{ marginRight: '6px', fontSize: '0.75rem' }}></i>
+              Go to Telemedicine
+            </button>
           </div>
         ) : (
-          <div className="active-call-preview">
-            <div className="patient-avatar-placeholder">
-              <i className="fas fa-paw"></i>
-            </div>
-            <div className="call-details">
-              <h4>{upNext.pet}</h4>
-              <p>Client: {upNext.owner}</p>
-              <div className="call-time-badge">
-                <i className="far fa-clock"></i> {upNext.time}
+          <div>
+            <div className="active-call-preview">
+              <div className="patient-avatar-placeholder">
+                <i className="fas fa-paw"></i>
               </div>
+              <div className="call-details">
+                <h4>{upNext.pet || 'Patient'}</h4>
+                <p>Client: {upNext.owner || 'Unknown'}</p>
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div className="call-time-badge">
+                    <i className="far fa-clock"></i> {upNext.time || 'Scheduled'}
+                  </div>
+                  {upNext.sessionCode && (
+                    <span style={{ fontSize: '0.72rem', background: '#e2e8f0', color: '#4a5568', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>
+                      {upNext.sessionCode}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <button 
+                type="button" 
+                className="join-call-btn"
+                onClick={() => handleStartSession(upNext)}
+                title="Open Telemedicine consultation"
+              >
+                <i className="fas fa-video"></i> Start Session
+              </button>
             </div>
-            <button className="join-call-btn">
-              <i className="fas fa-video"></i> Start Session
-            </button>
+
+            {remainingCount > 0 && (
+              <div className="telemed-more-queue">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', color: '#718096', fontWeight: 600, marginTop: '8px' }}>
+                  <span>Next in queue ({remainingCount})</span>
+                  <button 
+                    type="button"
+                    onClick={() => router.push(telemedPath)} 
+                    className="telemed-view-link"
+                    style={{ fontSize: '0.72rem' }}
+                  >
+                    View All
+                  </button>
+                </div>
+                {upcomingTelemed.slice(1, 3).map((item) => (
+                  <div key={item.id} className="telemed-mini-item">
+                    <span><strong>{item.pet}</strong> ({item.owner})</span>
+                    <span style={{ color: '#319795', fontWeight: 600 }}>{item.time}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>

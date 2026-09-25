@@ -2855,3 +2855,259 @@ body.dark-mode .bar-wrapper { background: #1a202c; }
 }
 body.dark-mode .bar-label { color: #a0aec0; }
 
+/* Telemedicine Queue Widget */
+.telemed-card {
+    background: white;
+    border: 1px solid #cde0d4;
+    border-radius: 16px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    transition: all 0.2s ease;
+}
+
+body.dark-mode .telemed-card {
+    background: #2d3748;
+    border-color: #4a5568;
+    color: #e2e8f0;
+}
+
+.telemed-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #edf2f7;
+}
+
+body.dark-mode .telemed-header {
+    border-color: #4a5568;
+}
+
+.telemed-header h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #1a202c;
+}
+
+body.dark-mode .telemed-header h2 {
+    color: #f7fafc;
+}
+
+.telemed-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 12px;
+    background: #e6fffa;
+    color: #234e52;
+}
+
+body.dark-mode .telemed-badge {
+    background: #234e52;
+    color: #b2f5ea;
+}
+
+.telemed-view-link {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #319795;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0;
+    transition: color 0.2s;
+}
+
+.telemed-view-link:hover {
+    color: #285e61;
+    text-decoration: underline;
+}
+
+.empty-telemed {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 16px;
+    text-align: center;
+    background: #f7fafc;
+    border-radius: 12px;
+    border: 1px dashed #cbd5e0;
+}
+
+body.dark-mode .empty-telemed {
+    background: #1a202c;
+    border-color: #4a5568;
+}
+
+.empty-telemed i {
+    font-size: 2.2rem;
+    color: #a0aec0;
+    margin-bottom: 10px;
+    opacity: 0.8;
+}
+
+.empty-telemed p {
+    font-size: 0.88rem;
+    color: #718096;
+    margin: 0 0 12px 0;
+}
+
+body.dark-mode .empty-telemed p {
+    color: #a0aec0;
+}
+
+.empty-telemed-btn {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #319795;
+    background: white;
+    border: 1px solid #b2f5ea;
+    border-radius: 8px;
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.empty-telemed-btn:hover {
+    background: #e6fffa;
+    border-color: #319795;
+}
+
+body.dark-mode .empty-telemed-btn {
+    background: #2d3748;
+    color: #4fd1c5;
+    border-color: #4a5568;
+}
+
+.active-call-preview {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    background: #f0fff4;
+    border: 1px solid #c6f6d5;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+}
+
+body.dark-mode .active-call-preview {
+    background: #1c4532;
+    border-color: #276749;
+}
+
+.patient-avatar-placeholder {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: #319795;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.call-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.call-details h4 {
+    margin: 0 0 2px 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #2d3748;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+body.dark-mode .call-details h4 {
+    color: #edf2f7;
+}
+
+.call-details p {
+    margin: 0 0 6px 0;
+    font-size: 0.8rem;
+    color: #718096;
+}
+
+body.dark-mode .call-details p {
+    color: #a0aec0;
+}
+
+.call-time-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #22543d;
+    background: #c6f6d5;
+    padding: 2px 8px;
+    border-radius: 6px;
+}
+
+body.dark-mode .call-time-badge {
+    background: #276749;
+    color: #9ae6b4;
+}
+
+.join-call-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #319795;
+    color: white;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.join-call-btn:hover {
+    background: #285e61;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(49, 151, 149, 0.3);
+}
+
+.telemed-more-queue {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.telemed-mini-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: #f7fafc;
+    border: 1px solid #edf2f7;
+    font-size: 0.8rem;
+}
+
+body.dark-mode .telemed-mini-item {
+    background: #1a202c;
+    border-color: #2d3748;
+}
+
+

@@ -10,6 +10,7 @@ export type AppointmentItem = {
   owner: string;
   type: string;
   status: string;
+  sessionCode?: string;
 };
 
 interface AppointmentDonutChartProps {
