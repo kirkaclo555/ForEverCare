@@ -85,6 +85,7 @@ export default function AppointmentPage() {
   const [appointmentPurpose, setAppointmentPurpose] = useState('Check-up');
   const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState('all');
+  const [reasonFilter, setReasonFilter] = useState('all');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [appointmentToDecline, setAppointmentToDecline] = useState<string | null>(null);
   const [declineReason, setDeclineReason] = useState('');
@@ -475,6 +476,60 @@ export default function AppointmentPage() {
     setTimeout(() => setCopiedRef(false), 2000);
   };
 
+  const cleanAppPurpose = (purpose: string = '') => {
+    return (purpose || '').replace('[CANCEL_REQUESTED] ', '').replace('[CANCEL_REQUESTED]', '').trim();
+  };
+
+  const matchesReasonFilter = (purpose: string = '', filter: string) => {
+    if (filter === 'all') return true;
+    const p = cleanAppPurpose(purpose).toLowerCase();
+    switch (filter) {
+      case 'checkup':
+        return p.includes('check');
+      case 'vaccination':
+        return p.includes('vaccin');
+      case 'grooming':
+        return p.includes('groom');
+      case 'consultation':
+        return p.includes('consult');
+      case 'treatment':
+        return p.includes('treat') || p.includes('sick');
+      case 'deworming':
+        return p.includes('deworm');
+      case 'laboratory':
+        return p.includes('lab');
+      case 'emergency':
+        return p.includes('emerg');
+      case 'dental':
+        return p.includes('dent');
+      case 'followup':
+        return p.includes('follow');
+      case 'other':
+        return (
+          p.includes('other') ||
+          (!p.includes('check') &&
+           !p.includes('vaccin') &&
+           !p.includes('groom') &&
+           !p.includes('consult') &&
+           !p.includes('treat') &&
+           !p.includes('sick') &&
+           !p.includes('deworm') &&
+           !p.includes('lab') &&
+           !p.includes('emerg') &&
+           !p.includes('dent') &&
+           !p.includes('follow'))
+        );
+      default:
+        return p.includes(filter.toLowerCase());
+    }
+  };
+
+  const filteredAppointments = appointments.filter(app => {
+    const matchesStatus = statusFilter === 'all' || app.status.toLowerCase() === statusFilter.toLowerCase();
+    const matchesReason = matchesReasonFilter(app.purpose, reasonFilter);
+    return matchesStatus && matchesReason;
+  });
+
   return (
     <>
     <div className="module-content" style={{ width: "100%", padding: 0, margin: 0 }} id="mainContent" onClick={closeDropdown}>
@@ -487,6 +542,24 @@ export default function AppointmentPage() {
                     <option value="paid">Verified</option>
                     <option value="completed">Completed</option>
                     <option value="declined">Declined</option>
+                </select>
+            </div>
+
+            <div className="filter-group">
+                <span className="filter-label"><i className="fas fa-stethoscope" style={{marginRight: "5px"}}></i>Reason:</span>
+                <select className="filter-select" id="reasonFilter" value={reasonFilter} onChange={(e) => setReasonFilter(e.target.value)}>
+                    <option value="all">All Reasons</option>
+                    <option value="checkup">Annual Checkup / Check-up</option>
+                    <option value="vaccination">Vaccination</option>
+                    <option value="grooming">Grooming Services</option>
+                    <option value="consultation">Consultation</option>
+                    <option value="treatment">Treatment / Sick Visit</option>
+                    <option value="deworming">Deworming</option>
+                    <option value="laboratory">Laboratory</option>
+                    <option value="emergency">Emergency</option>
+                    <option value="dental">Dental Cleaning</option>
+                    <option value="followup">Follow-up</option>
+                    <option value="other">Other</option>
                 </select>
             </div>
 
@@ -518,15 +591,15 @@ export default function AppointmentPage() {
                     </tr>
                 </thead>
                 <tbody>
-                    {appointments.filter(app => statusFilter === 'all' || app.status.toLowerCase() === statusFilter.toLowerCase()).length === 0 ? (
+                    {filteredAppointments.length === 0 ? (
                         <tr>
                             <td colSpan={11} style={{ textAlign: 'center', padding: '40px', color: '#a0aec0' }}>
                                 <i className="fas fa-calendar-times" style={{ fontSize: '2rem', marginBottom: '10px', opacity: 0.5 }}></i>
-                                <p>No appointments found for the selected status.</p>
+                                <p>No appointments found matching the selected filters.</p>
                             </td>
                         </tr>
                     ) : (
-                        appointments.filter(app => statusFilter === 'all' || app.status.toLowerCase() === statusFilter.toLowerCase()).map((app) => {
+                        filteredAppointments.map((app) => {
                             const badge = getStatusBadgeConfig(app.status);
                             const cleanPurpose = app.purpose?.startsWith('[CANCEL_REQUESTED]')
                                 ? app.purpose.replace('[CANCEL_REQUESTED] ', '')

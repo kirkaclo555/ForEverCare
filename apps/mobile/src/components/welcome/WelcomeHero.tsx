@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     paddingHorizontal: 20,
     paddingTop: 8,
-    paddingBottom: 24,
+    paddingBottom: 12,
   },
   pawWatermark1: {
     position: 'absolute',
@@ -83,13 +83,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 12,
     elevation: 6,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   logo: {
-    width: 110,
-    height: 110,
+    width: 155,
+    height: 155,
     resizeMode: 'contain',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   brandTitle: {
     fontFamily: 'Catcut',

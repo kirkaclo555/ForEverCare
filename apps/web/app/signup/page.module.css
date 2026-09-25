@@ -352,6 +352,15 @@
   margin-bottom: 20px;
 }
 
+.inputLabel {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+}
+
 .nameRow {
   display: flex;
   gap: 15px;

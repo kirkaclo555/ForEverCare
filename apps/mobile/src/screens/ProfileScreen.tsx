@@ -30,6 +30,7 @@ import PetCardList from '../components/profile/PetCard';
 import InfoRow from '../components/profile/InfoRow';
 import SectionCard from '../components/profile/SectionCard';
 import SettingsRow from '../components/profile/SettingsRow';
+import ConfirmDialog from '../components/settings/ConfirmDialog';
 
 type Props = {
   navigation: NativeStackNavigationProp<any, any>;
@@ -43,6 +44,7 @@ export default function ProfileScreen({ navigation }: Props) {
 
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const isSavingRef = useRef(false);
 
   // Toast State
@@ -489,33 +491,28 @@ export default function ProfileScreen({ navigation }: Props) {
 
   // Account Actions
   const handleLogout = () => {
-    Alert.alert('Log Out', 'Are you sure you want to log out of your account?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Log Out',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await AsyncStorage.removeItem('@user_profile');
-            await updateUser({
-              id: '',
-              fullName: '',
-              firstName: '',
-              middleName: '',
-              lastName: '',
-              email: '',
-              phoneNumber: '',
-              address: '',
-              avatarUri: null,
-            });
-            navigation.replace('Welcome');
-          } catch (e) {
-            console.error('Logout error:', e);
-            navigation.replace('Welcome');
-          }
-        },
-      },
-    ]);
+    setLogoutModalVisible(true);
+  };
+
+  const performLogout = async () => {
+    try {
+      await AsyncStorage.removeItem('@user_profile');
+      await updateUser({
+        id: '',
+        fullName: '',
+        firstName: '',
+        middleName: '',
+        lastName: '',
+        email: '',
+        phoneNumber: '',
+        address: '',
+        avatarUri: null,
+      });
+      navigation.replace('Welcome');
+    } catch (e) {
+      console.error('Logout error:', e);
+      navigation.replace('Welcome');
+    }
   };
 
   const handleDeleteAccount = () => {
@@ -798,9 +795,7 @@ export default function ProfileScreen({ navigation }: Props) {
               <SectionCard title="Edit Personal Details" iconName="person-outline">
                 {/* First Name */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>
-                    First Name <Text style={styles.requiredStar}>*</Text>
-                  </Text>
+                  <Text style={styles.inputLabel}>First Name</Text>
                   <View style={[styles.inputBox, firstNameError ? styles.inputBoxError : null]}>
                     <Ionicons name="person" size={17} color="#6B7280" style={styles.inputIcon} />
                     <TextInput
@@ -851,7 +846,7 @@ export default function ProfileScreen({ navigation }: Props) {
 
                 {/* Bio Line */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Short Bio</Text>
+                  <Text style={styles.inputLabel}>Short Bio (Optional)</Text>
                   <View style={[styles.inputBox, styles.inputBoxMultiline]}>
                     <Ionicons
                       name="chatbubble-ellipses-outline"
@@ -875,11 +870,8 @@ export default function ProfileScreen({ navigation }: Props) {
 
               {/* Contact Information */}
               <SectionCard title="Edit Contact Information" iconName="call-outline">
-                {/* Phone Number */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>
-                    Phone Number <Text style={styles.requiredStar}>*</Text>
-                  </Text>
+                  <Text style={styles.inputLabel}>Phone Number</Text>
                   <View style={[styles.inputBox, phoneError ? styles.inputBoxError : null]}>
                     <Ionicons name="phone-portrait-outline" size={17} color="#6B7280" style={styles.inputIcon} />
                     <TextInput
@@ -890,7 +882,7 @@ export default function ProfileScreen({ navigation }: Props) {
                         if (phoneError) setPhoneError(null);
                       }}
                       keyboardType="phone-pad"
-                      placeholder="e.g. 0912-345-6789"
+                      placeholder="Phone Number"
                       placeholderTextColor="#9CA3AF"
                     />
                   </View>
@@ -908,7 +900,7 @@ export default function ProfileScreen({ navigation }: Props) {
                       onChangeText={setEmail}
                       keyboardType="email-address"
                       autoCapitalize="none"
-                      placeholder="e.g. petparent@example.com"
+                      placeholder="Email Address"
                       placeholderTextColor="#9CA3AF"
                     />
                   </View>
@@ -916,7 +908,7 @@ export default function ProfileScreen({ navigation }: Props) {
 
                 {/* Emergency Contact */}
                 <View style={styles.inputGroup}>
-                  <Text style={styles.inputLabel}>Emergency Contact</Text>
+                  <Text style={styles.inputLabel}>Emergency Contact (Optional)</Text>
                   <View style={styles.inputBox}>
                     <Ionicons name="heart-outline" size={17} color="#6B7280" style={styles.inputIcon} />
                     <TextInput
@@ -924,7 +916,7 @@ export default function ProfileScreen({ navigation }: Props) {
                       value={emergencyContact}
                       onChangeText={setEmergencyContact}
                       keyboardType="phone-pad"
-                      placeholder="e.g. 0928-111-2222 (Relative / Vet)"
+                      placeholder="Emergency Contact Number"
                       placeholderTextColor="#9CA3AF"
                     />
                   </View>
@@ -1033,6 +1025,13 @@ export default function ProfileScreen({ navigation }: Props) {
           </View>
         )}
       </KeyboardAvoidingView>
+
+      <ConfirmDialog
+        visible={logoutModalVisible}
+        onClose={() => setLogoutModalVisible(false)}
+        onConfirm={performLogout}
+        language={(user.language as any) || 'en'}
+      />
     </SafeAreaView>
   );
 }

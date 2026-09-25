@@ -125,6 +125,7 @@ export default function ProfilePage() {
                                         type="text" 
                                         value={editedInfo.fullName}
                                         onChange={(e) => setEditedInfo({...editedInfo, fullName: e.target.value})}
+                                        placeholder="e.g. Juan Dela Cruz"
                                         style={{ flex: 1, padding: '8px 0', border: 'none', borderBottom: '1px solid #e2e8f0', background: 'transparent', outline: 'none', fontSize: '1rem', color: '#2d3748', transition: 'border-color 0.3s' }}
                                         onFocus={(e) => e.target.style.borderBottom = '2px solid #2E5E3E'}
                                         onBlur={(e) => e.target.style.borderBottom = '1px solid #e2e8f0'}
@@ -141,6 +142,7 @@ export default function ProfilePage() {
                                         type="email" 
                                         value={editedInfo.email}
                                         onChange={(e) => setEditedInfo({...editedInfo, email: e.target.value})}
+                                        placeholder="example@gmail.com"
                                         style={{ flex: 1, padding: '8px 0', border: 'none', borderBottom: '1px solid #e2e8f0', background: 'transparent', outline: 'none', fontSize: '1rem', color: '#2d3748', transition: 'border-color 0.3s' }}
                                         onFocus={(e) => e.target.style.borderBottom = '2px solid #2E5E3E'}
                                         onBlur={(e) => e.target.style.borderBottom = '1px solid #e2e8f0'}
@@ -157,6 +159,7 @@ export default function ProfilePage() {
                                         type="tel" 
                                         value={editedInfo.contact}
                                         onChange={(e) => setEditedInfo({...editedInfo, contact: e.target.value})}
+                                        placeholder="+63 9XX XXX XXXX"
                                         style={{ flex: 1, padding: '8px 0', border: 'none', borderBottom: '1px solid #e2e8f0', background: 'transparent', outline: 'none', fontSize: '1rem', color: '#2d3748', transition: 'border-color 0.3s' }}
                                         onFocus={(e) => e.target.style.borderBottom = '2px solid #2E5E3E'}
                                         onBlur={(e) => e.target.style.borderBottom = '1px solid #e2e8f0'}
@@ -173,6 +176,7 @@ export default function ProfilePage() {
                                         type="text" 
                                         value={editedInfo.address}
                                         onChange={(e) => setEditedInfo({...editedInfo, address: e.target.value})}
+                                        placeholder="e.g. 123 Main St, Balingasag, Misamis Oriental"
                                         style={{ flex: 1, padding: '8px 0', border: 'none', borderBottom: '1px solid #e2e8f0', background: 'transparent', outline: 'none', fontSize: '1rem', color: '#2d3748', transition: 'border-color 0.3s' }}
                                         onFocus={(e) => e.target.style.borderBottom = '2px solid #2E5E3E'}
                                         onBlur={(e) => e.target.style.borderBottom = '1px solid #e2e8f0'}

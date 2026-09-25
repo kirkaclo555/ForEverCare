@@ -20,6 +20,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { API_URL } from '../config/api';
 import { useTheme } from '../context/ThemeContext';
 import { useUser } from '../context/UserContext';
+import LabeledInput from '../components/shared/LabeledInput';
 
 
 type RootStackParamList = {
@@ -40,10 +41,14 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
   const codeInputRef = useRef<TextInput>(null);
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [identifier, setIdentifier] = useState('');
+  const [identifierError, setIdentifierError] = useState('');
   const [userId, setUserId] = useState('');
   const [code, setCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  const [shakeTrigger, setShakeTrigger] = useState(0);
   const [focusedInput, setFocusedInput] = useState<string | null>(null);
   const [otpMethod, setOtpMethod] = useState<'email' | 'sms'>('email');
   const [isSendingCode, setIsSendingCode] = useState(false);
@@ -86,19 +91,26 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
   };
 
   const handleSendCode = async () => {
-    if (!identifier) {
-      Alert.alert('Error', `Please enter your registered ${otpMethod === 'email' ? 'email address' : 'phone number'}`);
+    if (!identifier.trim()) {
+      setShakeTrigger((prev) => prev + 1);
+      setIdentifierError(`Please enter your registered ${otpMethod === 'email' ? 'email address' : 'phone number'}`);
       return;
     }
 
     if (otpMethod === 'sms') {
       const cleanPhone = identifier.replace(/\D/g, '');
       if (cleanPhone.length !== 11) {
-        Alert.alert('Invalid Phone Number', 'Please enter a valid 11-digit mobile number (e.g., 0912-345-6789) to receive the reset code.');
+        setShakeTrigger((prev) => prev + 1);
+        setIdentifierError('Enter a valid 11-digit mobile number (e.g., 0912-345-6789)');
         return;
       }
+    } else if (!identifier.includes('@')) {
+      setShakeTrigger((prev) => prev + 1);
+      setIdentifierError('Enter a valid email address');
+      return;
     }
-    
+
+    setIdentifierError('');
     setIsSendingCode(true);
     try {
       const res = await fetch(`${API_URL}/api/auth/mobile/forgot-password`, {
@@ -212,10 +224,36 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
   };
 
   const handleResetPassword = async () => {
-    if (!newPassword || newPassword !== confirmPassword) {
-      Alert.alert('Error', 'Please enter a valid password and ensure both passwords match');
-      return;
+    let valid = true;
+    setShakeTrigger((prev) => prev + 1);
+
+    if (!newPassword) {
+      setPasswordError('New password is required');
+      valid = false;
+    } else if (newPassword.length < 8) {
+      setPasswordError('Password must be at least 8 characters');
+      valid = false;
+    } else if (!/[A-Z]/.test(newPassword)) {
+      setPasswordError('Must contain at least one uppercase letter');
+      valid = false;
+    } else if (!/[0-9]/.test(newPassword)) {
+      setPasswordError('Must contain at least one number');
+      valid = false;
+    } else {
+      setPasswordError('');
     }
+
+    if (!confirmPassword) {
+      setConfirmPasswordError('Please confirm your password');
+      valid = false;
+    } else if (newPassword !== confirmPassword) {
+      setConfirmPasswordError('Passwords do not match');
+      valid = false;
+    } else {
+      setConfirmPasswordError('');
+    }
+
+    if (!valid) return;
 
     const codeToVerify = (typeof code === 'string' ? code : '').trim();
     setIsResetting(true);
@@ -391,30 +429,34 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
                       </TouchableOpacity>
                     </View>
 
-                    <View style={[
-                      styles.inputContainer,
-                      { backgroundColor: isDarkMode ? '#1a1a1a' : '#f8faf9', borderColor: theme.border },
-                      focusedInput === 'identifier' && styles.inputFocused
-                    ]}>
-                      <Ionicons name={otpMethod === 'email' ? "mail-outline" : "call-outline"} size={20} color={focusedInput === 'identifier' ? '#3a7d55' : theme.subtext} style={styles.inputIcon} />
-                      <TextInput
-                        style={[styles.input, { color: theme.text }]}
-                        value={identifier}
-                        onChangeText={(text) => {
-                          if (otpMethod === 'sms') {
-                            setIdentifier(formatPhoneNumber(text));
-                          } else {
-                            setIdentifier(text);
-                          }
-                        }}
-                        placeholder={otpMethod === 'email' ? "Email Address" : "09XX-XXX-XXXX"}
-                        placeholderTextColor={theme.subtext}
-                        keyboardType={otpMethod === 'email' ? "email-address" : "phone-pad"}
-                        autoCapitalize="none"
-                        onFocus={() => setFocusedInput('identifier')}
-                        onBlur={() => setFocusedInput(null)}
-                      />
-                    </View>
+                    <LabeledInput
+                      label={otpMethod === 'email' ? "Email Address" : "Mobile Number"}
+                      value={identifier}
+                      onChangeText={(text) => {
+                        if (identifierError) setIdentifierError('');
+                        if (otpMethod === 'sms') {
+                          setIdentifier(formatPhoneNumber(text));
+                        } else {
+                          setIdentifier(text);
+                        }
+                      }}
+                      placeholder={otpMethod === 'email' ? "juan@example.com" : "0912-345-6789"}
+                      keyboardType={otpMethod === 'email' ? "email-address" : "phone-pad"}
+                      autoCapitalize="none"
+                      error={identifierError}
+                      shakeTrigger={shakeTrigger}
+                      isDarkMode={isDarkMode}
+                      themeText={theme.text}
+                      themeBorder={theme.border}
+                      themeSubtext={theme.subtext}
+                      leftElement={
+                        <Ionicons
+                          name={otpMethod === 'email' ? "mail-outline" : "call-outline"}
+                          size={18}
+                          color={theme.subtext}
+                        />
+                      }
+                    />
                     <TouchableOpacity onPress={handleSendCode} activeOpacity={0.8} style={styles.buttonShadow} disabled={isSendingCode}>
                       <View style={[styles.actionBtn, isSendingCode && { opacity: 0.85 }]}>
                         {isSendingCode ? (
@@ -552,40 +594,40 @@ export default function ForgotPasswordScreen({ navigation }: Props) {
                     <Text style={[styles.instructionText, { color: theme.subtext }]}>
                       Please enter your new password.
                     </Text>
-                    <View style={[
-                      styles.inputContainer,
-                      { backgroundColor: isDarkMode ? '#1a1a1a' : '#f8faf9', borderColor: theme.border },
-                      focusedInput === 'password' && styles.inputFocused
-                    ]}>
-                      <Ionicons name="lock-closed-outline" size={20} color={focusedInput === 'password' ? '#3a7d55' : theme.subtext} style={styles.inputIcon} />
-                      <TextInput
-                        style={[styles.input, { color: theme.text }]}
-                        value={newPassword}
-                        onChangeText={setNewPassword}
-                        placeholder="New Password"
-                        placeholderTextColor={theme.subtext}
-                        secureTextEntry
-                        onFocus={() => setFocusedInput('password')}
-                        onBlur={() => setFocusedInput(null)}
-                      />
-                    </View>
-                    <View style={[
-                      styles.inputContainer,
-                      { backgroundColor: isDarkMode ? '#1a1a1a' : '#f8faf9', borderColor: theme.border },
-                      focusedInput === 'confirmPassword' && styles.inputFocused
-                    ]}>
-                      <Ionicons name="lock-closed-outline" size={20} color={focusedInput === 'confirmPassword' ? '#3a7d55' : theme.subtext} style={styles.inputIcon} />
-                      <TextInput
-                        style={[styles.input, { color: theme.text }]}
-                        value={confirmPassword}
-                        onChangeText={setConfirmPassword}
-                        placeholder="Confirm Password"
-                        placeholderTextColor={theme.subtext}
-                        secureTextEntry
-                        onFocus={() => setFocusedInput('confirmPassword')}
-                        onBlur={() => setFocusedInput(null)}
-                      />
-                    </View>
+                    <LabeledInput
+                      label="New Password"
+                      value={newPassword}
+                      onChangeText={(t) => {
+                        setNewPassword(t);
+                        if (passwordError) setPasswordError('');
+                      }}
+                      placeholder="Enter new password"
+                      secureTextEntry
+                      error={passwordError}
+                      shakeTrigger={shakeTrigger}
+                      isDarkMode={isDarkMode}
+                      themeText={theme.text}
+                      themeBorder={theme.border}
+                      themeSubtext={theme.subtext}
+                      leftElement={<Ionicons name="lock-closed-outline" size={18} color={theme.subtext} />}
+                    />
+                    <LabeledInput
+                      label="Confirm Password"
+                      value={confirmPassword}
+                      onChangeText={(t) => {
+                        setConfirmPassword(t);
+                        if (confirmPasswordError) setConfirmPasswordError('');
+                      }}
+                      placeholder="Re-enter new password"
+                      secureTextEntry
+                      error={confirmPasswordError}
+                      shakeTrigger={shakeTrigger}
+                      isDarkMode={isDarkMode}
+                      themeText={theme.text}
+                      themeBorder={theme.border}
+                      themeSubtext={theme.subtext}
+                      leftElement={<Ionicons name="lock-closed-outline" size={18} color={theme.subtext} />}
+                    />
 
                     {/* Password Requirements */}
                     <View style={[styles.passwordRequirements, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f7fafc', borderColor: theme.border }]}>

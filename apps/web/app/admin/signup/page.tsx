@@ -32,14 +32,14 @@ export default function SignupPage() {
                 <div className="form-group">
                     <label>Full Name</label>
                     <div className="input-group">
-                        <input type="text" id="fullName" placeholder="Enter your full name" required />
+                        <input type="text" id="fullName" placeholder="e.g. Juan Dela Cruz" required />
                     </div>
                 </div>
 
                 <div className="form-group">
                     <label>Email Address</label>
                     <div className="input-group">
-                        <input type="email" id="email" placeholder="Enter your email" required />
+                        <input type="email" id="email" placeholder="example@gmail.com" required />
                     </div>
                 </div>
 

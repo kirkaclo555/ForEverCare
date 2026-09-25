@@ -42,7 +42,7 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
             case 'Products':
               return focused ? 'cart' : 'cart-outline';
             case 'More':
-              return focused ? 'ellipsis-horizontal' : 'ellipsis-horizontal-outline';
+              return focused ? 'menu' : 'menu-outline';
             default:
               return focused ? 'ellipse' : 'ellipse-outline';
           }

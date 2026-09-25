@@ -318,12 +318,13 @@ export default function LoginPage() {
 
               <form onSubmit={handleLogin}>
                 <div className={styles.formGroup}>
+                  <label className={styles.inputLabel}>Email Address</label>
                   <div className={styles.inputGroup}>
                     <input
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Email address"
+                      placeholder="example@gmail.com"
                       required
                       className={styles.inputField}
                     />
@@ -332,12 +333,13 @@ export default function LoginPage() {
                 </div>
 
                 <div className={styles.formGroup}>
+                  <label className={styles.inputLabel}>Password</label>
                   <div className={styles.inputGroup}>
                     <input
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Password"
+                      placeholder="Enter your password"
                       required
                       className={styles.inputField}
                     />
@@ -410,12 +412,13 @@ export default function LoginPage() {
                   <p>Enter your clinic email address and we'll send you a 6-digit code to reset your password.</p>
                   <form onSubmit={handleForgotPassword}>
                     <div className={styles.formGroup}>
+                      <label className={styles.inputLabel}>Email Address</label>
                       <div className={styles.inputGroup}>
                         <input
                           type="email"
                           value={forgotEmail}
                           onChange={(e) => setForgotEmail(e.target.value)}
-                          placeholder="Email address"
+                          placeholder="example@gmail.com"
                           required
                           className={styles.inputField}
                           disabled={isResetting}

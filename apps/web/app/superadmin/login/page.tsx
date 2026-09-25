@@ -168,7 +168,7 @@ export default function LoginPage() {
                       <div className="form-group">
                           <label>Email Address</label>
                           <div className="input-group">
-                              <input type="email" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} placeholder="Enter your email" required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', background: 'transparent' }} />
+                              <input type="email" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} placeholder="example@gmail.com" required style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #e2e8f0', background: 'transparent' }} />
                           </div>
                       </div>
                       <button type="submit" className="login-btn" style={{marginTop: '10px'}} disabled={isLoading}>
@@ -228,7 +228,7 @@ export default function LoginPage() {
                 <div className="form-group">
                     <label>Email Address</label>
                     <div className="input-group">
-                        <input type="email" id="email" placeholder="Enter your email" required />
+                        <input type="email" id="email" placeholder="example@gmail.com" required />
                     </div>
                 </div>
 

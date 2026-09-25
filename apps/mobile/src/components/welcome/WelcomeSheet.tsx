@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -103,9 +103,7 @@ export default function WelcomeSheet({
             {/* Middle text block */}
             <View style={styles.guestCardMiddle}>
               <Text style={styles.guestCardTitle}>Just looking around?</Text>
-              <Text style={styles.guestCardSub}>
-                Browse products and clinic info first.
-              </Text>
+              <Text style={styles.guestCardSub} numberOfLines={1}>Browse products & clinic info without an account.</Text>
             </View>
 
             {/* Right: "Guest" label + arrow */}

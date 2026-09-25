@@ -36,30 +36,30 @@ export default function Sidebar({ isOpen, onClose }: { isOpen: boolean, onClose:
       title: 'Management',
       items: [
         { name: 'Dashboard', path: `${basePath}/dashboard`, icon: 'fa-home' },
-        { name: 'Inventory', path: `${basePath}/inventory`, icon: 'fa-boxes' },
-        { name: 'Products', path: `${basePath}/products`, icon: 'fa-store' },
-        { name: 'Billing', path: `${basePath}/billing`, icon: 'fa-file-invoice-dollar' },
+        { name: 'Inventory', path: `${basePath}/inventory`, icon: 'fa-box' },
+        { name: 'Products', path: `${basePath}/products`, icon: 'fa-tag' },
+        { name: 'Billing', path: `${basePath}/billing`, icon: 'fa-receipt' },
       ]
     },
     {
       title: 'Clinic',
       items: [
-        { name: 'Appointment', path: `${basePath}/appointment`, icon: 'fa-calendar-check' },
+        { name: 'Appointment', path: `${basePath}/appointment`, icon: 'fa-calendar' },
         { name: 'Telemedicine', path: `${basePath}/telemedicine`, icon: 'fa-video' },
         { name: 'Pet Monitor', path: `${basePath}/monitor`, icon: 'fa-heartbeat' },
-        { name: 'SMS Center', path: `${basePath}/sms`, icon: 'fa-sms' },
+        { name: 'SMS Center', path: `${basePath}/sms`, icon: 'fa-comment' },
       ]
     },
     {
       title: 'Records',
       items: [
         { name: 'Pet Records', path: `${basePath}/records`, icon: 'fa-paw' },
-        { name: 'Users', path: `${basePath}/users`, icon: 'fa-users' },
+        { name: 'Users', path: `${basePath}/users`, icon: 'fa-user' },
         { name: 'Reports', path: `${basePath}/reports`, icon: 'fa-chart-bar' },
         { name: 'Analytics', path: `${basePath}/analytics`, icon: 'fa-chart-line' },
-        { name: 'Tutorials', path: `${basePath}/tutorials`, icon: 'fa-graduation-cap' },
-        { name: 'Announcements', path: `${basePath}/announcement`, icon: 'fa-bullhorn' },
-        { name: 'Feedback', path: `${basePath}/feedback`, icon: 'fa-comments' },
+        { name: 'Tutorials', path: `${basePath}/tutorials`, icon: 'fa-book-open' },
+        { name: 'Announcements', path: `${basePath}/announcement`, icon: 'fa-bell' },
+        { name: 'Feedback', path: `${basePath}/feedback`, icon: 'fa-star' },
       ]
     }
   ];

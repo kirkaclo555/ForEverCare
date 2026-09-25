@@ -135,8 +135,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a3d28',
   },
   heroWrapper: {
-    height: '42%',
-    minHeight: 240,
+    height: '46%',
+    minHeight: 270,
   },
   sheetWrapper: {
     flex: 1,

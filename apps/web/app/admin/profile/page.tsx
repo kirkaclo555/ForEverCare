@@ -711,9 +711,9 @@ export default function ProfilePage() {
                 <input 
                   type="text" 
                   className="profile-input"
+                  placeholder="e.g. Juan Dela Cruz"
                   value={editedInfo.fullName}
-                  onChange={(e) => setEditedInfo({ ...editedInfo, fullName: e.target.value })}
-                />
+                  onChange={(e) => setEditedInfo({ ...editedInfo, fullName: e.target.value })}/>
               </div>
 
               <div className="profile-field-group">
@@ -721,9 +721,9 @@ export default function ProfilePage() {
                 <input 
                   type="email" 
                   className="profile-input"
+                  placeholder="example@gmail.com"
                   value={editedInfo.email}
-                  onChange={(e) => setEditedInfo({ ...editedInfo, email: e.target.value })}
-                />
+                  onChange={(e) => setEditedInfo({ ...editedInfo, email: e.target.value })}/>
               </div>
 
               <div className="profile-field-group">
@@ -764,9 +764,9 @@ export default function ProfilePage() {
                 <input 
                   type="text" 
                   className="profile-input"
+                  placeholder="e.g. Veterinarian"
                   value={editedInfo.roleTitle}
-                  onChange={(e) => setEditedInfo({ ...editedInfo, roleTitle: e.target.value })}
-                />
+                  onChange={(e) => setEditedInfo({ ...editedInfo, roleTitle: e.target.value })}/>
               </div>
             </div>
 
@@ -776,6 +776,7 @@ export default function ProfilePage() {
                 className="profile-input"
                 rows={3}
                 style={{ resize: 'vertical' }}
+                placeholder="e.g. Licensed veterinarian with 5+ years of experience in small animal care..."
                 value={editedInfo.bio}
                 onChange={(e) => setEditedInfo({ ...editedInfo, bio: e.target.value })}
               />
@@ -791,6 +792,7 @@ export default function ProfilePage() {
                   <input 
                     type="text" 
                     className="profile-input"
+                    placeholder="e.g. Maria Santos"
                     value={editedInfo.emergencyName}
                     onChange={(e) => setEditedInfo({ ...editedInfo, emergencyName: e.target.value })}
                   />
@@ -800,6 +802,7 @@ export default function ProfilePage() {
                   <input 
                     type="text" 
                     className="profile-input"
+                    placeholder="e.g. Spouse"
                     value={editedInfo.emergencyRelation}
                     onChange={(e) => setEditedInfo({ ...editedInfo, emergencyRelation: e.target.value })}
                   />

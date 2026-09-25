@@ -6,6 +6,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useUser } from '../context/UserContext';
 import { API_URL } from '../config/api';
 import { useTheme } from '../context/ThemeContext';
+import LabeledInput from '../components/shared/LabeledInput';
 
 type RootStackParamList = {
   Home: undefined;
@@ -32,11 +33,16 @@ export default function AccountSecurityScreen({ navigation }: Props) {
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [oldPasswordError, setOldPasswordError] = useState('');
+  const [newPasswordError, setNewPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
   const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
 
   // Phone state
   const [newPhone, setNewPhone] = useState('');
+  const [newPhoneError, setNewPhoneError] = useState('');
   const [isSubmittingPhone, setIsSubmittingPhone] = useState(false);
+  const [shakeTrigger, setShakeTrigger] = useState(0);
 
   useEffect(() => {
     fetchSettings();
@@ -58,14 +64,37 @@ export default function AccountSecurityScreen({ navigation }: Props) {
   };
 
   const handleChangePassword = async () => {
-    if (!oldPassword || !newPassword || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields.');
-      return;
+    let valid = true;
+    setShakeTrigger((prev) => prev + 1);
+
+    if (!oldPassword) {
+      setOldPasswordError('Current password is required');
+      valid = false;
+    } else {
+      setOldPasswordError('');
     }
-    if (newPassword !== confirmPassword) {
-      Alert.alert('Error', 'New passwords do not match.');
-      return;
+
+    if (!newPassword) {
+      setNewPasswordError('New password is required');
+      valid = false;
+    } else if (newPassword.length < 8) {
+      setNewPasswordError('Password must be at least 8 characters');
+      valid = false;
+    } else {
+      setNewPasswordError('');
     }
+
+    if (!confirmPassword) {
+      setConfirmPasswordError('Please confirm your new password');
+      valid = false;
+    } else if (newPassword !== confirmPassword) {
+      setConfirmPasswordError('Passwords do not match');
+      valid = false;
+    } else {
+      setConfirmPasswordError('');
+    }
+
+    if (!valid) return;
 
     setIsSubmittingPassword(true);
     try {
@@ -82,7 +111,8 @@ export default function AccountSecurityScreen({ navigation }: Props) {
         setNewPassword('');
         setConfirmPassword('');
       } else {
-        Alert.alert('Error', data.error || 'Failed to update password.');
+        setShakeTrigger((prev) => prev + 1);
+        setOldPasswordError(data.error || 'Failed to update password.');
       }
     } catch (error) {
       Alert.alert('Error', 'Network error. Please try again later.');
@@ -92,11 +122,20 @@ export default function AccountSecurityScreen({ navigation }: Props) {
   };
 
   const handleUpdateRecoveryPhone = async () => {
-    if (!newPhone) {
-      Alert.alert('Error', 'Please enter a valid phone number.');
+    if (!newPhone.trim()) {
+      setShakeTrigger((prev) => prev + 1);
+      setNewPhoneError('Please enter a valid phone number.');
       return;
     }
 
+    const cleanPhone = newPhone.replace(/\D/g, '');
+    if (cleanPhone.length !== 11) {
+      setShakeTrigger((prev) => prev + 1);
+      setNewPhoneError('Enter a valid 11-digit mobile number (e.g. 0912-345-6789)');
+      return;
+    }
+
+    setNewPhoneError('');
     setIsSubmittingPhone(true);
     try {
       const res = await fetch(`${API_URL}/api/auth/mobile/security-settings`, {
@@ -187,29 +226,53 @@ export default function AccountSecurityScreen({ navigation }: Props) {
               <Text style={[styles.modalTitle, { color: theme.text }]}>Change Password</Text>
               <Text style={[styles.modalSubtitle, { color: theme.subtext }]}>Update your account password for better security</Text>
             </View>
-            <TextInput
-              style={[styles.input, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f7fafc', borderColor: theme.border, color: theme.text }]}
-              placeholder="Current Password"
-              placeholderTextColor={theme.subtext}
+            <LabeledInput
+              label="Current Password"
+              placeholder="Enter current password"
               secureTextEntry
               value={oldPassword}
-              onChangeText={setOldPassword}
+              onChangeText={(t) => {
+                setOldPassword(t);
+                if (oldPasswordError) setOldPasswordError('');
+              }}
+              error={oldPasswordError}
+              shakeTrigger={shakeTrigger}
+              isDarkMode={isDarkMode}
+              themeText={theme.text}
+              themeBorder={theme.border}
+              themeSubtext={theme.subtext}
             />
-            <TextInput
-              style={[styles.input, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f7fafc', borderColor: theme.border, color: theme.text }]}
-              placeholder="New Password"
-              placeholderTextColor={theme.subtext}
+            <LabeledInput
+              label="New Password"
+              placeholder="Enter new password"
               secureTextEntry
               value={newPassword}
-              onChangeText={setNewPassword}
+              onChangeText={(t) => {
+                setNewPassword(t);
+                if (newPasswordError) setNewPasswordError('');
+              }}
+              error={newPasswordError}
+              shakeTrigger={shakeTrigger}
+              isDarkMode={isDarkMode}
+              themeText={theme.text}
+              themeBorder={theme.border}
+              themeSubtext={theme.subtext}
             />
-            <TextInput
-              style={[styles.input, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f7fafc', borderColor: theme.border, color: theme.text }]}
-              placeholder="Confirm New Password"
-              placeholderTextColor={theme.subtext}
+            <LabeledInput
+              label="Confirm New Password"
+              placeholder="Re-enter new password"
               secureTextEntry
               value={confirmPassword}
-              onChangeText={setConfirmPassword}
+              onChangeText={(t) => {
+                setConfirmPassword(t);
+                if (confirmPasswordError) setConfirmPasswordError('');
+              }}
+              error={confirmPasswordError}
+              shakeTrigger={shakeTrigger}
+              isDarkMode={isDarkMode}
+              themeText={theme.text}
+              themeBorder={theme.border}
+              themeSubtext={theme.subtext}
             />
 
             {/* Password Requirements */}
@@ -289,13 +352,21 @@ export default function AccountSecurityScreen({ navigation }: Props) {
                 Add a phone number to help recover your account if you lose access.
               </Text>
             </View>
-            <TextInput
-              style={[styles.input, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f7fafc', borderColor: theme.border, color: theme.text }]}
-              placeholder="+63 9XX XXX XXXX"
-              placeholderTextColor={theme.subtext}
+            <LabeledInput
+              label="Recovery Mobile Number"
+              placeholder="0912-345-6789"
               keyboardType="phone-pad"
               value={newPhone}
-              onChangeText={setNewPhone}
+              onChangeText={(t) => {
+                setNewPhone(t);
+                if (newPhoneError) setNewPhoneError('');
+              }}
+              error={newPhoneError}
+              shakeTrigger={shakeTrigger}
+              isDarkMode={isDarkMode}
+              themeText={theme.text}
+              themeBorder={theme.border}
+              themeSubtext={theme.subtext}
             />
             <View style={{ gap: 10, marginTop: 5 }}>
               <TouchableOpacity 

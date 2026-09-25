@@ -7,16 +7,27 @@ import {
   Modal,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
+import { scale, verticalScale, fontSize } from '../../utils/responsive';
 
 type Props = {
   visible: boolean;
   onClose: () => void;
   onConfirm: () => Promise<void>;
-  language: 'en' | 'tl';
+  language?: 'en' | 'tl';
+  title?: string;
+  message?: string;
 };
 
-export default function ConfirmDialog({ visible, onClose, onConfirm, language }: Props) {
+export default function ConfirmDialog({
+  visible,
+  onClose,
+  onConfirm,
+  language = 'en',
+  title,
+  message,
+}: Props) {
   const { theme, isDarkMode } = useTheme();
   const [loading, setLoading] = useState(false);
 
@@ -29,6 +40,13 @@ export default function ConfirmDialog({ visible, onClose, onConfirm, language }:
     }
   };
 
+  const defaultTitle =
+    language === 'en' ? 'Log out of your account?' : 'Mag-logout sa iyong account?';
+  const defaultMessage =
+    language === 'en'
+      ? 'Are you sure you want to log out? You can sign back in anytime to access your pets and appointments.'
+      : 'Sigurado ka bang nais mong mag-logout? Maaari kang mag-log in muli anumang oras.';
+
   return (
     <Modal
       visible={visible}
@@ -37,54 +55,69 @@ export default function ConfirmDialog({ visible, onClose, onConfirm, language }:
       onRequestClose={onClose}
     >
       <View style={styles.backdrop}>
-        <View style={[styles.dialog, { backgroundColor: theme.card }]}>
-          {/* Icon */}
-          <View style={styles.iconCircle}>
-            <Text style={styles.iconText}>👋</Text>
+        <View style={[styles.dialog, { backgroundColor: theme.card, borderColor: theme.border }]}>
+          {/* Refined Logout Icon Badge */}
+          <View
+            style={[
+              styles.iconCircle,
+              {
+                backgroundColor: isDarkMode ? 'rgba(220, 38, 38, 0.15)' : '#FEF2F2',
+                borderColor: isDarkMode ? 'rgba(220, 38, 38, 0.3)' : '#FEE2E2',
+              },
+            ]}
+          >
+            <Ionicons name="log-out-outline" size={28} color="#DC2626" />
           </View>
 
           <Text style={[styles.title, { color: theme.text }]}>
-            {language === 'en'
-              ? 'Log out of Furever Paw Care?'
-              : 'Mag-logout sa Furever Paw Care?'}
+            {title || defaultTitle}
           </Text>
+
           <Text style={[styles.subtitle, { color: theme.subtext }]}>
-            {language === 'en'
-              ? 'You can always log back in anytime.'
-              : 'Maaari kang mag-log in muli anumang oras.'}
+            {message || defaultMessage}
           </Text>
 
-          {/* Buttons */}
-          <TouchableOpacity
-            style={styles.logoutBtn}
-            onPress={handleConfirm}
-            disabled={loading}
-            accessibilityRole="button"
-            accessibilityLabel="Confirm log out"
-          >
-            {loading ? (
-              <ActivityIndicator color="#FFFFFF" size="small" />
-            ) : (
-              <Text style={styles.logoutBtnText}>
-                {language === 'en' ? 'Log out' : 'Mag-logout'}
-              </Text>
-            )}
-          </TouchableOpacity>
+          {/* Action Buttons */}
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.logoutBtn}
+              onPress={handleConfirm}
+              disabled={loading}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel="Confirm log out"
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <View style={styles.btnContent}>
+                  <Ionicons name="log-out-outline" size={18} color="#FFFFFF" style={{ marginRight: scale(8) }} />
+                  <Text style={styles.logoutBtnText}>
+                    {language === 'en' ? 'Log Out' : 'Mag-logout'}
+                  </Text>
+                </View>
+              )}
+            </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[
-              styles.cancelBtn,
-              { backgroundColor: isDarkMode ? '#2d2d2d' : '#F3F4F6', borderColor: theme.border },
-            ]}
-            onPress={onClose}
-            disabled={loading}
-            accessibilityRole="button"
-            accessibilityLabel="Cancel log out"
-          >
-            <Text style={[styles.cancelBtnText, { color: theme.text }]}>
-              {language === 'en' ? 'Cancel' : 'Kanselahin'}
-            </Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.cancelBtn,
+                {
+                  backgroundColor: isDarkMode ? '#1e1e1e' : '#F8FAFC',
+                  borderColor: theme.border,
+                },
+              ]}
+              onPress={onClose}
+              disabled={loading}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel log out"
+            >
+              <Text style={[styles.cancelBtnText, { color: theme.text }]}>
+                {language === 'en' ? 'Cancel' : 'Kanselahin'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </Modal>
@@ -94,71 +127,92 @@ export default function ConfirmDialog({ visible, onClose, onConfirm, language }:
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 28,
+    paddingHorizontal: scale(24),
   },
   dialog: {
     width: '100%',
-    borderRadius: 20,
-    padding: 24,
+    maxWidth: scale(340),
+    borderRadius: scale(22),
+    borderWidth: 1,
+    paddingHorizontal: scale(24),
+    paddingTop: verticalScale(28),
+    paddingBottom: verticalScale(20),
     alignItems: 'center',
-    elevation: 10,
+    elevation: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: scale(20),
   },
   iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#FCEBEB',
+    width: scale(62),
+    height: scale(62),
+    borderRadius: scale(31),
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
-  },
-  iconText: {
-    fontSize: 30,
+    marginBottom: verticalScale(16),
   },
   title: {
-    fontSize: 17,
-    fontFamily: 'PlusJakartaSans-Bold',
+    fontSize: fontSize(18),
+    fontFamily: 'Montserrat-Bold',
+    fontWeight: '700',
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: verticalScale(8),
+    letterSpacing: 0.2,
   },
   subtitle: {
-    fontSize: 13,
-    fontFamily: 'PlusJakartaSans-Regular',
+    fontSize: fontSize(13.5),
+    fontFamily: 'Montserrat-Regular',
     textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 18,
+    marginBottom: verticalScale(24),
+    lineHeight: 20,
+    paddingHorizontal: scale(4),
+  },
+  buttonContainer: {
+    width: '100%',
+    gap: verticalScale(10),
+  },
+  btnContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   logoutBtn: {
     width: '100%',
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: '#C0392B',
+    height: verticalScale(48),
+    borderRadius: scale(14),
+    backgroundColor: '#DC2626',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: scale(8),
+    elevation: 4,
   },
   logoutBtnText: {
-    fontSize: 15,
-    fontFamily: 'PlusJakartaSans-Bold',
+    fontSize: fontSize(15),
+    fontFamily: 'Montserrat-SemiBold',
+    fontWeight: '600',
     color: '#FFFFFF',
+    letterSpacing: 0.2,
   },
   cancelBtn: {
     width: '100%',
-    height: 48,
-    borderRadius: 12,
+    height: verticalScale(48),
+    borderRadius: scale(14),
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
+    borderWidth: 1.5,
   },
   cancelBtnText: {
-    fontSize: 15,
-    fontFamily: 'PlusJakartaSans-SemiBold',
+    fontSize: fontSize(15),
+    fontFamily: 'Montserrat-SemiBold',
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
 });

@@ -29,6 +29,7 @@ import { scale, verticalScale, moderateScale, fontSize, wp, hp, device } from '.
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
 import { makeRedirectUri } from 'expo-auth-session';
+import LabeledInput from '../components/shared/LabeledInput';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -57,6 +58,9 @@ export default function LoginScreen({ navigation }: Props) {
   const { updateUser } = useUser();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
+  const [identifierError, setIdentifierError] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [shakeTrigger, setShakeTrigger] = useState(0);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -162,10 +166,24 @@ export default function LoginScreen({ navigation }: Props) {
 
 
   const performLogin = async (loginIdentifier: string, loginPassword: string) => {
-    if (!loginIdentifier || !loginPassword) {
-      Alert.alert('Error', 'Please enter your phone number/email and password.');
-      return;
+    let valid = true;
+    setShakeTrigger((prev) => prev + 1);
+
+    if (!loginIdentifier.trim()) {
+      setIdentifierError('Phone number or email is required');
+      valid = false;
+    } else {
+      setIdentifierError('');
     }
+
+    if (!loginPassword) {
+      setPasswordError('Password is required');
+      valid = false;
+    } else {
+      setPasswordError('');
+    }
+
+    if (!valid) return;
 
     setIsLoading(true);
     try {
@@ -178,7 +196,8 @@ export default function LoginScreen({ navigation }: Props) {
       const data = await response.json();
 
       if (!response.ok) {
-        Alert.alert('Login Failed', data.error || 'Invalid credentials. Please try again.');
+        setShakeTrigger((prev) => prev + 1);
+        setPasswordError(data.error || 'Invalid credentials. Please try again.');
       } else {
         // Save latest successful login credentials for biometrics (if they have it enabled, this is handled via account security later)
         await AsyncStorage.setItem('latest_successful_login', JSON.stringify({ identifier: loginIdentifier, password: loginPassword }));
@@ -234,7 +253,7 @@ export default function LoginScreen({ navigation }: Props) {
           </View>
           
           <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={styles.keyboardAvoidingView}
           >
             <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="always" keyboardDismissMode="none" bounces={false} showsVerticalScrollIndicator={false}>
@@ -247,7 +266,7 @@ export default function LoginScreen({ navigation }: Props) {
                   </TouchableOpacity>
 
                   <View style={styles.brandingContainer}>
-                    <Image source={require('../../assets/logo.png')} style={{ width: 130, height: 130, resizeMode: 'contain', marginBottom: 8 }} />
+                    <Image source={require('../../assets/logo.png')} style={{ width: scale(125), height: scale(125), resizeMode: 'contain', marginBottom: verticalScale(4) }} />
                     <Text
                       style={styles.brandText}
                       numberOfLines={1}
@@ -266,32 +285,46 @@ export default function LoginScreen({ navigation }: Props) {
                   </View>
 
                   {/* Input Fields */}
-                  <View style={[styles.inputContainer, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f8faf9', borderColor: theme.border }]}>
-                    <Ionicons name="person-outline" size={20} color={theme.subtext} style={styles.inputIcon} />
-                    <TextInput
-                      style={[styles.input, { color: theme.text }]}
-                      value={identifier}
-                      onChangeText={setIdentifier}
-                      placeholder="Phone Number or Email"
-                      placeholderTextColor={theme.subtext}
-                      autoCapitalize="none"
-                    />
-                  </View>
+                  <LabeledInput
+                    label="Phone Number or Email"
+                    value={identifier}
+                    onChangeText={(t) => {
+                      setIdentifier(t);
+                      if (identifierError) setIdentifierError('');
+                    }}
+                    placeholder="Enter phone number or email"
+                    autoCapitalize="none"
+                    error={identifierError}
+                    shakeTrigger={shakeTrigger}
+                    isDarkMode={isDarkMode}
+                    themeText={theme.text}
+                    themeBorder={theme.border}
+                    themeSubtext={theme.subtext}
+                    leftElement={<Ionicons name="person-outline" size={18} color={theme.subtext} />}
+                  />
 
-                  <View style={[styles.inputContainer, { backgroundColor: isDarkMode ? '#1a1a1a' : '#f8faf9', borderColor: theme.border }]}>
-                    <Ionicons name="lock-closed-outline" size={20} color={theme.subtext} style={styles.inputIcon} />
-                    <TextInput
-                      style={[styles.input, { color: theme.text }]}
-                      value={password}
-                      onChangeText={setPassword}
-                      placeholder="Password"
-                      placeholderTextColor={theme.subtext}
-                      secureTextEntry={!showPassword}
-                    />
-                    <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={styles.eyeIconToggle}>
-                      <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color={theme.subtext} />
-                    </TouchableOpacity>
-                  </View>
+                  <LabeledInput
+                    label="Password"
+                    value={password}
+                    onChangeText={(t) => {
+                      setPassword(t);
+                      if (passwordError) setPasswordError('');
+                    }}
+                    placeholder="Enter password"
+                    secureTextEntry={!showPassword}
+                    error={passwordError}
+                    shakeTrigger={shakeTrigger}
+                    isDarkMode={isDarkMode}
+                    themeText={theme.text}
+                    themeBorder={theme.border}
+                    themeSubtext={theme.subtext}
+                    leftElement={<Ionicons name="lock-closed-outline" size={18} color={theme.subtext} />}
+                    rightElement={
+                      <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                        <Ionicons name={showPassword ? "eye-off-outline" : "eye-outline"} size={20} color={theme.subtext} />
+                      </TouchableOpacity>
+                    }
+                  />
 
                   {/* Options: Remember me & Forgot Password */}
                   <View style={styles.optionsRow}>
@@ -331,9 +364,7 @@ export default function LoginScreen({ navigation }: Props) {
                         <ActivityIndicator size="small" color="#4285F4" />
                       ) : (
                         <>
-                          <View style={styles.googleIconWrapper}>
-                            <Text style={styles.googleG}>G</Text>
-                          </View>
+                          <Image source={require('../../assets/google_logo.png')} style={styles.googleLogoImg} />
                           <Text style={[styles.googleBtnText, { color: theme.text }]}>Continue with Google</Text>
                         </>
                       )}
@@ -401,8 +432,8 @@ const styles = StyleSheet.create({
     flex: 2,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingTop: verticalScale(10),
-    paddingBottom: verticalScale(10),
+    paddingTop: verticalScale(6),
+    paddingBottom: verticalScale(6),
   },
   backButton: {
     position: 'absolute',
@@ -432,8 +463,9 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: scale(40),
     borderTopRightRadius: scale(40),
     paddingHorizontal: scale(30),
-    paddingTop: verticalScale(25),
+    paddingTop: verticalScale(20),
     paddingBottom: Platform.OS === 'ios' ? verticalScale(25) : verticalScale(20),
+    flex: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -10 },
     shadowOpacity: 0.1,
@@ -442,8 +474,8 @@ const styles = StyleSheet.create({
   },
   headerTextContainer: {
     alignItems: 'center',
-    marginBottom: verticalScale(16),
-    marginTop: verticalScale(4),
+    marginBottom: verticalScale(12),
+    marginTop: verticalScale(2),
   },
   welcomeText: {
     fontFamily: 'Catcut',
@@ -570,19 +602,11 @@ const styles = StyleSheet.create({
   googleButton: {
     backgroundColor: 'transparent',
   },
-  googleIconWrapper: {
-    width: scale(28),
-    height: scale(28),
-    borderRadius: scale(14),
-    backgroundColor: '#4285F4',
-    alignItems: 'center',
-    justifyContent: 'center',
+  googleLogoImg: {
+    width: scale(36),
+    height: scale(36),
     marginRight: scale(12),
-  },
-  googleG: {
-    color: '#ffffff',
-    fontSize: fontSize(15),
-    fontFamily: 'PlusJakartaSans-Bold',
+    resizeMode: 'contain',
   },
   googleBtnText: {
     fontSize: fontSize(15),

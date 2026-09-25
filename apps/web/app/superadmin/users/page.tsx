@@ -353,7 +353,7 @@ export default function UsersPage() {
                                     </h4>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                                         <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                                            <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>User Role *</label>
+                                            <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>User Role</label>
                                             <select value={formData.role} onChange={(e) => {setFormData({...formData, role: e.target.value as 'admin'|'petowner'}); setShowValidationErrors(false);}} className="form-control" style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', border: (showValidationErrors && !formData.role) ? '1px solid #fc8181' : '1px solid #e2e8f0', background: (showValidationErrors && !formData.role) ? '#fff5f5' : '#f8fafc', fontSize: '0.95rem', color: '#2d3748', transition: '0.2s', outline: 'none' }}>
                                                 <option value="petowner">Pet Owner</option>
                                                 <option value="admin">Administrator</option>
@@ -361,13 +361,13 @@ export default function UsersPage() {
                                             {showValidationErrors && !formData.role && <p style={{ color: '#e53e3e', fontSize: '0.85rem', margin: '6px 0 0 0', display: 'flex', alignItems: 'center', gap: '5px' }}><i className="fas fa-exclamation-circle"></i> This field is required</p>}
                                         </div>
                                         <div className="form-group">
-                                            <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>First Name *</label>
-                                            <input type="text" value={formData.firstName} onChange={(e) => {setFormData({...formData, firstName: e.target.value}); setShowValidationErrors(false);}} className="form-control" placeholder="Jane" style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', border: (showValidationErrors && !formData.firstName) ? '1px solid #fc8181' : '1px solid #e2e8f0', background: (showValidationErrors && !formData.firstName) ? '#fff5f5' : '#f8fafc', fontSize: '0.95rem', color: '#2d3748', transition: '0.2s', outline: 'none' }} />
+                                            <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>First Name</label>
+                                            <input type="text" value={formData.firstName} onChange={(e) => {setFormData({...formData, firstName: e.target.value}); setShowValidationErrors(false);}} className="form-control" placeholder="e.g. Juan" style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', border: (showValidationErrors && !formData.firstName) ? '1px solid #fc8181' : '1px solid #e2e8f0', background: (showValidationErrors && !formData.firstName) ? '#fff5f5' : '#f8fafc', fontSize: '0.95rem', color: '#2d3748', transition: '0.2s', outline: 'none' }} />
                                             {showValidationErrors && !formData.firstName && <p style={{ color: '#e53e3e', fontSize: '0.85rem', margin: '6px 0 0 0', display: 'flex', alignItems: 'center', gap: '5px' }}><i className="fas fa-exclamation-circle"></i> This field is required</p>}
                                         </div>
                                         <div className="form-group">
-                                            <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Last Name *</label>
-                                            <input type="text" value={formData.lastName} onChange={(e) => {setFormData({...formData, lastName: e.target.value}); setShowValidationErrors(false);}} className="form-control" placeholder="Doe" style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', border: (showValidationErrors && !formData.lastName) ? '1px solid #fc8181' : '1px solid #e2e8f0', background: (showValidationErrors && !formData.lastName) ? '#fff5f5' : '#f8fafc', fontSize: '0.95rem', color: '#2d3748', transition: '0.2s', outline: 'none' }} />
+                                            <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Last Name</label>
+                                            <input type="text" value={formData.lastName} onChange={(e) => {setFormData({...formData, lastName: e.target.value}); setShowValidationErrors(false);}} className="form-control" placeholder="e.g. Dela Cruz" style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', border: (showValidationErrors && !formData.lastName) ? '1px solid #fc8181' : '1px solid #e2e8f0', background: (showValidationErrors && !formData.lastName) ? '#fff5f5' : '#f8fafc', fontSize: '0.95rem', color: '#2d3748', transition: '0.2s', outline: 'none' }} />
                                             {showValidationErrors && !formData.lastName && <p style={{ color: '#e53e3e', fontSize: '0.85rem', margin: '6px 0 0 0', display: 'flex', alignItems: 'center', gap: '5px' }}><i className="fas fa-exclamation-circle"></i> This field is required</p>}
                                         </div>
                                     </div>
@@ -379,12 +379,12 @@ export default function UsersPage() {
                                     </h4>
                                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                                         <div className="form-group">
-                                            <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Email Address *</label>
+                                            <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Email Address</label>
                                             <input type="email" value={formData.email} onChange={(e) => { setFormData({...formData, email: e.target.value}); setEmailError(''); setShowValidationErrors(false); }} className="form-control" placeholder="jane@example.com" style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', border: (emailError || (showValidationErrors && !formData.email)) ? '1px solid #fc8181' : '1px solid #e2e8f0', background: (emailError || (showValidationErrors && !formData.email)) ? '#fff5f5' : '#f8fafc', outline: 'none', boxShadow: emailError ? '0 0 0 2px rgba(252,129,129,0.2)' : 'none', fontSize: '0.95rem', color: '#2d3748', transition: '0.2s' }} />
                                             {emailError ? <p style={{ color: '#e53e3e', fontSize: '0.85rem', margin: '6px 0 0 0', display: 'flex', alignItems: 'center', gap: '5px' }}><i className="fas fa-exclamation-circle"></i> {emailError}</p> : (showValidationErrors && !formData.email && <p style={{ color: '#e53e3e', fontSize: '0.85rem', margin: '6px 0 0 0', display: 'flex', alignItems: 'center', gap: '5px' }}><i className="fas fa-exclamation-circle"></i> This field is required</p>)}
                                         </div>
                                         <div className="form-group">
-                                            <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Phone Number *</label>
+                                            <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Phone Number</label>
                                             <input type="tel" value={formData.contact} onChange={(e) => {
                                                 const val = e.target.value;
                                                 if (/\D/.test(val)) {
@@ -397,7 +397,7 @@ export default function UsersPage() {
                                             {contactWarning ? <p style={{ color: '#e53e3e', fontSize: '0.85rem', margin: '6px 0 0 0', display: 'flex', alignItems: 'center', gap: '5px' }}><i className="fas fa-exclamation-circle"></i> Numbers only</p> : (showValidationErrors && !formData.contact && <p style={{ color: '#e53e3e', fontSize: '0.85rem', margin: '6px 0 0 0', display: 'flex', alignItems: 'center', gap: '5px' }}><i className="fas fa-exclamation-circle"></i> This field is required</p>)}
                                         </div>
                                         <div className="form-group" style={{ gridColumn: '1 / -1' }}>
-                                            <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Password *</label>
+                                            <label style={{ fontSize: '0.9rem', color: '#4a5568', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Password</label>
                                             <input type="password" value={formData.password} onChange={(e) => {setFormData({...formData, password: e.target.value}); setShowValidationErrors(false);}} className="form-control" placeholder="Create a secure password" style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', border: (showValidationErrors && !formData.password) ? '1px solid #fc8181' : '1px solid #e2e8f0', background: (showValidationErrors && !formData.password) ? '#fff5f5' : '#f8fafc', fontSize: '0.95rem', color: '#2d3748', transition: '0.2s', outline: 'none' }} />
                                             {showValidationErrors && !formData.password && <p style={{ color: '#e53e3e', fontSize: '0.85rem', margin: '6px 0 0 0', display: 'flex', alignItems: 'center', gap: '5px' }}><i className="fas fa-exclamation-circle"></i> This field is required</p>}
                                         </div>
@@ -411,7 +411,7 @@ export default function UsersPage() {
                                         </h4>
                                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                                             <div className="form-group">
-                                                <label style={{ fontSize: '0.9rem', color: '#276749', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Pet Name</label>
+                                                <label style={{ fontSize: '0.9rem', color: '#276749', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Pet Name (Optional)</label>
                                                 <input type="text" value={formData.petName} onChange={(e) => setFormData({...formData, petName: e.target.value})} className="form-control" placeholder="Buddy" style={{ width: '100%', padding: '12px 15px', borderRadius: '10px', border: '1px solid #bbf7d0', background: 'white', fontSize: '0.95rem', color: '#2d3748', transition: '0.2s' }} />
                                             </div>
                                             <div className="form-group">

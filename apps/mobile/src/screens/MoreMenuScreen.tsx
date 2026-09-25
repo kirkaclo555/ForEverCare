@@ -96,7 +96,7 @@ export default function MoreMenuScreen({ navigation }: Props) {
   const learnItems: MenuRowConfig[] = [
     {
       id: 'tutorials',
-      icon: 'play-circle-outline' as keyof typeof Ionicons.glyphMap,
+      icon: 'book-outline' as keyof typeof Ionicons.glyphMap,
       title: language === 'en' ? 'Pet tutorials' : 'Mga tutorial sa alaga',
       description: language === 'en'
         ? 'Training, grooming and care videos'
@@ -116,7 +116,7 @@ export default function MoreMenuScreen({ navigation }: Props) {
     },
     {
       id: 'feedback',
-      icon: 'chatbubble-ellipses-outline' as keyof typeof Ionicons.glyphMap,
+      icon: 'star-outline' as keyof typeof Ionicons.glyphMap,
       title: language === 'en' ? 'Give feedback' : 'Magbigay ng feedback',
       description: language === 'en'
         ? 'Tell us how we can improve'

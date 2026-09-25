@@ -138,24 +138,26 @@ export default function SignupPage() {
               
               <div className={styles.nameRow}>
                 <div className={styles.formGroup}>
+                  <label className={styles.inputLabel}>First Name</label>
                   <div className={styles.inputGroup}>
                     <input
                       type="text"
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
-                      placeholder="First name"
+                      placeholder="e.g. Juan"
                       required
                       className={styles.inputField}
                     />
                   </div>
                 </div>
                 <div className={styles.formGroup}>
+                  <label className={styles.inputLabel}>Last Name</label>
                   <div className={styles.inputGroup}>
                     <input
                       type="text"
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
-                      placeholder="Last name"
+                      placeholder="e.g. Dela Cruz"
                       required
                       className={styles.inputField}
                     />
@@ -164,12 +166,13 @@ export default function SignupPage() {
               </div>
 
               <div className={styles.formGroup}>
+                <label className={styles.inputLabel}>Phone Number</label>
                 <div className={styles.inputGroup}>
                   <input
                     type="tel"
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
-                    placeholder="Phone number"
+                    placeholder="09XX XXX XXXX"
                     required
                     className={styles.inputField}
                   />
@@ -178,6 +181,7 @@ export default function SignupPage() {
               </div>
 
               <div className={styles.formGroup}>
+                <label className={styles.inputLabel}>Password</label>
                 <div className={styles.inputGroup}>
                   <input
                     type="password"
