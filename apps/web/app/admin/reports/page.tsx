@@ -439,16 +439,16 @@ export default function AdminReportsPage() {
     };
   }, [reports, appointmentsList]);
 
-  // Categories Distribution (matching screenshot reference)
+  // Categories Distribution (green brand palette)
   const categoryStats = useMemo(() => {
     return [
-      { name: 'Vaccination', count: 34, pct: 27, color: '#2563eb' },
-      { name: 'Illness / Disease', count: 28, pct: 23, color: '#16a34a' },
-      { name: 'Check-up', count: 22, pct: 18, color: '#f59e0b' },
-      { name: 'Injury', count: 15, pct: 12, color: '#8b5cf6' },
-      { name: 'Other', count: 12, pct: 10, color: '#0ea5e9' },
-      { name: 'Surgery', count: 8, pct: 6, color: '#4f46e5' },
-      { name: 'Dental', count: 5, pct: 4, color: '#ec4899' },
+      { name: 'Vaccination', count: 34, pct: 27, color: '#144d3a' },
+      { name: 'Illness / Disease', count: 28, pct: 23, color: '#1d6046' },
+      { name: 'Check-up', count: 22, pct: 18, color: '#277453' },
+      { name: 'Injury', count: 15, pct: 12, color: '#318861' },
+      { name: 'Other', count: 12, pct: 10, color: '#3d9c70' },
+      { name: 'Surgery', count: 8, pct: 6, color: '#52b385' },
+      { name: 'Dental', count: 5, pct: 4, color: '#74c99e' },
     ];
   }, []);
 
@@ -744,7 +744,7 @@ export default function AdminReportsPage() {
                     <span className="barchart-bar-value">{metrics.total}</span>
                     <div 
                       className="barchart-bar" 
-                      style={{ height: '78%', background: '#18533e' }}
+                      style={{ height: '78%', background: '#144d3a' }}
                       title={`Total Logs: ${metrics.total}`}
                     ></div>
                   </div>
@@ -754,7 +754,7 @@ export default function AdminReportsPage() {
                     <span className="barchart-bar-value">{metrics.resolved}</span>
                     <div 
                       className="barchart-bar" 
-                      style={{ height: '62%', background: '#38a169' }}
+                      style={{ height: '62%', background: '#2E5E3E' }}
                       title={`Resolved: ${metrics.resolved}`}
                     ></div>
                   </div>
@@ -764,7 +764,7 @@ export default function AdminReportsPage() {
                     <span className="barchart-bar-value">{metrics.active}</span>
                     <div 
                       className="barchart-bar" 
-                      style={{ height: '32%', background: '#ea580c' }}
+                      style={{ height: '32%', background: '#38a169' }}
                       title={`Active: ${metrics.active}`}
                     ></div>
                   </div>
@@ -774,7 +774,7 @@ export default function AdminReportsPage() {
                     <span className="barchart-bar-value">{metrics.critical}</span>
                     <div 
                       className="barchart-bar" 
-                      style={{ height: '14%', background: '#dc2626' }}
+                      style={{ height: '14%', background: '#52b385' }}
                       title={`Critical: ${metrics.critical}`}
                     ></div>
                   </div>
@@ -814,19 +814,19 @@ export default function AdminReportsPage() {
                   <svg className="donut-chart-svg" viewBox="0 0 100 100">
                     <circle cx="50" cy="50" r="38" fill="none" stroke="#f1f5f9" strokeWidth="15" />
                     {/* Vaccination: 27% */}
-                    <circle cx="50" cy="50" r="38" fill="none" stroke="#2563eb" strokeWidth="15" strokeDasharray="64.5 238.7" strokeDashoffset="0" />
+                    <circle cx="50" cy="50" r="38" fill="none" stroke="#144d3a" strokeWidth="15" strokeDasharray="64.5 238.7" strokeDashoffset="0" />
                     {/* Illness / Disease: 23% */}
-                    <circle cx="50" cy="50" r="38" fill="none" stroke="#16a34a" strokeWidth="15" strokeDasharray="54.9 238.7" strokeDashoffset="-64.5" />
+                    <circle cx="50" cy="50" r="38" fill="none" stroke="#1d6046" strokeWidth="15" strokeDasharray="54.9 238.7" strokeDashoffset="-64.5" />
                     {/* Check-up: 18% */}
-                    <circle cx="50" cy="50" r="38" fill="none" stroke="#f59e0b" strokeWidth="15" strokeDasharray="43.0 238.7" strokeDashoffset="-119.4" />
+                    <circle cx="50" cy="50" r="38" fill="none" stroke="#277453" strokeWidth="15" strokeDasharray="43.0 238.7" strokeDashoffset="-119.4" />
                     {/* Injury: 12% */}
-                    <circle cx="50" cy="50" r="38" fill="none" stroke="#8b5cf6" strokeWidth="15" strokeDasharray="28.6 238.7" strokeDashoffset="-162.4" />
+                    <circle cx="50" cy="50" r="38" fill="none" stroke="#318861" strokeWidth="15" strokeDasharray="28.6 238.7" strokeDashoffset="-162.4" />
                     {/* Other: 10% */}
-                    <circle cx="50" cy="50" r="38" fill="none" stroke="#0ea5e9" strokeWidth="15" strokeDasharray="23.9 238.7" strokeDashoffset="-191.0" />
+                    <circle cx="50" cy="50" r="38" fill="none" stroke="#3d9c70" strokeWidth="15" strokeDasharray="23.9 238.7" strokeDashoffset="-191.0" />
                     {/* Surgery: 6% */}
-                    <circle cx="50" cy="50" r="38" fill="none" stroke="#4f46e5" strokeWidth="15" strokeDasharray="14.3 238.7" strokeDashoffset="-214.9" />
+                    <circle cx="50" cy="50" r="38" fill="none" stroke="#52b385" strokeWidth="15" strokeDasharray="14.3 238.7" strokeDashoffset="-214.9" />
                     {/* Dental: 4% */}
-                    <circle cx="50" cy="50" r="38" fill="none" stroke="#ec4899" strokeWidth="15" strokeDasharray="9.5 238.7" strokeDashoffset="-229.2" />
+                    <circle cx="50" cy="50" r="38" fill="none" stroke="#74c99e" strokeWidth="15" strokeDasharray="9.5 238.7" strokeDashoffset="-229.2" />
                   </svg>
                   <div className="donut-center-info">
                     <span className="donut-center-value">{metrics.total}</span>
@@ -1109,15 +1109,15 @@ export default function AdminReportsPage() {
               <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#15803d' }}>{metrics.resolved}</div>
               <div style={{ fontSize: '0.78rem', color: '#16a34a', marginTop: '4px' }}>Patients released after care</div>
             </div>
-            <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-              <div style={{ color: '#92400e', fontSize: '0.85rem', fontWeight: 600 }}>ACTIVE MONITORING</div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#b45309' }}>{metrics.active}</div>
-              <div style={{ fontSize: '0.78rem', color: '#d97706', marginTop: '4px' }}>Under regular observation</div>
+            <div style={{ background: '#f4f9f6', border: '1px solid #cde0d4', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+              <div style={{ color: '#235338', fontSize: '0.85rem', fontWeight: 600 }}>ACTIVE MONITORING</div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#2e5e3e' }}>{metrics.active}</div>
+              <div style={{ fontSize: '0.78rem', color: '#3d6b4f', marginTop: '4px' }}>Under regular observation</div>
             </div>
-            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-              <div style={{ color: '#991b1b', fontSize: '0.85rem', fontWeight: 600 }}>CRITICAL ATTENTION</div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#b91c1c' }}>{metrics.critical}</div>
-              <div style={{ fontSize: '0.78rem', color: '#dc2626', marginTop: '4px' }}>Immediate veterinarian care</div>
+            <div style={{ background: '#edf5f0', border: '1px solid #b8dec6', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+              <div style={{ color: '#144d3a', fontSize: '0.85rem', fontWeight: 600 }}>CRITICAL ATTENTION</div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#1b4d33' }}>{metrics.critical}</div>
+              <div style={{ fontSize: '0.78rem', color: '#2a6144', marginTop: '4px' }}>Immediate veterinarian care</div>
             </div>
           </div>
 
@@ -1181,13 +1181,13 @@ export default function AdminReportsPage() {
               <div style={{ color: '#166534', fontSize: '0.8rem', fontWeight: 600 }}>COMPLETED & PAID</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#15803d' }}>{Math.round(metrics.appointments * 0.72)}</div>
             </div>
-            <div style={{ background: '#fffbeb', border: '1px solid #fde68a', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-              <div style={{ color: '#92400e', fontSize: '0.8rem', fontWeight: 600 }}>PENDING SESSIONS</div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#b45309' }}>{Math.round(metrics.appointments * 0.22)}</div>
+            <div style={{ background: '#f4f9f6', border: '1px solid #cde0d4', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+              <div style={{ color: '#235338', fontSize: '0.8rem', fontWeight: 600 }}>PENDING SESSIONS</div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#2e5e3e' }}>{Math.round(metrics.appointments * 0.22)}</div>
             </div>
-            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-              <div style={{ color: '#991b1b', fontSize: '0.8rem', fontWeight: 600 }}>CANCELED / RESCHED</div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#b91c1c' }}>{Math.max(1, Math.round(metrics.appointments * 0.06))}</div>
+            <div style={{ background: '#edf5f0', border: '1px solid #b8dec6', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+              <div style={{ color: '#144d3a', fontSize: '0.8rem', fontWeight: 600 }}>CANCELED / RESCHED</div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#3d6b4f' }}>{Math.max(1, Math.round(metrics.appointments * 0.06))}</div>
             </div>
           </div>
 
@@ -1262,9 +1262,9 @@ export default function AdminReportsPage() {
               <div style={{ color: '#166534', fontSize: '0.8rem', fontWeight: 600 }}>AVG. CONSULTATION DURATION</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#15803d' }}>18 mins</div>
             </div>
-            <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-              <div style={{ color: '#1e40af', fontSize: '0.8rem', fontWeight: 600 }}>DIGITAL PRESCRIPTIONS ISSUED</div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#2563eb' }}>34</div>
+            <div style={{ background: '#f2faf5', border: '1px solid #cbe6d6', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+              <div style={{ color: '#235338', fontSize: '0.8rem', fontWeight: 600 }}>DIGITAL PRESCRIPTIONS ISSUED</div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#2e5e3e' }}>34</div>
             </div>
           </div>
 
@@ -1322,13 +1322,13 @@ export default function AdminReportsPage() {
               <div style={{ color: '#166534', fontSize: '0.8rem', fontWeight: 600 }}>TOTAL STOCKED ITEMS</div>
               <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#15803d' }}>{inventoryStats.wellStocked} Units</div>
             </div>
-            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-              <div style={{ color: '#991b1b', fontSize: '0.8rem', fontWeight: 600 }}>OUT OF STOCK ALERTS</div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#b91c1c' }}>{inventoryStats.outOfStock}</div>
+            <div style={{ background: '#edf5f0', border: '1px solid #b8dec6', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+              <div style={{ color: '#144d3a', fontSize: '0.8rem', fontWeight: 600 }}>OUT OF STOCK ALERTS</div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#3d6b4f' }}>{inventoryStats.outOfStock}</div>
             </div>
-            <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
-              <div style={{ color: '#1e40af', fontSize: '0.8rem', fontWeight: 600 }}>MEDICATIONS DISPENSED</div>
-              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#2563eb' }}>265 Units</div>
+            <div style={{ background: '#f2faf5', border: '1px solid #cbe6d6', borderRadius: '12px', padding: '16px', textAlign: 'center' }}>
+              <div style={{ color: '#235338', fontSize: '0.8rem', fontWeight: 600 }}>MEDICATIONS DISPENSED</div>
+              <div style={{ fontSize: '1.8rem', fontWeight: 800, color: '#2e5e3e' }}>265 Units</div>
             </div>
           </div>
 

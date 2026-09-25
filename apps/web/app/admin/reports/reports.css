@@ -170,7 +170,7 @@
 
 .report-metric-card.total-logs {
   background: #ffffff;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #d2e5d9;
 }
 
 .report-metric-card.resolved {
@@ -179,18 +179,18 @@
 }
 
 .report-metric-card.active-status {
-  background: #fff8ee;
-  border: 1px solid #fed7aa;
+  background: #f4f9f6;
+  border: 1px solid #cde0d4;
 }
 
 .report-metric-card.critical {
-  background: #fff1f2;
-  border: 1px solid #fecdd3;
+  background: #edf5f0;
+  border: 1px solid #c4ded0;
 }
 
 .report-metric-card.appointments {
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  background: #f2faf5;
+  border: 1px solid #cbe6d6;
 }
 
 .metric-card-top {
@@ -216,22 +216,22 @@
 }
 
 .resolved .metric-card-icon {
-  background: #22c55e;
+  background: #2E5E3E;
   color: #ffffff;
 }
 
 .active-status .metric-card-icon {
-  background: #f97316;
+  background: #38a169;
   color: #ffffff;
 }
 
 .critical .metric-card-icon {
-  background: #ef4444;
+  background: #1b4d33;
   color: #ffffff;
 }
 
 .appointments .metric-card-icon {
-  background: #3b82f6;
+  background: #286646;
   color: #ffffff;
 }
 
@@ -258,19 +258,19 @@
 }
 
 .trend-up-green {
-  color: #16a34a;
+  color: #166534;
 }
 
 .trend-down-orange {
-  color: #ea580c;
+  color: #2e5e3e;
 }
 
 .trend-down-red {
-  color: #dc2626;
+  color: #4a7c59;
 }
 
 .trend-up-blue {
-  color: #2563eb;
+  color: #235338;
 }
 
 /* Analytics Section (2 Columns) */
@@ -820,38 +820,45 @@
 }
 
 .type-badge.check-up {
-  background: #ffedd5;
-  color: #c2410c;
+  background: #eefaf2;
+  color: #1b4d33;
+  border: 1px solid #c7eed5;
 }
 
 .type-badge.illness {
-  background: #dcfce7;
-  color: #15803d;
+  background: #f4f9f6;
+  color: #235338;
+  border: 1px solid #cde0d4;
 }
 
 .type-badge.vaccination {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: #e7f3eb;
+  color: #144d3a;
+  border: 1px solid #b8dec6;
 }
 
 .type-badge.injury {
-  background: #f3e8ff;
-  color: #7e22ce;
+  background: #f0f7f3;
+  color: #2a6144;
+  border: 1px solid #d2e7db;
 }
 
 .type-badge.surgery {
-  background: #e0e7ff;
-  color: #4338ca;
+  background: #e2ece5;
+  color: #1b4d33;
+  border: 1px solid #b2d2bf;
 }
 
 .type-badge.dental {
-  background: #fce7f3;
-  color: #be185d;
+  background: #edf5f0;
+  color: #2e5e3e;
+  border: 1px solid #cce4d5;
 }
 
 .type-badge.other {
   background: #f1f5f9;
   color: #475569;
+  border: 1px solid #e2e8f0;
 }
 
 /* Status Badges */
@@ -867,21 +874,21 @@
 }
 
 .status-badge.resolved {
-  background: #dcfce7;
+  background: #eefaf2;
   color: #166534;
-  border: 1px solid #bbf7d0;
+  border: 1px solid #c7eed5;
 }
 
 .status-badge.active {
-  background: #ffedd5;
-  color: #9a3412;
-  border: 1px solid #fed7aa;
+  background: #f4f9f6;
+  color: #235338;
+  border: 1px solid #cde0d4;
 }
 
 .status-badge.critical {
-  background: #fee2e2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
+  background: #e2ece5;
+  color: #144d3a;
+  border: 1px solid #b2d2bf;
 }
 
 /* Action View Button */

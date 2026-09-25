@@ -157,8 +157,14 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
             )
             .subscribe();
 
+        // Polling fallback every 15 seconds to catch any notifications missed by realtime
+        const pollInterval = setInterval(() => {
+            fetchDbNotifications();
+        }, 15000);
+
         return () => {
             supabase.removeChannel(channel);
+            clearInterval(pollInterval);
         };
     }, []);
 
